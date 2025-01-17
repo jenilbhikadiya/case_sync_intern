@@ -12,7 +12,7 @@ class ApiResponse {
       var request = http.MultipartRequest(
         'POST',
         Uri.parse(
-            'https://pragmanxt.com/case_sync/services/v1/index.php/login_intern'),
+            'https://pragmanxt.com/case_sync/services/intern/v1/index.php/login_intern'),
       );
 
       // Add fields to the request
@@ -66,7 +66,7 @@ class ApiResponse {
       var request = http.MultipartRequest(
         'POST',
         Uri.parse(
-            'https://pragmanxt.com/case_sync/services/admin/v1/index.php/login_intern'),
+            'https://pragmanxt.com/case_sync/services/intern/v1/index.php/login_intern'),
       );
 
       // Add fields to the request
