@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'screens/splash_screen.dart';
-import 'theme_data/app_theme.dart';
+import 'package:intern_side/screens/cases/theme_data/app_theme.dart';
+import 'screens/cases/splash_screen.dart';
 
 void main() {
   runApp(const CaseSyncApp());

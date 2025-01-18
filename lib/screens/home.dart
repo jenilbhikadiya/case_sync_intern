@@ -4,8 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'appbar/notification_drawer.dart';
 import 'appbar/settings_drawer.dart';
 import 'cases/case_history.dart';
-import 'cases/unassigned_cases.dart';
-
+import 'cases/task_page.dart';
 class HomeScreen extends StatelessWidget {
   final List<dynamic> responseBody;
 
@@ -126,7 +125,7 @@ class HomeScreen extends StatelessWidget {
                 physics: const NeverScrollableScrollPhysics(),
                 children: [
                   _buildCard(
-                    'Unassigned Cases',
+                    'Task',
                     'assets/icons/unassigned.svg',
                     cardWidth,
                     cardHeight,
@@ -134,7 +133,7 @@ class HomeScreen extends StatelessWidget {
                     cardIconPositionY,
                     cardTextPositionY,
                     context,
-                    UnassignedCases(),
+                    TaskPage(),
                   ),
                   _buildCard(
                     'Case History',
