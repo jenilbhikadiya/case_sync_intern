@@ -1,40 +1,44 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:get/get.dart';
 
+import '../models/intern.dart';
+import '../services/shared_pref.dart';
 import 'appbar/notification_drawer.dart';
 import 'appbar/settings_drawer.dart';
 import 'cases/case_history.dart';
 import 'cases/task_page.dart';
 
-class HomeScreen extends StatelessWidget {
-  final List<dynamic> responseBody;
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
 
-  const HomeScreen({super.key, required this.responseBody});
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  late Future<Intern?> _userData;
+
+  @override
+  void initState() {
+    super.initState();
+    _userData = SharedPrefService.getUser();
+  }
+
+  String getGreeting() {
+    var hour = DateTime.now().hour;
+    if (hour < 12) {
+      return 'Good Morning';
+    } else if (hour < 17) {
+      return 'Good Afternoon';
+    } else {
+      return 'Good Evening';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-
-    // Validate responseBody and user data
-    List<dynamic> userList = responseBody;
-    Map<String, dynamic> userData =
-        userList.isNotEmpty && userList[0] is Map<String, dynamic>
-            ? userList[0] as Map<String, dynamic>
-            : {};
-    String userName = (userData['name'] is String && userData['name'] != null)
-        ? userData['name'] as String
-        : 'User';
-
-    String getGreeting() {
-      var hour = DateTime.now().hour;
-      if (hour < 12) {
-        return 'Good Morning';
-      } else if (hour < 17) {
-        return 'Good Afternoon';
-      } else {
-        return 'Good Evening';
-      }
-    }
 
     double cardWidth = screenWidth * 0.40;
     double cardHeight = 72;
@@ -42,8 +46,6 @@ class HomeScreen extends StatelessWidget {
     double cardIconPositionX = cardWidth * 0.08;
     double cardIconPositionY = cardHeight * 0.21;
     double cardTextPositionY = cardHeight * 0.57;
-    print('User data: $userData');
-    print('Intern ID: ${userData['id']}');
 
     return Scaffold(
       backgroundColor: const Color.fromRGBO(243, 243, 243, 1),
@@ -88,83 +90,97 @@ class HomeScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10),
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                getGreeting(),
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.black,
-                  height: 0.95,
-                ),
-              ),
-              Text(
-                userName,
-                style: const TextStyle(
-                  fontSize: 40,
-                  fontWeight: FontWeight.w900,
-                  color: Color.fromRGBO(37, 27, 70, 1.0),
-                  height: 1.1,
-                ),
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                'Cases',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                ),
-              ),
-              const SizedBox(height: 10),
-              GridView.count(
-                crossAxisCount: 2,
-                crossAxisSpacing: 2,
-                mainAxisSpacing: 2,
-                childAspectRatio: cardWidth / cardHeight,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                children: [
-                  _buildCard(
-                    'Task',
-                    'assets/icons/unassigned.svg',
-                    cardWidth,
-                    cardHeight,
-                    cardIconPositionX,
-                    cardIconPositionY,
-                    cardTextPositionY,
-                    context,
-                    TaskPage(
-                      internId: userData['intern_id']?.toString() ?? '',
+      body: FutureBuilder<Intern?>(
+        future: _userData,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return const Center(child: Text('Error loading user data'));
+          } else if (snapshot.hasData && snapshot.data != null) {
+            var userData = snapshot.data!;
+            String userName = userData.name ?? 'User';
+
+            return Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10),
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      getGreeting(),
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.black,
+                        height: 0.95,
+                      ),
                     ),
-                  ),
-                  _buildCard(
-                    'Case History',
-                    'assets/icons/case_history.svg',
-                    cardWidth,
-                    cardHeight,
-                    cardIconPositionX,
-                    cardIconPositionY,
-                    cardTextPositionY,
-                    context,
-                    const CaseHistoryScreen(),
-                  ),
-                ],
+                    Text(
+                      userName,
+                      style: const TextStyle(
+                        fontSize: 40,
+                        fontWeight: FontWeight.w900,
+                        color: Color.fromRGBO(37, 27, 70, 1.0),
+                        height: 1.1,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    const Text(
+                      'Cases',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    GridView.count(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 2,
+                      mainAxisSpacing: 2,
+                      childAspectRatio: cardWidth / cardHeight,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      children: [
+                        _buildCard(
+                          'Task',
+                          'assets/icons/unassigned.svg',
+                          cardWidth,
+                          cardHeight,
+                          cardIconPositionX,
+                          cardIconPositionY,
+                          cardTextPositionY,
+                          TaskPage(
+                            internId: userData.id.toString() ?? '',
+                          ),
+                        ),
+                        _buildCard(
+                          'Case History',
+                          'assets/icons/case_history.svg',
+                          cardWidth,
+                          cardHeight,
+                          cardIconPositionX,
+                          cardIconPositionY,
+                          cardTextPositionY,
+                          const CaseHistoryScreen(),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                  ],
+                ),
               ),
-              const SizedBox(height: 20),
-            ],
-          ),
-        ),
+            );
+          } else {
+            return const Center(child: Text('User not found'));
+          }
+        },
       ),
     );
   }
 
-  // Responsive card widget with navigation
   Widget _buildCard(
     String title,
     String iconPath,
@@ -173,7 +189,6 @@ class HomeScreen extends StatelessWidget {
     double iconPositionX,
     double iconPositionY,
     double textPositionY,
-    BuildContext context,
     Widget destinationScreen,
   ) {
     return Card(
@@ -185,16 +200,11 @@ class HomeScreen extends StatelessWidget {
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(20),
         child: InkWell(
-          borderRadius: BorderRadius.circular(20), // Ensures ripple is confined
+          borderRadius: BorderRadius.circular(20),
           onTap: () {
-            // Navigate to the target screen when card is tapped
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => destinationScreen),
-            );
+            Get.to(() => destinationScreen);
           },
-          splashColor:
-              Colors.grey.withOpacity(0.2), // Optional: Custom splash color
+          splashColor: Colors.grey.withOpacity(0.2),
           child: SizedBox(
             width: cardWidth,
             height: cardHeight,

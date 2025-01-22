@@ -2,30 +2,37 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../forms/login.dart';
+import '../home.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  _SplashScreenState createState() => _SplashScreenState();
+  SplashScreenState createState() => SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
+class SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
+    _checkLoginStatus();
+  }
 
-    // Start a timer to navigate to the next screen after 3 seconds
-    Timer(const Duration(seconds: 3), () {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-            builder: (context) =>
-                const LoginScreen()), // Navigate to your main screen
-      );
-    });
+  Future<void> _checkLoginStatus() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? userData = prefs.getString('user');
+
+    if (userData != null) {
+      // User is logged in, navigate to HomeScreen
+      Get.off(() => const HomeScreen());
+    } else {
+      // User is not logged in, navigate to LoginScreen
+      Get.off(() => LoginScreen());
+    }
   }
 
   @override
