@@ -1,26 +1,31 @@
 class TaskItem {
+  final String id;
   final String caseNo;
   final String instruction;
+  final String allotedTo;
   final String allotedBy;
   final DateTime allotedDate;
-  final DateTime endDate;
+  final DateTime expectedEndDate;
 
   TaskItem({
+    required this.id,
     required this.caseNo,
     required this.instruction,
+    required this.allotedTo,
     required this.allotedBy,
     required this.allotedDate,
-    required this.endDate,
+    required this.expectedEndDate,
   });
 
-  // Factory constructor to create a TaskItem from JSON
   factory TaskItem.fromJson(Map<String, dynamic> json) {
     return TaskItem(
-      caseNo: json['case_no'] ?? '', // Ensure no null values
-      instruction: json['instruction'] ?? '',
-      allotedBy: json['alloted_by'] ?? '',
+      id: json['id'],
+      caseNo: json['case_no'],
+      instruction: json['instruction'].trim(),
+      allotedTo: json['alloted_to'],
+      allotedBy: json['alloted_by'],
       allotedDate: DateTime.parse(json['alloted_date']),
-      endDate: DateTime.parse(json['end_date']),
+      expectedEndDate: DateTime.parse(json['expected_end_date']),
     );
   }
 }

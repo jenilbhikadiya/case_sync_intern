@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:get/get.dart';
 
-import '../../services/api_services.dart';
+import '../../models/intern.dart';
+import '../../services/api_service.dart';
+import '../../services/shared_pref.dart';
 import '../home.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -50,32 +53,38 @@ class _LoginScreenState extends State<LoginScreen> {
       String password = _passwordController.text;
 
       try {
-        // Start timing the login request
-        Map<String, dynamic> response =
-            await ApiResponse.loginUser(email, password);
+        // Call the login API
+        final response = await ApiService.loginUser(email, password);
+        print("Variable Response: ${response['data']}");
 
-        if (response['success'] == true && response['data'] != null) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const HomeScreen(),
-            ),
-          );
+        // Check if the login was successful
+        if (response['success'] == true) {
+          var data = response['data'];
+
+          // If the data is a list, we take the first user; otherwise, treat it as a map.
+          if (data is List && data.isNotEmpty) {
+            // Cast the first item in the list to Map<String, dynamic>
+            Map<String, dynamic> userJson =
+                (data as Map).cast<String, dynamic>();
+            Intern intern = Intern.fromJson(userJson);
+            await SharedPrefService.saveUser(intern);
+          } else if (data is Map) {
+            // If it's a map, cast it to Map<String, dynamic>
+            Map<String, dynamic> userJson = (data).cast<String, dynamic>();
+            Intern intern = Intern.fromJson(userJson);
+            await SharedPrefService.saveUser(intern);
+          }
+
+          // Navigate to the home screen
+          Get.offAll(() => const HomeScreen());
         } else {
-          setState(() {
-            _errorMessage = response['message'] ??
-                'Login failed. Please check your credentials.';
-          });
+          // Handle login failure
+          Get.snackbar('Login Error', response['message']);
         }
-      } catch (error) {
-        setState(() {
-          _errorMessage = 'An error occurred: $error';
-        });
+      } catch (e) {
+        print('An error occurred: $e');
+        Get.snackbar('Error', 'Login failed, please try again.');
       }
-
-      setState(() {
-        _isLoading = false;
-      });
     }
   }
 

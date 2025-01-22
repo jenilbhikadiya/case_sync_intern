@@ -1,14 +1,16 @@
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:intern_side/screens/cases/task_item.dart';
+import 'package:intern_side/services/shared_pref.dart';
+
+import '../../models/intern.dart';
 import 'remark_page.dart';
 import 'show_remark_page.dart';
-import 'task_item.dart';
 
 class TaskPage extends StatefulWidget {
-  final String internId;
-
-  const TaskPage({super.key, required this.internId});
+  const TaskPage({super.key});
 
   @override
   _TaskPageState createState() => _TaskPageState();
@@ -18,42 +20,47 @@ class _TaskPageState extends State<TaskPage> {
   List<TaskItem> taskList = [];
   bool isLoading = true;
   String errorMessage = '';
-
-  get userData => null;
+  Intern? _userData;
 
   @override
   void initState() {
     super.initState();
-    fetchTasks();
+    fetchUserData();
+  }
+
+  Future<void> fetchUserData() async {
+    try {
+      _userData = await SharedPrefService.getUser();
+      if (_userData == null || _userData!.id.isEmpty) {
+        setState(() {
+          isLoading = false;
+          errorMessage = 'Intern data not found.';
+        });
+      } else {
+        fetchTasks();
+      }
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+        errorMessage = 'Error fetching user data: $e';
+      });
+    }
   }
 
   Future<void> fetchTasks() async {
-    if (widget.internId.isEmpty) {
-      setState(() {
-        isLoading = false;
-        errorMessage = 'No Intern ID provided.';
-      });
-      return;
-    }
-
     const String url =
         'https://pragmanxt.com/case_sync/services/intern/v1/index.php/intern_task_list';
 
     try {
       var request = http.MultipartRequest('POST', Uri.parse(url));
-      request.fields['id'] =
-          widget.internId; // Ensure the correct field name expected by the API
-
-      print('Fetching tasks for Intern ID: ${widget.internId}'); // Debugging
+      request.fields['intern_id'] = _userData!.id;
 
       var response = await request.send();
       var responseBody = await response.stream.bytesToString();
 
       if (response.statusCode == 200) {
-        print('Response Body: $responseBody');
-        // Parse and update taskList here
         final parsedResponse = jsonDecode(responseBody);
-        if (parsedResponse['status'] == 'success' &&
+        if (parsedResponse['success'] == true &&
             parsedResponse['data'] != null) {
           setState(() {
             taskList = (parsedResponse['data'] as List)
@@ -64,14 +71,13 @@ class _TaskPageState extends State<TaskPage> {
         } else {
           setState(() {
             isLoading = false;
-            errorMessage = 'No tasks available.';
+            errorMessage = parsedResponse['message'] ?? 'No tasks available.';
           });
         }
       } else {
         setState(() {
           isLoading = false;
-          errorMessage =
-              'Failed to fetch tasks. Error: ${response.reasonPhrase}';
+          errorMessage = 'Failed to fetch tasks.';
         });
       }
     } catch (e) {
@@ -80,8 +86,6 @@ class _TaskPageState extends State<TaskPage> {
         errorMessage = 'Error fetching tasks: $e';
       });
     }
-    print('User data: $userData');
-    print('Intern ID: ${userData['id']}');
   }
 
   @override
@@ -145,15 +149,13 @@ class _TaskPageState extends State<TaskPage> {
                               ),
                               const SizedBox(height: 5),
                               Text(
-                                'Alloted Date: ${taskItem.allotedDate.toLocal()}'
-                                    .split(' ')[0],
+                                'Alloted Date: ${taskItem.allotedDate.toLocal().toString().split(' ')[0]}',
                                 style: const TextStyle(
                                     fontSize: 14, color: Colors.black),
                               ),
                               const SizedBox(height: 5),
                               Text(
-                                'End Date: ${taskItem.endDate.toLocal()}'
-                                    .split(' ')[0],
+                                'End Date: ${taskItem.expectedEndDate.toLocal().toString().split(' ')[0]}',
                                 style: const TextStyle(
                                     fontSize: 14, color: Colors.black),
                               ),

@@ -26,7 +26,7 @@ class Intern {
       email: json['email'],
       status: json['status'],
       password: json['password'],
-      dateTime: json['date/time'],
+      dateTime: json['date_time'],
     );
   }
 
@@ -39,7 +39,7 @@ class Intern {
       'email': email,
       'status': status,
       'password': password,
-      'date/time': dateTime,
+      'date_time': dateTime,
     };
   }
 }

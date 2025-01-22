@@ -152,9 +152,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           cardIconPositionX,
                           cardIconPositionY,
                           cardTextPositionY,
-                          TaskPage(
-                            internId: userData.id.toString() ?? '',
-                          ),
+                          TaskPage(),
                         ),
                         _buildCard(
                           'Case History',
