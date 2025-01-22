@@ -19,6 +19,8 @@ class _TaskPageState extends State<TaskPage> {
   bool isLoading = true;
   String errorMessage = '';
 
+  get userData => null;
+
   @override
   void initState() {
     super.initState();
@@ -29,7 +31,7 @@ class _TaskPageState extends State<TaskPage> {
     if (widget.internId.isEmpty) {
       setState(() {
         isLoading = false;
-        errorMessage = 'Invalid Intern ID';
+        errorMessage = 'No Intern ID provided.';
       });
       return;
     }
@@ -39,23 +41,47 @@ class _TaskPageState extends State<TaskPage> {
 
     try {
       var request = http.MultipartRequest('POST', Uri.parse(url));
-      request.fields['intern_id'] = widget.internId;
+      request.fields['id'] =
+          widget.internId; // Ensure the correct field name expected by the API
+
+      print('Fetching tasks for Intern ID: ${widget.internId}'); // Debugging
 
       var response = await request.send();
+      var responseBody = await response.stream.bytesToString();
+
       if (response.statusCode == 200) {
-        // Existing logic
+        print('Response Body: $responseBody');
+        // Parse and update taskList here
+        final parsedResponse = jsonDecode(responseBody);
+        if (parsedResponse['status'] == 'success' &&
+            parsedResponse['data'] != null) {
+          setState(() {
+            taskList = (parsedResponse['data'] as List)
+                .map((task) => TaskItem.fromJson(task))
+                .toList();
+            isLoading = false;
+          });
+        } else {
+          setState(() {
+            isLoading = false;
+            errorMessage = 'No tasks available.';
+          });
+        }
       } else {
         setState(() {
           isLoading = false;
-          errorMessage = 'Failed to fetch tasks. Server error.';
+          errorMessage =
+              'Failed to fetch tasks. Error: ${response.reasonPhrase}';
         });
       }
     } catch (e) {
       setState(() {
         isLoading = false;
-        errorMessage = 'An error occurred while fetching tasks: $e';
+        errorMessage = 'Error fetching tasks: $e';
       });
     }
+    print('User data: $userData');
+    print('Intern ID: ${userData['id']}');
   }
 
   @override

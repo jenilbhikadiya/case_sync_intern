@@ -43,7 +43,7 @@ class HomeScreen extends StatelessWidget {
     double cardIconPositionY = cardHeight * 0.21;
     double cardTextPositionY = cardHeight * 0.57;
     print('User data: $userData');
-    print('Intern ID: ${userData['intern_id']}');
+    print('Intern ID: ${userData['id']}');
 
     return Scaffold(
       backgroundColor: const Color.fromRGBO(243, 243, 243, 1),
@@ -140,10 +140,7 @@ class HomeScreen extends StatelessWidget {
                     cardTextPositionY,
                     context,
                     TaskPage(
-                      internId: userData['intern_id'] != null &&
-                              userData['intern_id'] is String
-                          ? userData['intern_id'] as String
-                          : '',
+                      internId: userData['intern_id']?.toString() ?? '',
                     ),
                   ),
                   _buildCard(
