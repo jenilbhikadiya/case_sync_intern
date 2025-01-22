@@ -54,7 +54,7 @@ class _LoginScreenState extends State<LoginScreen> {
         Map<String, dynamic> response =
             await ApiResponse.loginUser(email, password);
 
-        if (response['success'] == true) {
+        if (response['success'] == true && response['data'] != null) {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(

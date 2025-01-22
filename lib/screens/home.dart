@@ -5,6 +5,7 @@ import 'appbar/notification_drawer.dart';
 import 'appbar/settings_drawer.dart';
 import 'cases/case_history.dart';
 import 'cases/task_page.dart';
+
 class HomeScreen extends StatelessWidget {
   final List<dynamic> responseBody;
 
@@ -14,9 +15,15 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
 
+    // Validate responseBody and user data
     List<dynamic> userList = responseBody;
-    Map<String, dynamic> userData = userList.isNotEmpty ? userList[0] : {};
-    String userName = userData['name'] ?? 'User';
+    Map<String, dynamic> userData =
+        userList.isNotEmpty && userList[0] is Map<String, dynamic>
+            ? userList[0] as Map<String, dynamic>
+            : {};
+    String userName = (userData['name'] is String && userData['name'] != null)
+        ? userData['name'] as String
+        : 'User';
 
     String getGreeting() {
       var hour = DateTime.now().hour;
@@ -35,6 +42,8 @@ class HomeScreen extends StatelessWidget {
     double cardIconPositionX = cardWidth * 0.08;
     double cardIconPositionY = cardHeight * 0.21;
     double cardTextPositionY = cardHeight * 0.57;
+    print('User data: $userData');
+    print('Intern ID: ${userData['intern_id']}');
 
     return Scaffold(
       backgroundColor: const Color.fromRGBO(243, 243, 243, 1),
@@ -42,7 +51,7 @@ class HomeScreen extends StatelessWidget {
         surfaceTintColor: Colors.transparent,
         backgroundColor: const Color.fromRGBO(243, 243, 243, 1),
         elevation: 0,
-        leadingWidth: 56 + 30,
+        leadingWidth: 86,
         leading: IconButton(
           icon: SvgPicture.asset(
             'assets/icons/notification.svg',
@@ -52,15 +61,15 @@ class HomeScreen extends StatelessWidget {
           onPressed: () {
             showModalBottomSheet(
               context: context,
-              scrollControlDisabledMaxHeightRatio: 5 / 6,
-              backgroundColor: Color.fromRGBO(201, 201, 201, 1),
+              isScrollControlled: true,
+              backgroundColor: const Color.fromRGBO(201, 201, 201, 1),
               builder: (context) => const NotificationDrawer(),
             );
           },
         ),
         actions: [
           Padding(
-            padding: EdgeInsets.only(right: 20),
+            padding: const EdgeInsets.only(right: 20),
             child: IconButton(
               icon: SvgPicture.asset(
                 'assets/icons/settings.svg',
@@ -70,8 +79,8 @@ class HomeScreen extends StatelessWidget {
               onPressed: () {
                 showModalBottomSheet(
                   context: context,
-                  scrollControlDisabledMaxHeightRatio: 5 / 6,
-                  backgroundColor: Color.fromRGBO(201, 201, 201, 1),
+                  isScrollControlled: true,
+                  backgroundColor: const Color.fromRGBO(201, 201, 201, 1),
                   builder: (context) => const SettingsDrawer(),
                 );
               },
@@ -99,14 +108,11 @@ class HomeScreen extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 40,
                   fontWeight: FontWeight.w900,
-                  color: Color.fromRGBO(37, 27, 70, 1.000),
+                  color: Color.fromRGBO(37, 27, 70, 1.0),
                   height: 1.1,
                 ),
               ),
-
               const SizedBox(height: 20),
-
-              // "Cases" section
               const Text(
                 'Cases',
                 style: TextStyle(
@@ -133,7 +139,12 @@ class HomeScreen extends StatelessWidget {
                     cardIconPositionY,
                     cardTextPositionY,
                     context,
-                    TaskPage(),
+                    TaskPage(
+                      internId: userData['intern_id'] != null &&
+                              userData['intern_id'] is String
+                          ? userData['intern_id'] as String
+                          : '',
+                    ),
                   ),
                   _buildCard(
                     'Case History',
@@ -144,14 +155,10 @@ class HomeScreen extends StatelessWidget {
                     cardIconPositionY,
                     cardTextPositionY,
                     context,
-                    CaseHistoryScreen(),
+                    const CaseHistoryScreen(),
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
-              const SizedBox(height: 20),
-
-              const SizedBox(height: 10),
               const SizedBox(height: 20),
             ],
           ),
