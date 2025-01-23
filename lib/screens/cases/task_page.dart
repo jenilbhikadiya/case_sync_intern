@@ -110,7 +110,7 @@ class _TaskPageState extends State<TaskPage> {
                   itemBuilder: (context, index) {
                     final taskItem = taskList[index];
                     return GestureDetector(
-                      onLongPress: () {
+                      onTap: () {
                         _showDropdownMenu(context, taskItem);
                       },
                       child: Card(
@@ -129,7 +129,7 @@ class _TaskPageState extends State<TaskPage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Case No: ${taskItem.caseNo}',
+                                'Instruction: ${taskItem.instruction}',
                                 style: const TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 16,
@@ -137,7 +137,7 @@ class _TaskPageState extends State<TaskPage> {
                               ),
                               const SizedBox(height: 5),
                               Text(
-                                'Instruction: ${taskItem.instruction}',
+                                'Case No: ${taskItem.caseNo}',
                                 style: const TextStyle(
                                     fontSize: 14, color: Colors.black),
                               ),
@@ -156,6 +156,12 @@ class _TaskPageState extends State<TaskPage> {
                               const SizedBox(height: 5),
                               Text(
                                 'End Date: ${taskItem.expectedEndDate.toLocal().toString().split(' ')[0]}',
+                                style: const TextStyle(
+                                    fontSize: 14, color: Colors.black),
+                              ),
+                              const SizedBox(height: 5),
+                              Text(
+                                'Status: ${taskItem.status}',
                                 style: const TextStyle(
                                     fontSize: 14, color: Colors.black),
                               ),
@@ -185,7 +191,7 @@ class _TaskPageState extends State<TaskPage> {
           children: [
             ListTile(
               leading: const Icon(Icons.edit),
-              title: const Text('Remark'),
+              title: const Text('Add Remark'),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.push(
@@ -207,6 +213,18 @@ class _TaskPageState extends State<TaskPage> {
                 );
               },
             ),
+            // ListTile(
+            //   leading: const Icon(Icons.visibility),
+            //   title: const Text('Assign Task'),
+            //   onTap: () {
+            //     Navigator.pop(context);
+            //     Navigator.push(
+            //       context,
+            //       MaterialPageRoute(
+            //           builder: (context) => AssignTaskPage(taskItem: taskItem)),
+            //     );
+            //   },
+            // ),
           ],
         );
       },

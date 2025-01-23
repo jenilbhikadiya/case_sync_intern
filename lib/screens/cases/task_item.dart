@@ -6,6 +6,7 @@ class TaskItem {
   final String allotedBy;
   final DateTime allotedDate;
   final DateTime expectedEndDate;
+  final String status;
 
   TaskItem({
     required this.id,
@@ -15,6 +16,7 @@ class TaskItem {
     required this.allotedBy,
     required this.allotedDate,
     required this.expectedEndDate,
+    required this.status,
   });
 
   factory TaskItem.fromJson(Map<String, dynamic> json) {
@@ -26,6 +28,7 @@ class TaskItem {
       allotedBy: json['alloted_by'],
       allotedDate: DateTime.parse(json['alloted_date']),
       expectedEndDate: DateTime.parse(json['expected_end_date']),
+      status: json['status'],
     );
   }
 }
