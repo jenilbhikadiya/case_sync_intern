@@ -18,9 +18,9 @@ class _SettingsDrawerState extends State<SettingsDrawer> {
     return Container(
       width: screenWidth,
       height: screenHeight * 0.8,
-      decoration: BoxDecoration(
-        color: const Color.fromRGBO(201, 201, 201, 1.000),
-        borderRadius: const BorderRadius.vertical(
+      decoration: const BoxDecoration(
+        color: Color.fromRGBO(201, 201, 201, 1.000),
+        borderRadius: BorderRadius.vertical(
           top: Radius.circular(20),
         ),
       ),

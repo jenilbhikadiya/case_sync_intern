@@ -6,7 +6,7 @@ class AppTheme {
     return ThemeData(
       // Set the primary colors
       primaryColor: Colors.black,
-      scaffoldBackgroundColor: Color.fromRGBO(243, 243, 243, 1.0),
+      scaffoldBackgroundColor: const Color.fromRGBO(243, 243, 243, 1.0),
 
       textSelectionTheme: TextSelectionThemeData(
           cursorColor: Colors.black,

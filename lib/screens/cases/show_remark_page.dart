@@ -4,19 +4,19 @@ import 'task_item.dart';
 class ShowRemarkPage extends StatefulWidget {
   final TaskItem taskItem;
 
-  const ShowRemarkPage({Key? key, required this.taskItem}) : super(key: key);
+  const ShowRemarkPage({super.key, required this.taskItem});
 
   @override
-  _RemarkPageState createState() => _RemarkPageState();
+  RemarkPageState createState() => RemarkPageState();
 }
 
-class _RemarkPageState extends State<ShowRemarkPage> {
+class RemarkPageState extends State<ShowRemarkPage> {
   final _srNoController = TextEditingController();
   final _stageController = TextEditingController();
   final _remarkController = TextEditingController();
-  DateTime _remarkDate = DateTime.now();
-  DateTime _nextDate = DateTime.now();
-  String _status = 'Pending';
+  final DateTime _remarkDate = DateTime.now();
+  final DateTime _nextDate = DateTime.now();
+  final String _status = 'Pending';
 
   @override
   Widget build(BuildContext context) {
@@ -37,11 +37,23 @@ class _RemarkPageState extends State<ShowRemarkPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildField('SR. No.', _srNoController.text.isNotEmpty ? _srNoController.text : 'N/A'),
+                _buildField(
+                    'SR. No.',
+                    _srNoController.text.isNotEmpty
+                        ? _srNoController.text
+                        : 'N/A'),
                 const SizedBox(height: 16),
-                _buildField('Stage', _stageController.text.isNotEmpty ? _stageController.text : 'N/A'),
+                _buildField(
+                    'Stage',
+                    _stageController.text.isNotEmpty
+                        ? _stageController.text
+                        : 'N/A'),
                 const SizedBox(height: 16),
-                _buildField('Remark', _remarkController.text.isNotEmpty ? _remarkController.text : 'N/A'),
+                _buildField(
+                    'Remark',
+                    _remarkController.text.isNotEmpty
+                        ? _remarkController.text
+                        : 'N/A'),
                 const SizedBox(height: 16),
                 _buildField(
                   'Remark Date',

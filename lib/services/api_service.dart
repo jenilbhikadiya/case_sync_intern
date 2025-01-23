@@ -59,6 +59,11 @@ class ApiService {
             'data': decodedResponse['data'][0],
             'message': decodedResponse['message'],
           };
+        } else if (decodedResponse['success'] == false) {
+          return {
+            'success': false,
+            'message': decodedResponse['message'],
+          };
         } else {
           return {
             'success': false,
@@ -79,11 +84,13 @@ class ApiService {
   // Login user method
   static Future<Map<String, dynamic>> loginUser(
       String email, String password) async {
-    return _sendLoginRequest(
+    var response = await _sendLoginRequest(
       {
         'user_id': email,
         'password': password,
       },
     );
+    print("Response: $response");
+    return response;
   }
 }

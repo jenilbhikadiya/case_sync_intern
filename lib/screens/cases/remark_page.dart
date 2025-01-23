@@ -5,13 +5,13 @@ import 'task_item.dart';
 class RemarkPage extends StatefulWidget {
   final TaskItem taskItem;
 
-  const RemarkPage({Key? key, required this.taskItem}) : super(key: key);
+  const RemarkPage({super.key, required this.taskItem});
 
   @override
-  _RemarkPageState createState() => _RemarkPageState();
+  RemarkPageState createState() => RemarkPageState();
 }
 
-class _RemarkPageState extends State<RemarkPage> {
+class RemarkPageState extends State<RemarkPage> {
   final _formKey = GlobalKey<FormState>();
   final _remarkController = TextEditingController();
   final _currentStageController = TextEditingController();
@@ -38,12 +38,14 @@ class _RemarkPageState extends State<RemarkPage> {
               _buildFieldTitle('Current Stage'),
               _buildTextField(
                 controller: _currentStageController,
-                inputType: TextInputType.text, label: '',
+                inputType: TextInputType.text,
+                label: '',
               ),
               _buildFieldTitle('Remark'),
               _buildTextField(
                 controller: _remarkController,
-                inputType: TextInputType.text, label: '',
+                inputType: TextInputType.text,
+                label: '',
               ),
               _buildFieldTitle('Remark Date'),
               _buildRemarkBoxField(),
@@ -52,7 +54,8 @@ class _RemarkPageState extends State<RemarkPage> {
               _buildFieldTitle('Next Stage'),
               _buildTextField(
                 controller: _nextStageController,
-                inputType: TextInputType.text, label: '',
+                inputType: TextInputType.text,
+                label: '',
               ),
               _buildFieldTitle('Next Date'),
               _buildNextDateBoxField(),
@@ -88,7 +91,7 @@ class _RemarkPageState extends State<RemarkPage> {
         controller: controller,
         decoration: InputDecoration(
           labelText: label,
-          border: OutlineInputBorder(),
+          border: const OutlineInputBorder(),
         ),
         keyboardType: inputType,
         validator: (value) {
@@ -218,11 +221,11 @@ class _RemarkPageState extends State<RemarkPage> {
       padding: const EdgeInsets.only(top: 20),
       child: ElevatedButton(
         onPressed: _submitForm,
-        child: const Text('Submit'),
         style: ElevatedButton.styleFrom(
           foregroundColor: Colors.black,
           backgroundColor: Colors.white,
         ),
+        child: const Text('Submit'),
       ),
     );
   }

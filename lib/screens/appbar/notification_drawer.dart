@@ -9,9 +9,9 @@ class NotificationDrawer extends StatelessWidget {
 
     return Container(
       height: screenHeight * 0.8,
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: Color.fromRGBO(201, 201, 201, 1.000),
-        borderRadius: const BorderRadius.vertical(
+        borderRadius: BorderRadius.vertical(
           top: Radius.circular(20),
         ),
       ),
