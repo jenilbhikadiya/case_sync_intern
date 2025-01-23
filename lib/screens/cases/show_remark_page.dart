@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'task_item.dart';
 
 class ShowRemarkPage extends StatefulWidget {
@@ -11,12 +13,58 @@ class ShowRemarkPage extends StatefulWidget {
 }
 
 class _RemarkPageState extends State<ShowRemarkPage> {
-  final _srNoController = TextEditingController();
-  final _stageController = TextEditingController();
-  final _remarkController = TextEditingController();
-  DateTime _remarkDate = DateTime.now();
-  DateTime _nextDate = DateTime.now();
-  String _status = 'Pending';
+  final List<Map<String, dynamic>> _remarks = [];
+  bool _isLoading = true;
+  String _errorMessage = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchRemarkData();
+  }
+
+  Future<void> _fetchRemarkData() async {
+    try {
+      final response = await http.post(
+        Uri.parse(
+            'https://pragmanxt.com/case_sync/services/intern/v1/index.php/task_remark_list'),
+        headers: {
+          'User-Agent': 'Apidog/1.0.0 (https://apidog.com)',
+          'Accept': '*/*',
+          'Host': 'pragmanxt.com',
+        },
+        body: {'task_id': widget.taskItem.id.toString()},
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['success'] == true &&
+            data['data'] != null &&
+            data['data'].isNotEmpty) {
+          setState(() {
+            _remarks.clear();
+            _remarks.addAll(List<Map<String, dynamic>>.from(data['data']));
+            _isLoading = false;
+          });
+        } else {
+          setState(() {
+            _errorMessage = data['message'] ?? 'No remarks found.';
+            _isLoading = false;
+          });
+        }
+      } else {
+        setState(() {
+          _errorMessage = 'Failed to fetch remarks. Please try again later.';
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'An error occurred: $e';
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -25,54 +73,54 @@ class _RemarkPageState extends State<ShowRemarkPage> {
       appBar: AppBar(
         title: const Text('Show Remark'),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Card(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12.0),
-          ),
-          elevation: 5,
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildField(
-                    'SR. No.',
-                    _srNoController.text.isNotEmpty
-                        ? _srNoController.text
-                        : 'N/A'),
-                const SizedBox(height: 16),
-                _buildField(
-                    'Stage',
-                    _stageController.text.isNotEmpty
-                        ? _stageController.text
-                        : 'N/A'),
-                const SizedBox(height: 16),
-                _buildField(
-                    'Remark',
-                    _remarkController.text.isNotEmpty
-                        ? _remarkController.text
-                        : 'N/A'),
-                const SizedBox(height: 16),
-                _buildField(
-                  'Remark Date',
-                  '${_remarkDate.day.toString().padLeft(2, '0')}/${_remarkDate.month.toString().padLeft(2, '0')}/${_remarkDate.year}',
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _errorMessage.isNotEmpty
+              ? Center(child: Text(_errorMessage))
+              : SingleChildScrollView(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Card(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12.0),
+                    ),
+                    elevation: 5,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: _remarks.asMap().entries.map((entry) {
+                          int index = entry.key;
+                          Map<String, dynamic> remark = entry.value;
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildField('SR. No.', (index + 1).toString()),
+                              const SizedBox(height: 16),
+                              _buildField('Stage', remark['stage'] ?? 'N/A'),
+                              const SizedBox(height: 16),
+                              _buildField('Remark', remark['remarks'] ?? 'N/A'),
+                              const SizedBox(height: 16),
+                              _buildField(
+                                'Remark Date',
+                                '${DateTime.parse(remark['dos'] ?? DateTime.now().toString()).day.toString().padLeft(2, '0')}/${DateTime.parse(remark['dos'] ?? DateTime.now().toString()).month.toString().padLeft(2, '0')}/${DateTime.parse(remark['dos'] ?? DateTime.now().toString()).year}',
+                              ),
+                              const SizedBox(height: 16),
+                              _buildField(
+                                'Next Date',
+                                '${DateTime.parse(remark['nextdate'] ?? DateTime.now().toString()).day.toString().padLeft(2, '0')}/${DateTime.parse(remark['nextdate'] ?? DateTime.now().toString()).month.toString().padLeft(2, '0')}/${DateTime.parse(remark['nextdate'] ?? DateTime.now().toString()).year}',
+                              ),
+                              const SizedBox(height: 16),
+                              _buildField(
+                                  'Status', remark['status'] ?? 'Pending'),
+                              const Divider(thickness: 1),
+                              const SizedBox(height: 16),
+                            ],
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  ),
                 ),
-                const SizedBox(height: 16),
-                _buildField(
-                  'Next Date',
-                  '${_nextDate.day.toString().padLeft(2, '0')}/${_nextDate.month.toString().padLeft(2, '0')}/${_nextDate.year}',
-                ),
-                const SizedBox(height: 16),
-                _buildField('Status', _status),
-                const SizedBox(height: 16),
-                _buildButtonsRow(context),
-              ],
-            ),
-          ),
-        ),
-      ),
     );
   }
 
@@ -98,27 +146,6 @@ class _RemarkPageState extends State<ShowRemarkPage> {
               fontSize: 16.0,
             ),
           ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildButtonsRow(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: [
-        ElevatedButton(
-          onPressed: () {
-            // Handle edit action
-          },
-          child: const Text('Edit'),
-        ),
-        const SizedBox(width: 8.0),
-        ElevatedButton(
-          onPressed: () {
-            // Handle delete action
-          },
-          child: const Text('Delete'),
         ),
       ],
     );
