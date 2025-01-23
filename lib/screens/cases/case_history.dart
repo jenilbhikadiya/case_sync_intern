@@ -10,10 +10,10 @@ class CaseHistoryScreen extends StatefulWidget {
   const CaseHistoryScreen({super.key});
 
   @override
-  _CaseHistoryScreenState createState() => _CaseHistoryScreenState();
+  CaseHistoryScreenState createState() => CaseHistoryScreenState();
 }
 
-class _CaseHistoryScreenState extends State<CaseHistoryScreen>
+class CaseHistoryScreenState extends State<CaseHistoryScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   String selectedYear = '2024';

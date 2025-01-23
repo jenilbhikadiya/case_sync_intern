@@ -37,7 +37,8 @@ class CaseCard extends StatelessWidget {
         elevation: 3,
         shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
-            side: BorderSide(color: Colors.black, style: BorderStyle.solid)),
+            side: const BorderSide(
+                color: Colors.black, style: BorderStyle.solid)),
         child: Padding(
           padding: const EdgeInsets.all(12.0),
           child: Column(

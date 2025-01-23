@@ -42,7 +42,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     double cardWidth = screenWidth * 0.40;
     double cardHeight = 72;
-    double fullCardWidth = screenWidth * 0.93;
+    // double fullCardWidth = screenWidth * 0.93;
     double cardIconPositionX = cardWidth * 0.08;
     double cardIconPositionY = cardHeight * 0.21;
     double cardTextPositionY = cardHeight * 0.57;
@@ -99,7 +99,7 @@ class _HomeScreenState extends State<HomeScreen> {
             return const Center(child: Text('Error loading user data'));
           } else if (snapshot.hasData && snapshot.data != null) {
             var userData = snapshot.data!;
-            String userName = userData.name ?? 'User';
+            String userName = userData.name;
 
             return Padding(
               padding:
@@ -152,7 +152,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           cardIconPositionX,
                           cardIconPositionY,
                           cardTextPositionY,
-                          TaskPage(),
+                          const TaskPage(),
                         ),
                         _buildCard(
                           'Case History',

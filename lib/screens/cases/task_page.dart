@@ -13,10 +13,10 @@ class TaskPage extends StatefulWidget {
   const TaskPage({super.key});
 
   @override
-  _TaskPageState createState() => _TaskPageState();
+  TaskPageState createState() => TaskPageState();
 }
 
-class _TaskPageState extends State<TaskPage> {
+class TaskPageState extends State<TaskPage> {
   List<TaskItem> taskList = [];
   bool isLoading = true;
   String errorMessage = '';
