@@ -7,6 +7,10 @@ class CaseListData {
   final String courtName;
   final DateTime srDate;
   final String cityName;
+  final String companyName;
+  final String caseTypeName;
+  final String status;
+  final String summonDate;
 
   CaseListData({
     required this.id,
@@ -17,18 +21,26 @@ class CaseListData {
     required this.courtName,
     required this.srDate,
     required this.cityName,
+    required this.companyName,
+    required this.caseTypeName,
+    required this.status,
+    required this.summonDate,
   });
 
   factory CaseListData.fromJson(Map<String, dynamic> json) {
     return CaseListData(
-      id: json['id'],
+      id: json['id'] ?? '',
       caseNo: json['case_no'] ?? '',
       handleBy: json['handle_by'] ?? '',
       applicant: json['applicant'] ?? '',
       opponent: json['opp_name'] ?? '',
       courtName: json['court_name'] ?? '',
-      srDate: DateTime.parse(json['sr_date']),
+      srDate: DateTime.now(), // Default to now if no value is provided
       cityName: json['city_name'] ?? '',
+      companyName: json['company_name'] ?? '',
+      caseTypeName: json['case_type_name'] ?? '',
+      status: json['status'] ?? '',
+      summonDate: json['summon_date'] ?? '',
     );
   }
 

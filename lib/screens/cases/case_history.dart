@@ -1,9 +1,13 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart'; // For date formatting
 
 import '../../components/case_card.dart';
 import '../../components/list_app_bar.dart';
 import '../../models/case_list.dart';
 import '../../services/case_services.dart';
+import '../../services/shared_pref.dart';
 import '../constants/date_constants.dart';
 
 class CaseHistoryScreen extends StatefulWidget {
@@ -20,52 +24,25 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
   bool _isSearching = false;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+  List<CaseListData> _caseList = [];
+  Map<String, List<CaseListData>> _casesByMonth = {};
   List<CaseListData> _filteredCases = [];
   int _currentResultIndex = 0;
   List<String> _resultTabs = [];
-
-  // @override
-  // void initState() {
-  //   super.initState();
-  //
-  //   // Initialize the TabController and set it to the current month
-  //   _tabController = TabController(length: months.length, vsync: this);
-  //   final currentMonthIndex = DateTime.now().month - 1; // Index starts at 0
-  //   _tabController.animateTo(currentMonthIndex);
-  //
-  //   _tabController.addListener(() {
-  //     if (!_tabController.indexIsChanging) {
-  //       setState(() {});
-  //     }
-  //   });
-  // }
+  bool _isLoading = true;
+  String _errorMessage = '';
+  String? _internId;
 
   @override
   void initState() {
     super.initState();
-
-    // Initialize the TabController
     _tabController = TabController(length: months.length, vsync: this);
+    _fetchInternId();
 
     final currentMonthIndex = DateTime.now().month - 1; // Index starts at 0
-    final availableMonths = caseData[selectedYear]
-        ?.entries
-        .where((entry) => entry.value.isNotEmpty)
-        .map((entry) => months.indexOf(entry.key))
-        .toList();
-
-    // Determine the initial tab
     int initialTabIndex = currentMonthIndex;
-    if (availableMonths != null && availableMonths.isNotEmpty) {
-      if (!availableMonths.contains(currentMonthIndex)) {
-        initialTabIndex = availableMonths.last;
-      }
-    } else {
-      initialTabIndex = 0; // Default to the first month if no data exists
-    }
 
     _tabController.animateTo(initialTabIndex);
-
     _tabController.addListener(() {
       if (!_tabController.indexIsChanging) {
         setState(() {});
@@ -73,28 +50,115 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
     });
   }
 
-  @override
-  void dispose() {
-    _tabController.dispose();
-    _searchController.dispose();
-    super.dispose();
+  Future<void> _fetchInternId() async {
+    try {
+      final userData = await SharedPrefService.getUser();
+      if (userData != null && userData.id.isNotEmpty) {
+        setState(() {
+          _internId = userData.id;
+        });
+        await _fetchCaseHistory();
+      } else {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'Intern ID not found in shared preferences.';
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Error fetching intern ID: $e';
+      });
+    }
   }
 
-  // Update filtered cases across all months
+  Future<void> _fetchCaseHistory() async {
+    if (_internId == null) return;
+
+    try {
+      final response = await http.post(
+        Uri.parse(
+            'https://pragmanxt.com/case_sync/services/intern/v1/index.php/intern_case_history'),
+        headers: {
+          'User-Agent': 'Apidog/1.0.0 (https://apidog.com)',
+          'Accept': '*/*',
+          'Host': 'pragmanxt.com',
+        },
+        body: {'intern_id': _internId!},
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['success'] == true && data['data'] != null) {
+          List<dynamic> casesData = data['data'];
+          List<CaseListData> fetchedCases = casesData
+              .map((caseJson) => CaseListData.fromJson(caseJson))
+              .toList();
+
+          // Group cases by month
+          Map<String, List<CaseListData>> groupedCases = {};
+          for (var caseItem in fetchedCases) {
+            String dateString = caseItem.summonDate;
+
+            // Ensure dateString is valid and non-empty
+            if (dateString.isNotEmpty) {
+              try {
+                DateTime date = DateFormat('dd-MM-yyyy').parse(dateString);
+                String month = months[date.month - 1]; // Convert to month name
+
+                if (!groupedCases.containsKey(month)) {
+                  groupedCases[month] = [];
+                }
+                groupedCases[month]?.add(caseItem);
+              } catch (e) {
+                print(
+                    'Error parsing summon_date "$dateString" for case: ${caseItem.caseNo}');
+              }
+            } else {
+              print(
+                  'Empty or invalid summon_date for case: ${caseItem.caseNo}');
+            }
+          }
+
+          setState(() {
+            _caseList = fetchedCases;
+            _casesByMonth = groupedCases;
+            _isLoading = false;
+          });
+        } else {
+          setState(() {
+            _errorMessage = data['message'] ?? 'No case history found.';
+            _isLoading = false;
+          });
+        }
+      } else {
+        setState(() {
+          _errorMessage =
+              'Failed to fetch case history. Please try again later.';
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'An error occurred: $e';
+        _isLoading = false;
+      });
+    }
+  }
+
   void _updateFilteredCases() {
     setState(() {
       _filteredCases.clear();
       _resultTabs.clear();
 
-      // Filter cases based on the search query
-      caseData[selectedYear]?.forEach((month, cases) {
+      _casesByMonth.forEach((month, cases) {
         final results = cases.where((caseItem) {
           return caseItem.caseNo.toLowerCase().contains(_searchQuery) ||
               caseItem.courtName.toLowerCase().contains(_searchQuery) ||
               caseItem.cityName.toLowerCase().contains(_searchQuery) ||
-              caseItem.handleBy.toLowerCase().contains(_searchQuery) ||
-              caseItem.applicant.toLowerCase().contains(_searchQuery) ||
-              caseItem.opponent.toLowerCase().contains(_searchQuery);
+              caseItem.companyName.toLowerCase().contains(_searchQuery) ||
+              caseItem.caseTypeName.toLowerCase().contains(_searchQuery) ||
+              caseItem.status.toLowerCase().contains(_searchQuery);
         }).toList();
 
         if (results.isNotEmpty) {
@@ -104,15 +168,12 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
       });
 
       _currentResultIndex = 0; // Reset to the first result
-
-      // Automatically switch to the first result's tab if any result is found
       if (_filteredCases.isNotEmpty) {
         _switchTabToResult();
       }
     });
   }
 
-  // Navigate to previous search result
   void _navigateToPreviousResult() {
     setState(() {
       if (_currentResultIndex > 0) {
@@ -122,7 +183,6 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
     });
   }
 
-  // Navigate to next search result
   void _navigateToNextResult() {
     setState(() {
       if (_currentResultIndex < _filteredCases.length - 1) {
@@ -136,6 +196,13 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
     String resultMonth = _resultTabs[_currentResultIndex];
     int monthIndex = months.indexOf(resultMonth);
     _tabController.animateTo(monthIndex);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    _searchController.dispose();
+    super.dispose();
   }
 
   @override
@@ -156,7 +223,7 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
           });
         },
         isSearching: _isSearching,
-        onFilterPressed: null, // Removed filter functionality
+        onFilterPressed: null,
       ),
       body: Column(
         children: [
@@ -169,10 +236,8 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
                     child: TextField(
                       controller: _searchController,
                       onChanged: (value) {
-                        setState(() {
-                          _searchQuery = value.toLowerCase();
-                          _updateFilteredCases();
-                        });
+                        _searchQuery = value.toLowerCase();
+                        _updateFilteredCases();
                       },
                       decoration: InputDecoration(
                         hintText: 'Search cases...',
@@ -226,6 +291,7 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
                   onChanged: (String? newValue) {
                     setState(() {
                       selectedYear = newValue!;
+                      _fetchCaseHistory(); // Fetch data for the selected year if needed
                     });
                   },
                   dropdownColor: Colors.white,
@@ -257,42 +323,43 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
             child: Padding(
               padding:
                   const EdgeInsets.symmetric(horizontal: 16.0, vertical: 5.0),
-              child: TabBarView(
-                controller: _tabController,
-                children: months.map((month) {
-                  var allCases = getCaseDataForMonth(selectedYear, month);
-
-                  // Wrap ListView with RefreshIndicator
-                  return RefreshIndicator(
-                    onRefresh: () async {
-                      // Reload or update case data here
-                      setState(() {
-                        // You can modify this to fetch updated data from your API or service
-                        populateCaseData();
-                        allCases = getCaseDataForMonth(selectedYear, month);
-                      });
-                    },
-                    child: ListView.builder(
-                      itemCount: allCases.length,
-                      itemBuilder: (context, index) {
-                        var caseItem = allCases[index];
-
-                        // Highlight only the current result
-                        bool isHighlighted = _isSearching &&
-                            _filteredCases.isNotEmpty &&
-                            _resultTabs[_currentResultIndex] == month &&
-                            _filteredCases[_currentResultIndex].caseNo ==
-                                caseItem.caseNo;
-
-                        return CaseCard(
-                          caseItem: caseItem,
-                          isHighlighted: isHighlighted,
-                        );
-                      },
-                    ),
-                  );
-                }).toList(),
-              ),
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _errorMessage.isNotEmpty
+                      ? Center(child: Text(_errorMessage))
+                      : TabBarView(
+                          controller: _tabController,
+                          children: months.map((month) {
+                            var allCases = _casesByMonth[month] ?? [];
+                            return RefreshIndicator(
+                              onRefresh: () async {
+                                await _fetchCaseHistory();
+                              },
+                              child: allCases.isEmpty
+                                  ? const Center(
+                                      child: Text('No cases for this month.'),
+                                    )
+                                  : ListView.builder(
+                                      itemCount: allCases.length,
+                                      itemBuilder: (context, index) {
+                                        var caseItem = allCases[index];
+                                        bool isHighlighted = _isSearching &&
+                                            _filteredCases.isNotEmpty &&
+                                            _resultTabs[_currentResultIndex] ==
+                                                month &&
+                                            _filteredCases[_currentResultIndex]
+                                                    .caseNo ==
+                                                caseItem.caseNo;
+                                        return CaseCard(
+                                          srNo: index + 1, // Pass Sr No
+                                          caseItem: caseItem,
+                                          isHighlighted: isHighlighted,
+                                        );
+                                      },
+                                    ),
+                            );
+                          }).toList(),
+                        ),
             ),
           ),
         ],
