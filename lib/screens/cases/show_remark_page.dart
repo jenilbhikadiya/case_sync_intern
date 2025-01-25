@@ -1,7 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'task_item.dart';
+
+import '../../models/task_item_list.dart';
 
 class ShowRemarkPage extends StatefulWidget {
   final TaskItem taskItem;
@@ -25,16 +26,36 @@ class _RemarkPageState extends State<ShowRemarkPage> {
 
   Future<void> _fetchRemarkData() async {
     try {
-      final response = await http.post(
-        Uri.parse(
-            'https://pragmanxt.com/case_sync/services/intern/v1/index.php/task_remark_list'),
-        headers: {
-          'User-Agent': 'Apidog/1.0.0 (https://apidog.com)',
-          'Accept': '*/*',
-          'Host': 'pragmanxt.com',
-        },
-        body: {'task_id': widget.taskItem.id.toString()},
-      );
+      debugPrint('Task ID: ${widget.taskItem.task_id}');
+      if (widget.taskItem.task_id.isEmpty) {
+        setState(() {
+          _errorMessage = 'Task ID is missing or invalid.';
+          _isLoading = false;
+        });
+        return;
+      }
+
+      // Create a multipart request
+      final uri = Uri.parse(
+          'https://pragmanxt.com/case_sync/services/intern/v1/index.php/task_remark_list');
+      final request = http.MultipartRequest('POST', uri);
+
+      // Add headers
+      request.headers.addAll({
+        'User-Agent': 'Apidog/1.0.0 (https://apidog.com)',
+        'Accept': '*/*',
+        'Host': 'pragmanxt.com',
+      });
+
+      // Add fields
+      request.fields['task_id'] = widget.taskItem.task_id;
+
+      // Send the request
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      debugPrint('Response Status Code: ${response.statusCode}');
+      debugPrint('Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -54,15 +75,32 @@ class _RemarkPageState extends State<ShowRemarkPage> {
         }
       } else {
         setState(() {
-          _errorMessage = 'Failed to fetch remarks. Please try again later.';
+          _errorMessage =
+              'Failed to fetch remarks. Status code: ${response.statusCode}';
           _isLoading = false;
         });
       }
     } catch (e) {
+      debugPrint('Error occurred: $e');
       setState(() {
         _errorMessage = 'An error occurred: $e';
         _isLoading = false;
       });
+    }
+  }
+
+  String _formatDate(String? dateString) {
+    try {
+      if (dateString == null ||
+          dateString.isEmpty ||
+          dateString == "0000-00-00" ||
+          dateString.startsWith("0000")) {
+        return 'N/A';
+      }
+      final parsedDate = DateTime.parse(dateString);
+      return '${parsedDate.day.toString().padLeft(2, '0')}/${parsedDate.month.toString().padLeft(2, '0')}/${parsedDate.year}';
+    } catch (e) {
+      return 'Invalid Date';
     }
   }
 
@@ -102,12 +140,12 @@ class _RemarkPageState extends State<ShowRemarkPage> {
                               const SizedBox(height: 16),
                               _buildField(
                                 'Remark Date',
-                                '${DateTime.parse(remark['dos'] ?? DateTime.now().toString()).day.toString().padLeft(2, '0')}/${DateTime.parse(remark['dos'] ?? DateTime.now().toString()).month.toString().padLeft(2, '0')}/${DateTime.parse(remark['dos'] ?? DateTime.now().toString()).year}',
+                                _formatDate(remark['dos']),
                               ),
                               const SizedBox(height: 16),
                               _buildField(
                                 'Next Date',
-                                '${DateTime.parse(remark['nextdate'] ?? DateTime.now().toString()).day.toString().padLeft(2, '0')}/${DateTime.parse(remark['nextdate'] ?? DateTime.now().toString()).month.toString().padLeft(2, '0')}/${DateTime.parse(remark['nextdate'] ?? DateTime.now().toString()).year}',
+                                _formatDate(remark['nextdate']),
                               ),
                               const SizedBox(height: 16),
                               _buildField(

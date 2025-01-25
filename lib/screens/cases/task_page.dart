@@ -2,11 +2,12 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:intern_side/screens/cases/task_item.dart';
+import 'package:intern_side/screens/cases/assign_task_page.dart';
 import 'package:intern_side/services/shared_pref.dart';
 
 import '../../models/intern.dart';
-import 'remark_page.dart';
+import '../../models/task_item_list.dart';
+import 'add_remark_page.dart';
 import 'show_remark_page.dart';
 
 class TaskPage extends StatefulWidget {
@@ -108,7 +109,8 @@ class TaskPageState extends State<TaskPage> {
               ? ListView.builder(
                   itemCount: taskList.length,
                   itemBuilder: (context, index) {
-                    final taskItem = taskList[index];
+                    final taskItem =
+                        taskList.reversed.toList()[index]; // Reverse the list
                     return GestureDetector(
                       onTap: () {
                         _showDropdownMenu(context, taskItem);
@@ -149,19 +151,40 @@ class TaskPageState extends State<TaskPage> {
                               ),
                               const SizedBox(height: 5),
                               Text(
-                                'Alloted Date: ${taskItem.allotedDate.toLocal().toString().split(' ')[0]}',
+                                'Alloted Date: ${taskItem.allotedDate?.toLocal().toString().split(' ')[0]}',
                                 style: const TextStyle(
                                     fontSize: 14, color: Colors.black),
                               ),
                               const SizedBox(height: 5),
                               Text(
-                                'End Date: ${taskItem.expectedEndDate.toLocal().toString().split(' ')[0]}',
+                                'End Date: ${taskItem.expectedEndDate?.toLocal().toString().split(' ')[0]}',
                                 style: const TextStyle(
                                     fontSize: 14, color: Colors.black),
                               ),
                               const SizedBox(height: 5),
                               Text(
                                 'Status: ${taskItem.status}',
+                                style: const TextStyle(
+                                    fontSize: 14, color: Colors.black),
+                              ),
+                              const SizedBox(height: 5),
+                              Text(
+                                'Current Stage: ${taskItem.stage}',
+                                style: const TextStyle(
+                                    fontSize: 14, color: Colors.black),
+                              ),
+                              Text(
+                                'taskId: ${taskItem.task_id}',
+                                style: const TextStyle(
+                                    fontSize: 14, color: Colors.black),
+                              ),
+                              Text(
+                                'case_id: ${taskItem.case_id}',
+                                style: const TextStyle(
+                                    fontSize: 14, color: Colors.black),
+                              ),
+                              Text(
+                                'stage_id: ${taskItem.stage_id}',
                                 style: const TextStyle(
                                     fontSize: 14, color: Colors.black),
                               ),
@@ -193,11 +216,16 @@ class TaskPageState extends State<TaskPage> {
               leading: const Icon(Icons.edit),
               title: const Text('Add Remark'),
               onTap: () {
-                Navigator.pop(context);
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (context) => RemarkPage(taskItem: taskItem)),
+                    builder: (context) => AddRemarkPage(
+                      taskItem: taskItem,
+                      task_id: taskItem.task_id,
+                      case_id: taskItem.case_id,
+                      stage_id: taskItem.stage_id,
+                    ),
+                  ),
                 );
               },
             ),
@@ -209,22 +237,23 @@ class TaskPageState extends State<TaskPage> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (context) => ShowRemarkPage(taskItem: taskItem)),
+                    builder: (context) => ShowRemarkPage(
+                        taskItem: taskItem), // Pass taskItem here
+                  ),
                 );
               },
             ),
-            // ListTile(
-            //   leading: const Icon(Icons.visibility),
-            //   title: const Text('Assign Task'),
-            //   onTap: () {
-            //     Navigator.pop(context);
-            //     Navigator.push(
-            //       context,
-            //       MaterialPageRoute(
-            //           builder: (context) => AssignTaskPage(taskItem: taskItem)),
-            //     );
-            //   },
-            // ),
+            ListTile(
+              leading: const Icon(Icons.visibility),
+              title: const Text('Assign Task'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => AssignTaskPage()),
+                );
+              },
+            ),
           ],
         );
       },
