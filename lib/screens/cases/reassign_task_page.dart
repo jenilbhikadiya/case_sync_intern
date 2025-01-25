@@ -67,29 +67,24 @@ class _ReAssignTaskPageState extends State<ReAssignTaskPage> {
   }
 
   Future<void> reassignTask() async {
-    final String apiUrl =
-        'https://pragmanxt.com/case_sync/services/intern/v1/index.php/task_reassign';
+    final url = Uri.parse(
+        'https://pragmanxt.com/case_sync/services/intern/v1/index.php/task_reassign');
+    var request = http.MultipartRequest('POST', url);
 
-    final Map<String, dynamic> data = {
-      "task_id": "3",
-      "intern_id": _selectedIntern,
-      "reassign_id": "2",
+    request.fields['data'] = jsonEncode({
+      "task_id": widget.task_id,
+      "intern_id": widget.intern_id,
+      "reassign_id": _selectedIntern, // Use the updated _selectedIntern
       "remark": _remarkController.text,
-      "remark_date": DateFormat('yyyy-MM-dd').format(_selectedDate),
-    };
+      "remark_date": DateFormat('yyyy/MM/dd').format(_selectedDate),
+    });
 
     try {
-      final response = await http.post(
-        Uri.parse(apiUrl),
-        headers: {
-          'Accept': '*/*',
-          'Content-Type': 'application/json',
-        },
-        body: json.encode({"data": data}),
-      );
+      final response = await request.send();
+      final responseBody = await response.stream.bytesToString();
 
       if (response.statusCode == 200) {
-        final responseData = json.decode(response.body);
+        final responseData = json.decode(responseBody);
         setState(() {
           _responseMessage = responseData['message'];
         });
@@ -97,16 +92,15 @@ class _ReAssignTaskPageState extends State<ReAssignTaskPage> {
         setState(() {
           _responseMessage =
               'Failed to reassign task. Status code: ${response.statusCode}';
-          print(data);
         });
       }
     } catch (e) {
       setState(() {
         _responseMessage = 'An error occurred: $e';
-        print("$e");
       });
     }
-    print(data);
+
+    print(request.fields['data']);
   }
 
   void _selectDate(BuildContext context) async {
@@ -159,40 +153,36 @@ class _ReAssignTaskPageState extends State<ReAssignTaskPage> {
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             DropdownButton<String>(
-              dropdownColor: Colors.white,
-              isExpanded: true,
-              value: _selectedIntern,
-              hint: Text('Select an Intern'),
-              items: _internList
-                  .map((intern) => DropdownMenuItem<String>(
-                        value: intern['id'],
-                        child: Text(intern['name']!),
-                      ))
-                  .toList(),
-              onChanged: (value) {
-                setState(() {
-                  _selectedIntern = value;
-                  // Fetch and assign the selected intern's id as reassign_id
-                  final selectedInternData =
-                      _internList.firstWhere((intern) => intern['id'] == value);
-                  print("Selected Intern ID: ${selectedInternData['id']}");
-                  print("Selected Intern Name: ${selectedInternData['name']}");
-                });
-              },
-            ),
-            SizedBox(height: 16),
-            Text(
+                dropdownColor: Colors.white,
+                isExpanded: true,
+                value: _selectedIntern,
+                hint: const Text('Select an Intern'),
+                items: _internList
+                    .map((intern) => DropdownMenuItem<String>(
+                          value: intern['id'], // The ID of the intern
+                          child:
+                              Text(intern['name']!), // The name of the intern
+                        ))
+                    .toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _selectedIntern = value;
+                  });
+                  print('Selected Intern ID: $_selectedIntern'); // Debugging
+                }),
+            const SizedBox(height: 16),
+            const Text(
               'Remark',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             TextField(
               controller: _remarkController,
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 border: OutlineInputBorder(),
               ),
             ),
-            SizedBox(height: 16),
-            Text(
+            const SizedBox(height: 16),
+            const Text(
               'Remark Date',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
