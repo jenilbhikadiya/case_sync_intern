@@ -37,4 +37,6 @@ class SharedPrefService {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     return prefs.containsKey(_userKey);
   }
+
+  static getString(String s) {}
 }

@@ -53,7 +53,13 @@ class AddRemarkPageState extends State<AddRemarkPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF3F3F3),
       appBar: AppBar(
-        title: const Text('Remark'),
+        title: const Text(
+          'Remark',
+          style: TextStyle(color: Colors.black),
+        ),
+        backgroundColor: const Color(0xFFF3F3F3),
+        iconTheme: const IconThemeData(color: Colors.black),
+        elevation: 0,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -107,6 +113,7 @@ class AddRemarkPageState extends State<AddRemarkPage> {
         decoration: InputDecoration(
           labelText: label,
           border: const OutlineInputBorder(),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         ),
         keyboardType: inputType,
         validator: (value) {
@@ -123,7 +130,7 @@ class AddRemarkPageState extends State<AddRemarkPage> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 20),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
         decoration: BoxDecoration(
           color: Colors.grey[200], // Light grey background for read-only feel
           borderRadius: BorderRadius.circular(8),
@@ -180,25 +187,11 @@ class AddRemarkPageState extends State<AddRemarkPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         border: Border.all(color: Colors.black, width: 1),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(8),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       child: child,
     );
-  }
-
-  Future<void> _selectDate(DateTime date) async {
-    DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: date,
-      firstDate: DateTime(2021),
-      lastDate: DateTime(2101),
-    );
-    if (picked != null && picked != date) {
-      setState(() {
-        _remarkDate = picked;
-      });
-    }
   }
 
   Widget _buildStatusRadioButtons() {
@@ -247,6 +240,20 @@ class AddRemarkPageState extends State<AddRemarkPage> {
     );
   }
 
+  Future<void> _selectDate(DateTime date) async {
+    DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: date,
+      firstDate: DateTime(2021),
+      lastDate: DateTime(2101),
+    );
+    if (picked != null && picked != date) {
+      setState(() {
+        _remarkDate = picked;
+      });
+    }
+  }
+
   Future<void> _uploadDocument() async {
     try {
       FilePickerResult? result = await FilePicker.platform.pickFiles();
@@ -289,15 +296,12 @@ class AddRemarkPageState extends State<AddRemarkPage> {
         "status": _status, // Add status field here
       };
 
-      print("Submitted Data: $submittedData"); // Debugging log
-
       try {
         final uri = Uri.parse(
             'https://pragmanxt.com/case_sync/services/intern/v1/index.php/add_task_remark');
         final request = http.MultipartRequest('POST', uri);
         request.fields['data'] = json.encode(submittedData);
 
-        // Attach the document if uploaded
         if (_documentPath.isNotEmpty) {
           request.files.add(await http.MultipartFile.fromPath(
             'task_image',
@@ -305,15 +309,11 @@ class AddRemarkPageState extends State<AddRemarkPage> {
           ));
         }
 
-        // Send the request
         final response = await request.send();
-        print("Response Status Code: ${response.statusCode}");
-        print("Response Headers: ${response.headers}");
 
         if (response.statusCode == 200) {
           final responseBody = await response.stream.bytesToString();
           final jsonResponse = json.decode(responseBody);
-          print("Response Body: $responseBody");
 
           if (jsonResponse['success'] == true) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -336,9 +336,9 @@ class AddRemarkPageState extends State<AddRemarkPage> {
             backgroundColor: Colors.red,
           ),
         );
-        print("$e");
       } finally {
-        setState(() {
+       
+ setState(() {
           _isSubmitting = false;
         });
       }

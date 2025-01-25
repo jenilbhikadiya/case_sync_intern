@@ -30,6 +30,8 @@ class Intern {
     );
   }
 
+  String? get role => null;
+
   // Method to convert Advocate to JSON for SharedPreferences
   Map<String, dynamic> toJson() {
     return {
