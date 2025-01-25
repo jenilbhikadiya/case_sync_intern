@@ -27,6 +27,12 @@ class _ReAssignTaskPageState extends State<ReAssignTaskPage> {
     fetchInternList();
   }
 
+  @override
+  void dispose() {
+    _remarkController.dispose();
+    super.dispose();
+  }
+
   Future<void> fetchInternList() async {
     final String apiUrl =
         'https://pragmanxt.com/case_sync/services/intern/v1/index.php/get_interns_list';
@@ -140,16 +146,14 @@ class _ReAssignTaskPageState extends State<ReAssignTaskPage> {
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             DropdownButton<String>(
-              dropdownColor: Colors.white,
-              isExpanded: true,
               value: _selectedIntern,
-              hint: Text('Select an Intern'),
-              items: _internList
-                  .map((intern) => DropdownMenuItem<String>(
-                        value: intern['id'],
-                        child: Text(intern['name']!),
-                      ))
-                  .toList(),
+              hint: const Text('Select an Intern'),
+              items: _internList.map((intern) {
+                return DropdownMenuItem<String>(
+                  value: intern['reassign_id'],
+                  child: Text(intern['name']!),
+                );
+              }).toList(),
               onChanged: (value) {
                 setState(() {
                   _selectedIntern = value;
