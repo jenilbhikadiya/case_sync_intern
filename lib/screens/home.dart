@@ -1,33 +1,44 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:get/get.dart';
+import 'package:intern_side/screens/cases/task_page.dart';
 
+import '../models/intern.dart';
+import '../services/shared_pref.dart';
 import 'appbar/notification_drawer.dart';
 import 'appbar/settings_drawer.dart';
 import 'cases/case_history.dart';
-import 'cases/task_page.dart';
-class HomeScreen extends StatelessWidget {
-  final List<dynamic> responseBody;
 
-  const HomeScreen({super.key, required this.responseBody});
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  late Future<Intern?> _userData;
+
+  @override
+  void initState() {
+    super.initState();
+    _userData = SharedPrefService.getUser();
+  }
+
+  String getGreeting() {
+    var hour = DateTime.now().hour;
+    if (hour < 12) {
+      return 'Good Morning';
+    } else if (hour < 17) {
+      return 'Good Afternoon';
+    } else {
+      return 'Good Evening';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-
-    List<dynamic> userList = responseBody;
-    Map<String, dynamic> userData = userList.isNotEmpty ? userList[0] : {};
-    String userName = userData['name'] ?? 'User';
-
-    String getGreeting() {
-      var hour = DateTime.now().hour;
-      if (hour < 12) {
-        return 'Good Morning';
-      } else if (hour < 17) {
-        return 'Good Afternoon';
-      } else {
-        return 'Good Evening';
-      }
-    }
 
     double cardWidth = screenWidth * 0.40;
     double cardHeight = 72;
@@ -42,7 +53,7 @@ class HomeScreen extends StatelessWidget {
         surfaceTintColor: Colors.transparent,
         backgroundColor: const Color.fromRGBO(243, 243, 243, 1),
         elevation: 0,
-        leadingWidth: 56 + 30,
+        leadingWidth: 86,
         leading: IconButton(
           icon: SvgPicture.asset(
             'assets/icons/notification.svg',
@@ -52,15 +63,15 @@ class HomeScreen extends StatelessWidget {
           onPressed: () {
             showModalBottomSheet(
               context: context,
-              scrollControlDisabledMaxHeightRatio: 5 / 6,
-              backgroundColor: Color.fromRGBO(201, 201, 201, 1),
+              isScrollControlled: true,
+              backgroundColor: const Color.fromRGBO(201, 201, 201, 1),
               builder: (context) => const NotificationDrawer(),
             );
           },
         ),
         actions: [
           Padding(
-            padding: EdgeInsets.only(right: 20),
+            padding: const EdgeInsets.only(right: 20),
             child: IconButton(
               icon: SvgPicture.asset(
                 'assets/icons/settings.svg',
@@ -70,8 +81,8 @@ class HomeScreen extends StatelessWidget {
               onPressed: () {
                 showModalBottomSheet(
                   context: context,
-                  scrollControlDisabledMaxHeightRatio: 5 / 6,
-                  backgroundColor: Color.fromRGBO(201, 201, 201, 1),
+                  isScrollControlled: true,
+                  backgroundColor: const Color.fromRGBO(201, 201, 201, 1),
                   builder: (context) => const SettingsDrawer(),
                 );
               },
@@ -79,88 +90,95 @@ class HomeScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10),
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                getGreeting(),
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.black,
-                  height: 0.95,
+      body: FutureBuilder<Intern?>(
+        future: _userData,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return const Center(child: Text('Error loading user data'));
+          } else if (snapshot.hasData && snapshot.data != null) {
+            var userData = snapshot.data!;
+            String userName = userData.name ?? 'User';
+
+            return Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10),
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      getGreeting(),
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.black,
+                        height: 0.95,
+                      ),
+                    ),
+                    Text(
+                      userName,
+                      style: const TextStyle(
+                        fontSize: 40,
+                        fontWeight: FontWeight.w900,
+                        color: Color.fromRGBO(37, 27, 70, 1.0),
+                        height: 1.1,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    const Text(
+                      'Cases',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    GridView.count(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 2,
+                      mainAxisSpacing: 2,
+                      childAspectRatio: cardWidth / cardHeight,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      children: [
+                        _buildCard(
+                          'Task',
+                          'assets/icons/unassigned.svg',
+                          cardWidth,
+                          cardHeight,
+                          cardIconPositionX,
+                          cardIconPositionY,
+                          cardTextPositionY,
+                          TaskPage(),
+                        ),
+                        _buildCard(
+                          'Case History',
+                          'assets/icons/case_history.svg',
+                          cardWidth,
+                          cardHeight,
+                          cardIconPositionX,
+                          cardIconPositionY,
+                          cardTextPositionY,
+                          const CaseHistoryScreen(),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                  ],
                 ),
               ),
-              Text(
-                userName,
-                style: const TextStyle(
-                  fontSize: 40,
-                  fontWeight: FontWeight.w900,
-                  color: Color.fromRGBO(37, 27, 70, 1.000),
-                  height: 1.1,
-                ),
-              ),
-
-              const SizedBox(height: 20),
-
-              // "Cases" section
-              const Text(
-                'Cases',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                ),
-              ),
-              const SizedBox(height: 10),
-              GridView.count(
-                crossAxisCount: 2,
-                crossAxisSpacing: 2,
-                mainAxisSpacing: 2,
-                childAspectRatio: cardWidth / cardHeight,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                children: [
-                  _buildCard(
-                    'Task',
-                    'assets/icons/unassigned.svg',
-                    cardWidth,
-                    cardHeight,
-                    cardIconPositionX,
-                    cardIconPositionY,
-                    cardTextPositionY,
-                    context,
-                    TaskPage(),
-                  ),
-                  _buildCard(
-                    'Case History',
-                    'assets/icons/case_history.svg',
-                    cardWidth,
-                    cardHeight,
-                    cardIconPositionX,
-                    cardIconPositionY,
-                    cardTextPositionY,
-                    context,
-                    CaseHistoryScreen(),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              const SizedBox(height: 20),
-
-              const SizedBox(height: 10),
-              const SizedBox(height: 20),
-            ],
-          ),
-        ),
+            );
+          } else {
+            return const Center(child: Text('User not found'));
+          }
+        },
       ),
     );
   }
 
-  // Responsive card widget with navigation
   Widget _buildCard(
     String title,
     String iconPath,
@@ -169,7 +187,6 @@ class HomeScreen extends StatelessWidget {
     double iconPositionX,
     double iconPositionY,
     double textPositionY,
-    BuildContext context,
     Widget destinationScreen,
   ) {
     return Card(
@@ -181,16 +198,11 @@ class HomeScreen extends StatelessWidget {
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(20),
         child: InkWell(
-          borderRadius: BorderRadius.circular(20), // Ensures ripple is confined
+          borderRadius: BorderRadius.circular(20),
           onTap: () {
-            // Navigate to the target screen when card is tapped
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => destinationScreen),
-            );
+            Get.to(() => destinationScreen);
           },
-          splashColor:
-              Colors.grey.withOpacity(0.2), // Optional: Custom splash color
+          splashColor: Colors.grey.withOpacity(0.2),
           child: SizedBox(
             width: cardWidth,
             height: cardHeight,

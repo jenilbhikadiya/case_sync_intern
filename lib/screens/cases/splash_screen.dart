@@ -28,9 +28,7 @@ class SplashScreenState extends State<SplashScreen> {
 
     if (userData != null) {
       // User is logged in, navigate to HomeScreen
-      Get.off(() => const HomeScreen(
-            responseBody: [],
-          ));
+      Get.off(() => const HomeScreen());
     } else {
       // User is not logged in, navigate to LoginScreen
       Get.off(() => const LoginScreen());

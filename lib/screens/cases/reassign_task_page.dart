@@ -27,15 +27,13 @@ class _ReAssignTaskPageState extends State<ReAssignTaskPage> {
     fetchInternList();
   }
 
-  @override
-  void dispose() {
-    _remarkController.dispose();
-    super.dispose();
-  }
-
   Future<void> fetchInternList() async {
-    final String apiUrl =
+    const String apiUrl =
         'https://pragmanxt.com/case_sync/services/intern/v1/index.php/get_interns_list';
+
+    print(_internList);
+    print(widget.intern_id);
+    print(widget.task_id);
 
     try {
       final response = await http.get(Uri.parse(apiUrl));
@@ -46,7 +44,7 @@ class _ReAssignTaskPageState extends State<ReAssignTaskPage> {
           setState(() {
             _internList = (responseData['data'] as List<dynamic>)
                 .map((item) => {
-                      'reassign_id': item['reassign_id'].toString(),
+                      'id': item['id'].toString(),
                       'name': item['name'].toString(),
                     })
                 .toList();
@@ -70,9 +68,9 @@ class _ReAssignTaskPageState extends State<ReAssignTaskPage> {
         'https://pragmanxt.com/case_sync/services/intern/v1/index.php/task_reassign';
 
     final Map<String, dynamic> data = {
-      "task_id": widget.task_id,
-      "intern_id": widget.intern_id,
-      "reassign_id": _selectedIntern,
+      "task_id": "3",
+      "intern_id": _selectedIntern,
+      "reassign_id": "2",
       "remark": _remarkController.text,
       "remark_date": DateFormat('yyyy-MM-dd').format(_selectedDate),
     };
@@ -96,6 +94,7 @@ class _ReAssignTaskPageState extends State<ReAssignTaskPage> {
         setState(() {
           _responseMessage =
               'Failed to reassign task. Status code: ${response.statusCode}';
+          print(data);
         });
       }
     } catch (e) {
@@ -104,6 +103,7 @@ class _ReAssignTaskPageState extends State<ReAssignTaskPage> {
         print("$e");
       });
     }
+    print(data);
   }
 
   void _selectDate(BuildContext context) async {
@@ -146,17 +146,24 @@ class _ReAssignTaskPageState extends State<ReAssignTaskPage> {
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             DropdownButton<String>(
+              dropdownColor: Colors.white,
+              isExpanded: true,
               value: _selectedIntern,
-              hint: const Text('Select an Intern'),
-              items: _internList.map((intern) {
-                return DropdownMenuItem<String>(
-                  value: intern['reassign_id'],
-                  child: Text(intern['name']!),
-                );
-              }).toList(),
+              hint: Text('Select an Intern'),
+              items: _internList
+                  .map((intern) => DropdownMenuItem<String>(
+                        value: intern['id'],
+                        child: Text(intern['name']!),
+                      ))
+                  .toList(),
               onChanged: (value) {
                 setState(() {
                   _selectedIntern = value;
+                  // Fetch and assign the selected intern's id as reassign_id
+                  final selectedInternData =
+                      _internList.firstWhere((intern) => intern['id'] == value);
+                  print("Selected Intern ID: ${selectedInternData['id']}");
+                  print("Selected Intern Name: ${selectedInternData['name']}");
                 });
               },
             ),

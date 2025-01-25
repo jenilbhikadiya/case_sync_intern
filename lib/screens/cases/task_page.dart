@@ -32,6 +32,7 @@ class TaskPageState extends State<TaskPage> {
   Future<void> fetchUserData() async {
     try {
       _userData = await SharedPrefService.getUser();
+      print("User Data: $_userData"); // Debug print
       if (_userData == null || _userData!.id.isEmpty) {
         setState(() {
           isLoading = false;
@@ -56,11 +57,19 @@ class TaskPageState extends State<TaskPage> {
       var request = http.MultipartRequest('POST', Uri.parse(url));
       request.fields['intern_id'] = _userData!.id;
 
+      print('Request URL: $url');
+      print('Request Fields: ${request.fields}');
+
       var response = await request.send();
       var responseBody = await response.stream.bytesToString();
 
+      print('Response Status Code: ${response.statusCode}');
+      print('Raw API Response: $responseBody');
+
       if (response.statusCode == 200) {
         final parsedResponse = jsonDecode(responseBody);
+        print('Parsed Response: $parsedResponse');
+
         if (parsedResponse['success'] == true &&
             parsedResponse['data'] != null) {
           setState(() {
