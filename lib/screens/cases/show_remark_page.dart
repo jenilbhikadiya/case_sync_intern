@@ -76,7 +76,7 @@ class _RemarkPageState extends State<ShowRemarkPage> {
       } else {
         setState(() {
           _errorMessage =
-              'Failed to fetch remarks. Status code: ${response.statusCode}';
+          'Failed to fetch remarks. Status code: ${response.statusCode}';
           _isLoading = false;
         });
       }
@@ -109,56 +109,69 @@ class _RemarkPageState extends State<ShowRemarkPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF3F3F3),
       appBar: AppBar(
-        title: const Text('Show Remark'),
+        backgroundColor: const Color(0xFFF3F3F3),
+        title: const Text(
+          'Show Remark',
+          style: TextStyle(color: Colors.black),
+        ),
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back_ios_new,
+            color: Colors.black,
+          ),
+          onPressed: () {
+            Navigator.pop(context); // Navigates back to the previous page
+          },
+        ),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _errorMessage.isNotEmpty
-              ? Center(child: Text(_errorMessage))
-              : SingleChildScrollView(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Card(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12.0),
+          ? Center(child: Text(_errorMessage))
+          : SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        child: Card(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12.0),
+          ),
+          elevation: 5,
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: _remarks.asMap().entries.map((entry) {
+                int index = entry.key;
+                Map<String, dynamic> remark = entry.value;
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildField('SR. No.', (index + 1).toString()),
+                    const SizedBox(height: 16),
+                    _buildField('Stage', remark['stage'] ?? 'N/A'),
+                    const SizedBox(height: 16),
+                    _buildField('Remark', remark['remarks'] ?? 'N/A'),
+                    const SizedBox(height: 16),
+                    _buildField(
+                      'Remark Date',
+                      _formatDate(remark['dos']),
                     ),
-                    elevation: 5,
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: _remarks.asMap().entries.map((entry) {
-                          int index = entry.key;
-                          Map<String, dynamic> remark = entry.value;
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _buildField('SR. No.', (index + 1).toString()),
-                              const SizedBox(height: 16),
-                              _buildField('Stage', remark['stage'] ?? 'N/A'),
-                              const SizedBox(height: 16),
-                              _buildField('Remark', remark['remarks'] ?? 'N/A'),
-                              const SizedBox(height: 16),
-                              _buildField(
-                                'Remark Date',
-                                _formatDate(remark['dos']),
-                              ),
-                              const SizedBox(height: 16),
-                              _buildField(
-                                'Next Date',
-                                _formatDate(remark['nextdate']),
-                              ),
-                              const SizedBox(height: 16),
-                              _buildField(
-                                  'Status', remark['status'] ?? 'Pending'),
-                              const Divider(thickness: 1),
-                              const SizedBox(height: 16),
-                            ],
-                          );
-                        }).toList(),
-                      ),
+                    const SizedBox(height: 16),
+                    _buildField(
+                      'Next Date',
+                      _formatDate(remark['nextdate']),
                     ),
-                  ),
-                ),
+                    const SizedBox(height: 16),
+                    _buildField(
+                        'Status', remark['status'] ?? 'Pending'),
+                    const Divider(thickness: 1),
+                    const SizedBox(height: 16),
+                  ],
+                );
+              }).toList(),
+            ),
+          ),
+        ),
+      ),
     );
   }
 

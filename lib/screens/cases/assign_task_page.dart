@@ -34,16 +34,16 @@ class _AssignTaskPageState extends State<AssignTaskPage> {
           setState(() {
             _internList = (responseData['data'] as List<dynamic>)
                 .map((item) => {
-                      'id': item['id'].toString(),
-                      'name': item['name'].toString(),
-                    })
+              'id': item['id'].toString(),
+              'name': item['name'].toString(),
+            })
                 .toList();
           });
         }
       } else {
         setState(() {
           _responseMessage =
-              'Failed to fetch interns. Status code: ${response.statusCode}';
+          'Failed to fetch interns. Status code: ${response.statusCode}';
         });
       }
     } catch (e) {
@@ -83,7 +83,7 @@ class _AssignTaskPageState extends State<AssignTaskPage> {
       } else {
         setState(() {
           _responseMessage =
-              'Failed to reassign task. Status code: ${response.statusCode}';
+          'Failed to reassign task. Status code: ${response.statusCode}';
         });
       }
     } catch (e) {
@@ -112,7 +112,17 @@ class _AssignTaskPageState extends State<AssignTaskPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Task Assign'),
+        backgroundColor: const Color(0xFFF3F3F3),
+        title: Text('Task Assign', style: TextStyle(color: Colors.black)),
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back_ios_new,
+            color: Colors.black, // Black back arrow icon
+          ),
+          onPressed: () {
+            Navigator.pop(context); // Navigate back when clicked
+          },
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -124,14 +134,15 @@ class _AssignTaskPageState extends State<AssignTaskPage> {
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             DropdownButton<String>(
+              dropdownColor: Colors.white,
               isExpanded: true,
               value: _selectedIntern,
               hint: Text('Select an Intern'),
               items: _internList
                   .map((intern) => DropdownMenuItem<String>(
-                        value: intern['id'],
-                        child: Text(intern['name']!),
-                      ))
+                value: intern['id'],
+                child: Text(intern['name']!),
+              ))
                   .toList(),
               onChanged: (value) {
                 setState(() {
