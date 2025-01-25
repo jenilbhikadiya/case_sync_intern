@@ -1,20 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:get/get.dart';
 
-import '../../models/intern.dart';
-import '../../services/api_service.dart';
-import '../../services/shared_pref.dart';
+import '../../services/api_services.dart';
 import '../home.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  LoginScreenState createState() => LoginScreenState();
+  _LoginScreenState createState() => _LoginScreenState();
 }
 
-class LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
@@ -53,38 +50,32 @@ class LoginScreenState extends State<LoginScreen> {
       String password = _passwordController.text;
 
       try {
-        // Call the login API
-        final response = await ApiService.loginUser(email, password);
-        print("Variable Response: ${response['data']}");
+        // Start timing the login request
+        Map<String, dynamic> response =
+            await ApiResponse.loginUser(email, password);
 
-        // Check if the login was successful
         if (response['success'] == true) {
-          var data = response['data'];
-
-          // If the data is a list, we take the first user; otherwise, treat it as a map.
-          if (data is List && data.isNotEmpty) {
-            // Cast the first item in the list to Map<String, dynamic>
-            Map<String, dynamic> userJson =
-                (data as Map).cast<String, dynamic>();
-            Intern intern = Intern.fromJson(userJson);
-            await SharedPrefService.saveUser(intern);
-          } else if (data is Map) {
-            // If it's a map, cast it to Map<String, dynamic>
-            Map<String, dynamic> userJson = (data).cast<String, dynamic>();
-            Intern intern = Intern.fromJson(userJson);
-            await SharedPrefService.saveUser(intern);
-          }
-
-          // Navigate to the home screen
-          Get.offAll(() => const HomeScreen());
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => HomeScreen(responseBody: response['data']),
+            ),
+          );
         } else {
-          // Handle login failure
-          Get.snackbar('Login Error', response['message']);
+          setState(() {
+            _errorMessage = response['message'] ??
+                'Login failed. Please check your credentials.';
+          });
         }
-      } catch (e) {
-        print('An error occurred: $e');
-        Get.snackbar('Error', 'Login failed, please try again.');
+      } catch (error) {
+        setState(() {
+          _errorMessage = 'An error occurred: $error';
+        });
       }
+
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
