@@ -3,12 +3,18 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 
-class AssignTaskPage extends StatefulWidget {
+class ReAssignTaskPage extends StatefulWidget {
+  final String task_id;
+  final String intern_id;
+
+  const ReAssignTaskPage(
+      {super.key, required this.task_id, required this.intern_id});
+
   @override
-  _AssignTaskPageState createState() => _AssignTaskPageState();
+  _ReAssignTaskPageState createState() => _ReAssignTaskPageState();
 }
 
-class _AssignTaskPageState extends State<AssignTaskPage> {
+class _ReAssignTaskPageState extends State<ReAssignTaskPage> {
   final TextEditingController _remarkController = TextEditingController();
   DateTime _selectedDate = DateTime.now();
   String? _selectedIntern;
@@ -34,16 +40,16 @@ class _AssignTaskPageState extends State<AssignTaskPage> {
           setState(() {
             _internList = (responseData['data'] as List<dynamic>)
                 .map((item) => {
-              'id': item['id'].toString(),
-              'name': item['name'].toString(),
-            })
+                      'reassign_id': item['reassign_id'].toString(),
+                      'name': item['name'].toString(),
+                    })
                 .toList();
           });
         }
       } else {
         setState(() {
           _responseMessage =
-          'Failed to fetch interns. Status code: ${response.statusCode}';
+              'Failed to fetch interns. Status code: ${response.statusCode}';
         });
       }
     } catch (e) {
@@ -58,9 +64,9 @@ class _AssignTaskPageState extends State<AssignTaskPage> {
         'https://pragmanxt.com/case_sync/services/intern/v1/index.php/task_reassign';
 
     final Map<String, dynamic> data = {
-      "task_id": "3",
-      "intern_id": _selectedIntern,
-      "reassign_id": "2",
+      "task_id": widget.task_id,
+      "intern_id": widget.intern_id,
+      "reassign_id": _selectedIntern,
       "remark": _remarkController.text,
       "remark_date": DateFormat('yyyy-MM-dd').format(_selectedDate),
     };
@@ -83,7 +89,7 @@ class _AssignTaskPageState extends State<AssignTaskPage> {
       } else {
         setState(() {
           _responseMessage =
-          'Failed to reassign task. Status code: ${response.statusCode}';
+              'Failed to reassign task. Status code: ${response.statusCode}';
         });
       }
     } catch (e) {
@@ -140,9 +146,9 @@ class _AssignTaskPageState extends State<AssignTaskPage> {
               hint: Text('Select an Intern'),
               items: _internList
                   .map((intern) => DropdownMenuItem<String>(
-                value: intern['id'],
-                child: Text(intern['name']!),
-              ))
+                        value: intern['id'],
+                        child: Text(intern['name']!),
+                      ))
                   .toList(),
               onChanged: (value) {
                 setState(() {

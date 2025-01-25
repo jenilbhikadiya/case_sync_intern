@@ -1,5 +1,19 @@
 import 'package:flutter/material.dart';
+<<<<<<< Updated upstream
 import 'remark_page.dart';  // Assuming this is where RemarkPage is imported
+=======
+<<<<<<< HEAD
+import 'package:http/http.dart' as http;
+import 'package:intern_side/screens/cases/reassign_task_page.dart';
+import 'package:intern_side/services/shared_pref.dart';
+
+import '../../models/intern.dart';
+import '../../models/task_item_list.dart';
+import 'add_remark_page.dart';
+=======
+import 'remark_page.dart';  // Assuming this is where RemarkPage is imported
+>>>>>>> 277f9bee96bd777278ea9326a8c832e20c61ca95
+>>>>>>> Stashed changes
 import 'show_remark_page.dart';
 import 'task_item.dart';
 
@@ -116,6 +130,8 @@ class TaskPage extends StatelessWidget {
   }
 
   void _showDropdownMenu(BuildContext context, TaskItem taskItem) {
+    bool isRealloted = taskItem.status.toLowerCase() == 're_alloted';
+
     showModalBottomSheet(
       context: context,
       builder: (BuildContext context) {
@@ -123,6 +139,28 @@ class TaskPage extends StatelessWidget {
           children: [
             ListTile(
               leading: const Icon(Icons.edit),
+<<<<<<< Updated upstream
+=======
+<<<<<<< HEAD
+              title: const Text('Add Remark'),
+              enabled: !isRealloted, // Disable if status is "re_alloted"
+              onTap: isRealloted
+                  ? null
+                  : () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => AddRemarkPage(
+                            taskItem: taskItem,
+                            task_id: taskItem.task_id,
+                            case_id: taskItem.case_id,
+                            stage_id: taskItem.stage_id,
+                          ),
+                        ),
+                      );
+                    },
+=======
+>>>>>>> Stashed changes
               title: const Text('Remark'),
               onTap: () {
                 Navigator.pop(context); // Close the bottom sheet
@@ -131,6 +169,7 @@ class TaskPage extends StatelessWidget {
                   MaterialPageRoute(builder: (context) => RemarkPage(taskItem: taskItem)),
                 );
               },
+>>>>>>> 277f9bee96bd777278ea9326a8c832e20c61ca95
             ),
             ListTile(
               leading: const Icon(Icons.visibility),
@@ -139,9 +178,40 @@ class TaskPage extends StatelessWidget {
                 Navigator.pop(context); // Close the bottom sheet
                 Navigator.push(
                   context,
+<<<<<<< Updated upstream
+=======
+<<<<<<< HEAD
+                  MaterialPageRoute(
+                    builder: (context) => ShowRemarkPage(
+                        taskItem: taskItem), // Pass taskItem here
+                  ),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.assignment_returned),
+              title: const Text('Reassign Task'),
+              enabled: !isRealloted, // Disable if status is "re_alloted"
+              onTap: isRealloted
+                  ? null
+                  : () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ReAssignTaskPage(
+                            task_id: taskItem.task_id,
+                            intern_id: _userData!.id,
+                          ),
+                        ),
+                      );
+                    },
+=======
+>>>>>>> Stashed changes
                   MaterialPageRoute(builder: (context) => ShowRemarkPage(taskItem: taskItem)),
                 );
               },
+>>>>>>> 277f9bee96bd777278ea9326a8c832e20c61ca95
             ),
           ],
         );
