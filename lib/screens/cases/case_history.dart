@@ -1,9 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:intern_side/screens/cases/view_case_history.dart';
 import 'package:intl/intl.dart'; // For date formatting
-
-import '../../components/case_card.dart';
 import '../../components/list_app_bar.dart';
 import '../../models/case_list.dart';
 import '../../services/case_services.dart';
@@ -100,11 +99,10 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
           for (var caseItem in fetchedCases) {
             String dateString = caseItem.summonDate;
 
-            // Ensure dateString is valid and non-empty
             if (dateString.isNotEmpty) {
               try {
                 DateTime date = DateFormat('dd-MM-yyyy').parse(dateString);
-                String month = months[date.month - 1]; // Convert to month name
+                String month = months[date.month - 1];
 
                 if (!groupedCases.containsKey(month)) {
                   groupedCases[month] = [];
@@ -146,58 +144,6 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
     }
   }
 
-  void _updateFilteredCases() {
-    setState(() {
-      _filteredCases.clear();
-      _resultTabs.clear();
-
-      _casesByMonth.forEach((month, cases) {
-        final results = cases.where((caseItem) {
-          return caseItem.caseNo.toLowerCase().contains(_searchQuery) ||
-              caseItem.courtName.toLowerCase().contains(_searchQuery) ||
-              caseItem.cityName.toLowerCase().contains(_searchQuery) ||
-              caseItem.companyName.toLowerCase().contains(_searchQuery) ||
-              caseItem.caseTypeName.toLowerCase().contains(_searchQuery) ||
-              caseItem.status.toLowerCase().contains(_searchQuery);
-        }).toList();
-
-        if (results.isNotEmpty) {
-          _filteredCases.addAll(results);
-          _resultTabs.addAll(List.filled(results.length, month));
-        }
-      });
-
-      _currentResultIndex = 0; // Reset to the first result
-      if (_filteredCases.isNotEmpty) {
-        _switchTabToResult();
-      }
-    });
-  }
-
-  void _navigateToPreviousResult() {
-    setState(() {
-      if (_currentResultIndex > 0) {
-        _currentResultIndex--;
-        _switchTabToResult();
-      }
-    });
-  }
-
-  void _navigateToNextResult() {
-    setState(() {
-      if (_currentResultIndex < _filteredCases.length - 1) {
-        _currentResultIndex++;
-        _switchTabToResult();
-      }
-    });
-  }
-
-  void _switchTabToResult() {
-    String resultMonth = _resultTabs[_currentResultIndex];
-    int monthIndex = months.indexOf(resultMonth);
-    _tabController.animateTo(monthIndex);
-  }
-
   @override
   void dispose() {
     _tabController.dispose();
@@ -214,98 +160,11 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
         onSearchPressed: () {
           setState(() {
             _isSearching = !_isSearching;
-            if (!_isSearching) {
-              _searchController.clear();
-              _searchQuery = '';
-              _filteredCases = [];
-              _resultTabs = [];
-            }
           });
         },
-        isSearching: _isSearching,
-        onFilterPressed: null,
       ),
       body: Column(
         children: [
-          if (_isSearching)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _searchController,
-                      onChanged: (value) {
-                        _searchQuery = value.toLowerCase();
-                        _updateFilteredCases();
-                      },
-                      decoration: InputDecoration(
-                        hintText: 'Search cases...',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(20.0),
-                        ),
-                      ),
-                    ),
-                  ),
-                  Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.arrow_back),
-                        onPressed: _currentResultIndex > 0
-                            ? _navigateToPreviousResult
-                            : null,
-                      ),
-                      Text(
-                          '${_filteredCases.isEmpty ? 0 : _currentResultIndex + 1} / ${_filteredCases.length}'),
-                      IconButton(
-                        icon: const Icon(Icons.arrow_forward),
-                        onPressed:
-                            _currentResultIndex < _filteredCases.length - 1
-                                ? _navigateToNextResult
-                                : null,
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          Container(
-            color: const Color(0xFFF3F3F3),
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Case History',
-                  style: TextStyle(
-                    fontSize: 30,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
-                ),
-                DropdownButton<String>(
-                  value: selectedYear,
-                  icon: const Icon(Icons.arrow_drop_down, color: Colors.black),
-                  underline: const SizedBox(),
-                  onChanged: (String? newValue) {
-                    setState(() {
-                      selectedYear = newValue!;
-                      _fetchCaseHistory(); // Fetch data for the selected year if needed
-                    });
-                  },
-                  dropdownColor: Colors.white,
-                  items: years.map<DropdownMenuItem<String>>((String value) {
-                    return DropdownMenuItem<String>(
-                      value: value,
-                      child: Text(value,
-                          style: const TextStyle(color: Colors.black)),
-                    );
-                  }).toList(),
-                ),
-              ],
-            ),
-          ),
           Container(
             color: const Color(0xFFF3F3F3),
             child: TabBar(
@@ -314,52 +173,65 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
               labelColor: Colors.black,
               unselectedLabelColor: Colors.grey,
               indicatorColor: Colors.black,
-              indicatorWeight: 2.0,
-              labelPadding: const EdgeInsets.symmetric(horizontal: 20.0),
               tabs: months.map((month) => Tab(text: month)).toList(),
             ),
           ),
           Expanded(
-            child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 5.0),
-              child: _isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : _errorMessage.isNotEmpty
-                      ? Center(child: Text(_errorMessage))
-                      : TabBarView(
-                          controller: _tabController,
-                          children: months.map((month) {
-                            var allCases = _casesByMonth[month] ?? [];
-                            return RefreshIndicator(
-                              onRefresh: () async {
-                                await _fetchCaseHistory();
-                              },
-                              child: allCases.isEmpty
-                                  ? const Center(
-                                      child: Text('No cases for this month.'),
-                                    )
-                                  : ListView.builder(
-                                      itemCount: allCases.length,
-                                      itemBuilder: (context, index) {
-                                        var caseItem = allCases[index];
-                                        bool isHighlighted = _isSearching &&
-                                            _filteredCases.isNotEmpty &&
-                                            _resultTabs[_currentResultIndex] ==
-                                                month &&
-                                            _filteredCases[_currentResultIndex]
-                                                    .caseNo ==
-                                                caseItem.caseNo;
-                                        return CaseCard(
-                                          srNo: index + 1, // Pass Sr No
-                                          caseItem: caseItem,
-                                          isHighlighted: isHighlighted,
-                                        );
-                                      },
+            child: TabBarView(
+              controller: _tabController,
+              children: months.map((month) {
+                var allCases = _casesByMonth[month] ?? [];
+                return allCases.isEmpty
+                    ? const Center(child: Text('No cases for this month.'))
+                    : ListView.builder(
+                        itemCount: allCases.length,
+                        itemBuilder: (context, index) {
+                          var caseItem = allCases[index];
+                          return GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ViewCaseHistoryScreen(
+                                    caseId: caseItem.id,
+                                  ),
+                                ),
+                              );
+                            },
+                            child: Card(
+                              margin: const EdgeInsets.symmetric(
+                                  vertical: 8.0, horizontal: 10.0),
+                              elevation: 3,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                                side: const BorderSide(
+                                    color: Colors.black,
+                                    style: BorderStyle.solid),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.all(12.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Sr No: ${index + 1}',
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.bold),
                                     ),
-                            );
-                          }).toList(),
-                        ),
+                                    Text('Case No: ${caseItem.caseNo}'),
+                                    Text('Company: ${caseItem.companyName}'),
+                                    Text(
+                                        'Court Name: ${caseItem.courtName}, ${caseItem.cityName}'),
+                                    Text('Summon Date: ${caseItem.summonDate}'),
+                                    Text('Status: ${caseItem.status}'),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      );
+              }).toList(),
             ),
           ),
         ],
