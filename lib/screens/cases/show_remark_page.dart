@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:http/http.dart' as http;
 
 import '../../models/task_item_list.dart';
@@ -109,19 +110,26 @@ class _RemarkPageState extends State<ShowRemarkPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF3F3F3),
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF3F3F3),
-        title: const Text(
-          'Show Remark',
-          style: TextStyle(color: Colors.black),
-        ),
+        surfaceTintColor: Colors.transparent,
+        backgroundColor: const Color.fromRGBO(243, 243, 243, 1),
+        elevation: 0,
         leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back_ios_new,
-            color: Colors.black,
+          icon: SvgPicture.asset(
+            'assets/icons/back_arrow.svg',
+            width: 32,
+            height: 32,
           ),
           onPressed: () {
-            Navigator.pop(context); // Navigates back to the previous page
+            Navigator.pop(context);
           },
+        ),
+        title: Text(
+          'Show Remark',
+          style: const TextStyle(
+            color: Colors.black,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
       body: _isLoading

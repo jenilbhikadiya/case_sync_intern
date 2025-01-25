@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
+
+import '../../components/list_app_bar.dart';
 
 class ReAssignTaskPage extends StatefulWidget {
   final String task_id;
@@ -124,16 +127,26 @@ class _ReAssignTaskPageState extends State<ReAssignTaskPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF3F3F3),
-        title: Text('Task Assign', style: TextStyle(color: Colors.black)),
+        surfaceTintColor: Colors.transparent,
+        backgroundColor: const Color.fromRGBO(243, 243, 243, 1),
+        elevation: 0,
         leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back_ios_new,
-            color: Colors.black, // Black back arrow icon
+          icon: SvgPicture.asset(
+            'assets/icons/back_arrow.svg',
+            width: 32,
+            height: 32,
           ),
           onPressed: () {
-            Navigator.pop(context); // Navigate back when clicked
+            Navigator.pop(context);
           },
+        ),
+        title: Text(
+          'Task Assign',
+          style: const TextStyle(
+            color: Colors.black,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
       body: Padding(

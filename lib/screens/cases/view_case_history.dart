@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
+import '../../components/list_app_bar.dart';
+
 class ViewCaseHistoryScreen extends StatefulWidget {
   final String caseId; // Accepting case ID from the previous page
 
@@ -58,7 +60,7 @@ class _ViewCaseHistoryScreenState extends State<ViewCaseHistoryScreen> {
     } catch (e) {
       setState(() {
         _errorMessage = 'An error occurred: $e';
-        _isLoading = false;
+          _isLoading = false;
       });
     }
   }
@@ -66,49 +68,58 @@ class _ViewCaseHistoryScreenState extends State<ViewCaseHistoryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('View Case History'),
+      appBar: ListAppBar(
+        onSearchPressed: () {  }, title: 'View Case History',
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _errorMessage.isNotEmpty
-              ? Center(child: Text(_errorMessage))
-              : ListView.builder(
-                  itemCount: _caseHistory.length,
-                  itemBuilder: (context, index) {
-                    final caseData = _caseHistory[index];
-                    return Card(
-                      margin: const EdgeInsets.symmetric(
-                          vertical: 8.0, horizontal: 10.0),
-                      elevation: 3,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                        side: const BorderSide(
-                          color: Colors.black,
-                          style: BorderStyle.solid,
-                        ),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(12.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Stage: ${caseData['stage_name']}',
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                            Text('Remarks: ${caseData['remarks']}'),
-                            Text('Date of Summon: ${caseData['fdos']}'),
-                            Text('Next Date: ${caseData['nextdate']}'),
-                            Text('Status: ${caseData['status']}'),
-                            Text('Advocate: ${caseData['advocate_name']}'),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
+          ? Center(child: Text(_errorMessage))
+          : ListView.builder(
+        itemCount: _caseHistory.length,
+        itemBuilder: (context, index) {
+          final caseData = _caseHistory[index];
+          return Card(
+            margin: const EdgeInsets.symmetric(
+                vertical: 8.0, horizontal: 10.0),
+            elevation: 3,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+              side: const BorderSide(
+                color: Colors.black,
+                style: BorderStyle.solid,
+              ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Display Intern Name
+                  Text(
+                    'Intern: ${caseData['intern_name']}', // Replace 'intern_name' with the correct key from your API
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18, // Larger font size for intern name
+                    ),
+                  ),
+                  const SizedBox(height: 0), // Spacing
+                  Text('Advocate: ${caseData['advocate_name']}'),
+                  Text(
+                    'Stage: ${caseData['stage_name']}',
+                    style:
+                    const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  Text('Remarks: ${caseData['remarks']}'),
+                  Text('Date of Summon: ${caseData['fdos']}'),
+                  Text('Next Date: ${caseData['nextdate']}'),
+                  Text('Status: ${caseData['status']}'),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 }

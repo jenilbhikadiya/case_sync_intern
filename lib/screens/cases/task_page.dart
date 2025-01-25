@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:http/http.dart' as http;
 import 'package:intern_side/screens/cases/reassign_task_page.dart';
 import 'package:intern_side/services/shared_pref.dart';
@@ -101,15 +102,28 @@ class TaskPageState extends State<TaskPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Task Page',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-        ),
-        centerTitle: true,
-        backgroundColor: const Color(0xFFF3F3F3),
+      appBar:  AppBar(
+        surfaceTintColor: Colors.transparent,
+        backgroundColor: const Color.fromRGBO(243, 243, 243, 1),
         elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black),
+        leading: IconButton(
+          icon: SvgPicture.asset(
+            'assets/icons/back_arrow.svg',
+            width: 32,
+            height: 32,
+          ),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+        title: Text(
+          'Tasks',
+          style: const TextStyle(
+            color: Colors.black,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ),
       backgroundColor: const Color(0xFFF3F3F3),
       body: isLoading
