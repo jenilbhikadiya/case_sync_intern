@@ -33,7 +33,6 @@ class TaskPageState extends State<TaskPage> {
   Future<void> fetchUserData() async {
     try {
       _userData = await SharedPrefService.getUser();
-      print("User Data: $_userData"); // Debug print
       if (_userData == null || _userData!.id.isEmpty) {
         setState(() {
           isLoading = false;
@@ -58,19 +57,11 @@ class TaskPageState extends State<TaskPage> {
       var request = http.MultipartRequest('POST', Uri.parse(url));
       request.fields['intern_id'] = _userData!.id;
 
-      print('Request URL: $url');
-      print('Request Fields: ${request.fields}');
-
       var response = await request.send();
       var responseBody = await response.stream.bytesToString();
 
-      print('Response Status Code: ${response.statusCode}');
-      print('Raw API Response: $responseBody');
-
       if (response.statusCode == 200) {
         final parsedResponse = jsonDecode(responseBody);
-        print('Parsed Response: $parsedResponse');
-
         if (parsedResponse['success'] == true &&
             parsedResponse['data'] != null) {
           setState(() {
@@ -99,10 +90,86 @@ class TaskPageState extends State<TaskPage> {
     }
   }
 
+  void _navigateToReAssignTask(TaskItem taskItem) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ReAssignTaskPage(
+          task_id: taskItem.task_id,
+          intern_id: _userData!.id,
+        ),
+      ),
+    );
+
+    if (result == true) {
+      fetchTasks(); // Refresh the task list
+    }
+  }
+
+  void _showDropdownMenu(BuildContext context, TaskItem taskItem) {
+    bool isRealloted = taskItem.status.toLowerCase() == 're_alloted';
+
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.edit),
+              title: const Text('Add Remark'),
+              enabled: !isRealloted, // Disable if status is "re_alloted"
+              onTap: isRealloted
+                  ? null
+                  : () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => AddRemarkPage(
+                            taskItem: taskItem,
+                            task_id: taskItem.task_id,
+                            case_id: taskItem.case_id,
+                            stage_id: taskItem.stage_id,
+                          ),
+                        ),
+                      );
+                    },
+            ),
+            ListTile(
+              leading: const Icon(Icons.visibility),
+              title: const Text('Show Remark'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ShowRemarkPage(
+                      taskItem: taskItem,
+                    ),
+                  ),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.assignment_returned),
+              title: const Text('Reassign Task'),
+              enabled: !isRealloted,
+              onTap: isRealloted
+                  ? null
+                  : () {
+                      Navigator.pop(context);
+                      _navigateToReAssignTask(taskItem);
+                    },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar:  AppBar(
+      appBar: AppBar(
         surfaceTintColor: Colors.transparent,
         backgroundColor: const Color.fromRGBO(243, 243, 243, 1),
         elevation: 0,
@@ -116,9 +183,9 @@ class TaskPageState extends State<TaskPage> {
             Navigator.pop(context);
           },
         ),
-        title: Text(
+        title: const Text(
           'Tasks',
-          style: const TextStyle(
+          style: TextStyle(
             color: Colors.black,
             fontSize: 20,
             fontWeight: FontWeight.bold,
@@ -196,21 +263,6 @@ class TaskPageState extends State<TaskPage> {
                                 style: const TextStyle(
                                     fontSize: 14, color: Colors.black),
                               ),
-                              Text(
-                                'taskId: ${taskItem.task_id}',
-                                style: const TextStyle(
-                                    fontSize: 14, color: Colors.black),
-                              ),
-                              Text(
-                                'case_id: ${taskItem.case_id}',
-                                style: const TextStyle(
-                                    fontSize: 14, color: Colors.black),
-                              ),
-                              Text(
-                                'stage_id: ${taskItem.stage_id}',
-                                style: const TextStyle(
-                                    fontSize: 14, color: Colors.black),
-                              ),
                             ],
                           ),
                         ),
@@ -226,73 +278,6 @@ class TaskPageState extends State<TaskPage> {
                     style: const TextStyle(fontSize: 16, color: Colors.black),
                   ),
                 ),
-    );
-  }
-
-  void _showDropdownMenu(BuildContext context, TaskItem taskItem) {
-    bool isRealloted = taskItem.status.toLowerCase() == 're_alloted';
-
-    showModalBottomSheet(
-      context: context,
-      builder: (BuildContext context) {
-        return Wrap(
-          children: [
-            ListTile(
-              leading: const Icon(Icons.edit),
-              title: const Text('Add Remark'),
-              enabled: !isRealloted, // Disable if status is "re_alloted"
-              onTap: isRealloted
-                  ? null
-                  : () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => AddRemarkPage(
-                            taskItem: taskItem,
-                            task_id: taskItem.task_id,
-                            case_id: taskItem.case_id,
-                            stage_id: taskItem.stage_id,
-                          ),
-                        ),
-                      );
-                    },
-            ),
-            ListTile(
-              leading: const Icon(Icons.visibility),
-              title: const Text('Show Remark'),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ShowRemarkPage(
-                        taskItem: taskItem), // Pass taskItem here
-                  ),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.assignment_returned),
-              title: const Text('Reassign Task'),
-              enabled: !isRealloted,
-              onTap: isRealloted
-                  ? null
-                  : () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => ReAssignTaskPage(
-                            task_id: taskItem.task_id,
-                            intern_id: _userData!.id,
-                          ),
-                        ),
-                      );
-                    },
-            ),
-          ],
-        );
-      },
     );
   }
 }

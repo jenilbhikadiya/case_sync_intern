@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
@@ -31,10 +30,6 @@ class _ReAssignTaskPageState extends State<ReAssignTaskPage> {
   Future<void> fetchInternList() async {
     const String apiUrl =
         'https://pragmanxt.com/case_sync/services/intern/v1/index.php/get_interns_list';
-
-    print(_internList);
-    print(widget.intern_id);
-    print(widget.task_id);
 
     try {
       final response = await http.get(Uri.parse(apiUrl));
@@ -72,7 +67,7 @@ class _ReAssignTaskPageState extends State<ReAssignTaskPage> {
     request.fields['data'] = jsonEncode({
       "task_id": widget.task_id,
       "intern_id": widget.intern_id,
-      "reassign_id": _selectedIntern, // Use the updated _selectedIntern
+      "reassign_id": _selectedIntern,
       "remark": _remarkController.text,
       "remark_date": DateFormat('yyyy/MM/dd').format(_selectedDate),
     });
@@ -83,22 +78,45 @@ class _ReAssignTaskPageState extends State<ReAssignTaskPage> {
 
       if (response.statusCode == 200) {
         final responseData = json.decode(responseBody);
-        setState(() {
-          _responseMessage = responseData['message'];
-        });
+        if (responseData['success'] == true) {
+          setState(() {
+            _responseMessage = responseData['message'];
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Task reassigned successfully!'),
+              backgroundColor: Colors.green,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+          Navigator.pop(context, true); // Pass 'true' to indicate success
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(responseData['message'] ?? 'Reassignment failed.'),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
       } else {
-        setState(() {
-          _responseMessage =
-              'Failed to reassign task. Status code: ${response.statusCode}';
-        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to reassign task.'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
       }
     } catch (e) {
-      setState(() {
-        _responseMessage = 'An error occurred: $e';
-      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('An error occurred: $e'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 3),
+        ),
+      );
     }
-
-    print(request.fields['data']);
   }
 
   void _selectDate(BuildContext context) async {
@@ -115,108 +133,181 @@ class _ReAssignTaskPageState extends State<ReAssignTaskPage> {
     }
   }
 
+  static InputDecoration textFieldDecoration({
+    required String labelText,
+    required String hintText,
+    Color? fillColor,
+  }) {
+    return InputDecoration(
+      labelText: labelText,
+      hintText: hintText,
+      filled: true,
+      fillColor: fillColor,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(20.0),
+      ),
+      contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+    );
+  }
+
+  static TextStyle titleStyle = const TextStyle(
+    fontSize: 24,
+    fontWeight: FontWeight.bold,
+    color: Colors.black,
+  );
+
+  static TextStyle buttonTextStyle = const TextStyle(
+    color: Colors.white,
+    fontWeight: FontWeight.bold,
+    fontSize: 16,
+  );
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        surfaceTintColor: Colors.transparent,
-        backgroundColor: const Color.fromRGBO(243, 243, 243, 1),
-        elevation: 0,
+        backgroundColor: const Color(0xFFF3F3F3),
+        title: null,
         leading: IconButton(
-          icon: SvgPicture.asset(
-            'assets/icons/back_arrow.svg',
-            width: 32,
-            height: 32,
-          ),
+          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black),
           onPressed: () {
             Navigator.pop(context);
           },
         ),
-        title: Text(
-          'Task Assign',
-          style: const TextStyle(
-            color: Colors.black,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Interns',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            DropdownButton<String>(
-                dropdownColor: Colors.white,
-                isExpanded: true,
-                value: _selectedIntern,
-                hint: const Text('Select an Intern'),
-                items: _internList
-                    .map((intern) => DropdownMenuItem<String>(
-                          value: intern['id'], // The ID of the intern
-                          child:
-                              Text(intern['name']!), // The name of the intern
-                        ))
-                    .toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _selectedIntern = value;
-                  });
-                  print('Selected Intern ID: $_selectedIntern'); // Debugging
-                }),
-            const SizedBox(height: 16),
-            const Text(
-              'Remark',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            TextField(
-              controller: _remarkController,
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Remark Date',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    DateFormat('dd-MM-yyyy').format(_selectedDate),
-                    style: TextStyle(fontSize: 16),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: IntrinsicHeight(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Center(
+                        child: Text(
+                          'Task Assign',
+                          style: TextStyle(
+                            fontSize: 48,
+                            fontWeight: FontWeight.bold,
+                            height: 1.2,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Interns',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.black),
+                          borderRadius: BorderRadius.circular(20.0),
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            isExpanded: true,
+                            value: _selectedIntern,
+                            hint: const Text('Select an Intern'),
+                            items: _internList
+                                .map((intern) => DropdownMenuItem<String>(
+                                      value: intern['id'],
+                                      child: Text(intern['name']!),
+                                    ))
+                                .toList(),
+                            onChanged: (value) {
+                              setState(() {
+                                _selectedIntern = value;
+                              });
+                            },
+                            dropdownColor:
+                                Colors.white, // Sets dropdown background color
+                            menuMaxHeight:
+                                200, // Adjusts the maximum height of the dropdown
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Remark',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: _remarkController,
+                        decoration: textFieldDecoration(
+                          labelText: '',
+                          hintText: 'Enter your remark',
+                          fillColor: const Color(0xFFF3F3F3),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Remark Date',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                              color: const Color.fromARGB(255, 0, 0, 0)),
+                          borderRadius: BorderRadius.circular(20.0),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                DateFormat('dd-MM-yyyy').format(_selectedDate),
+                                style: const TextStyle(fontSize: 16),
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.calendar_today),
+                              onPressed: () => _selectDate(context),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      Center(
+                        child: ElevatedButton(
+                          onPressed: reassignTask,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.black,
+                            shape: RoundedRectangleBorder(
+                              borderRadius:
+                                  BorderRadius.circular(30), // Adjusted to 30
+                            ),
+                          ),
+                          child: const Text(
+                            'Save',
+                            style: TextStyle(
+                              fontSize: 20, // Adjusted font size to 20
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                      if (_responseMessage != null) ...[
+                        const SizedBox(height: 20),
+                        Text(
+                          _responseMessage!,
+                          style: const TextStyle(color: Colors.green),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
-                IconButton(
-                  icon: Icon(Icons.calendar_today),
-                  onPressed: () => _selectDate(context),
-                ),
-              ],
-            ),
-            SizedBox(height: 32),
-            Center(
-              child: ElevatedButton(
-                onPressed: reassignTask,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                ),
-                child: Text('Save'),
               ),
             ),
-            if (_responseMessage != null) ...[
-              SizedBox(height: 20),
-              Text(
-                _responseMessage!,
-                style: TextStyle(color: Colors.green),
-              ),
-            ]
-          ],
-        ),
+          );
+        },
       ),
     );
   }

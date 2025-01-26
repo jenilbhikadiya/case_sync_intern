@@ -53,10 +53,6 @@ class AddRemarkPageState extends State<AddRemarkPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF3F3F3),
       appBar: AppBar(
-        title: const Text(
-          'Remark',
-          style: TextStyle(color: Colors.black),
-        ),
         backgroundColor: const Color(0xFFF3F3F3),
         iconTheme: const IconThemeData(color: Colors.black),
         elevation: 0,
@@ -68,6 +64,18 @@ class AddRemarkPageState extends State<AddRemarkPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              const Center(
+                child: Text(
+                  'Remark',
+                  style: TextStyle(
+                    fontSize: 48,
+                    fontWeight: FontWeight.bold,
+                    height: 1.2,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              const SizedBox(height: 20),
               _buildFieldTitle('Current Stage'),
               _buildCurrentStageField(),
               _buildFieldTitle('Remark'),
@@ -113,7 +121,8 @@ class AddRemarkPageState extends State<AddRemarkPage> {
         decoration: InputDecoration(
           labelText: label,
           border: const OutlineInputBorder(),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         ),
         keyboardType: inputType,
         validator: (value) {
@@ -130,10 +139,10 @@ class AddRemarkPageState extends State<AddRemarkPage> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 20),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: Colors.grey[200], // Light grey background for read-only feel
-          borderRadius: BorderRadius.circular(8),
+          color: Colors.grey[200],
+          borderRadius: BorderRadius.circular(20),
           border: Border.all(color: Colors.black, width: 1),
         ),
         child: Text(
@@ -146,7 +155,7 @@ class AddRemarkPageState extends State<AddRemarkPage> {
 
   Widget _buildRemarkBoxField() {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       child: _buildOutlinedBoxField(
         child: ListTile(
           title: Text(
@@ -161,7 +170,7 @@ class AddRemarkPageState extends State<AddRemarkPage> {
 
   Widget _buildDocumentBoxField() {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 20),
+      padding: const EdgeInsets.only(bottom: 10),
       child: _buildOutlinedBoxField(
         child: Row(
           children: [
@@ -187,9 +196,9 @@ class AddRemarkPageState extends State<AddRemarkPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         border: Border.all(color: Colors.black, width: 1),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(20),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: child,
     );
   }
@@ -293,7 +302,7 @@ class AddRemarkPageState extends State<AddRemarkPage> {
         "stage_id": widget.stage_id,
         "case_id": widget.case_id,
         "intern_id": _internId,
-        "status": _status, // Add status field here
+        "status": _status,
       };
 
       try {
@@ -337,8 +346,7 @@ class AddRemarkPageState extends State<AddRemarkPage> {
           ),
         );
       } finally {
-       
- setState(() {
+        setState(() {
           _isSubmitting = false;
         });
       }
