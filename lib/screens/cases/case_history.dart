@@ -77,7 +77,7 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
     try {
       final response = await http.post(
         Uri.parse(
-            'https://pragmanxt.com/case_sync/services/intern/v1/index.php/intern_case_history'),
+            'https://pragmanxt.com/case_sync_pro/services/intern/v1/index.php/intern_case_history'),
         headers: {
           'User-Agent': 'Apidog/1.0.0 (https://apidog.com)',
           'Accept': '*/*',

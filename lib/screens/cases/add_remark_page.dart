@@ -307,7 +307,7 @@ class AddRemarkPageState extends State<AddRemarkPage> {
 
       try {
         final uri = Uri.parse(
-            'https://pragmanxt.com/case_sync/services/intern/v1/index.php/add_task_remark');
+            'https://pragmanxt.com/case_sync_pro/services/intern/v1/index.php/add_task_remark');
         final request = http.MultipartRequest('POST', uri);
         request.fields['data'] = json.encode(submittedData);
 

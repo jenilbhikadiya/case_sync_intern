@@ -29,7 +29,7 @@ class _ReAssignTaskPageState extends State<ReAssignTaskPage> {
 
   Future<void> fetchInternList() async {
     const String apiUrl =
-        'https://pragmanxt.com/case_sync/services/intern/v1/index.php/get_interns_list';
+        'https://pragmanxt.com/case_sync_pro/services/intern/v1/index.php/get_interns_list';
 
     try {
       final response = await http.get(Uri.parse(apiUrl));

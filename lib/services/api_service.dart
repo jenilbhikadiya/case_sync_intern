@@ -29,7 +29,7 @@ class CaseApiService {
 
 class ApiService {
   static const String baseUrl =
-      'https://pragmanxt.com/case_sync/services/intern/v1/index.php/';
+      'https://pragmanxt.com/case_sync_pro/services/intern/v1/index.php/';
   // General method to send requests
   static Future<Map<String, dynamic>> _sendLoginRequest(
       Map<String, dynamic> bodyData) async {
@@ -37,7 +37,7 @@ class ApiService {
       var request = http.MultipartRequest(
           'POST',
           Uri.parse(
-              'https://pragmanxt.com/case_sync/services/intern/v1/index.php/login_intern'));
+              'https://pragmanxt.com/case_sync_pro/services/intern/v1/index.php/login_intern'));
 
       request.fields.addAll({'data': jsonEncode(bodyData)});
 

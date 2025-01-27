@@ -29,7 +29,7 @@ class _ViewCaseHistoryScreenState extends State<ViewCaseHistoryScreen> {
     try {
       final response = await http.post(
         Uri.parse(
-          'https://pragmanxt.com/case_sync/services/intern/v1/index.php/case_history_view',
+          'https://pragmanxt.com/case_sync_pro/services/intern/v1/index.php/case_history_view',
         ),
         headers: {
           'User-Agent': 'Apidog/1.0.0 (https://apidog.com)',

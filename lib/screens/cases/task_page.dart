@@ -51,7 +51,7 @@ class TaskPageState extends State<TaskPage> {
 
   Future<void> fetchTasks() async {
     const String url =
-        'https://pragmanxt.com/case_sync/services/intern/v1/index.php/intern_task_list';
+        'https://pragmanxt.com/case_sync_pro/services/intern/v1/index.php/intern_task_list';
 
     try {
       var request = http.MultipartRequest('POST', Uri.parse(url));

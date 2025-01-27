@@ -37,7 +37,7 @@ class _ViewDocsState extends State<ViewDocs> {
 
     try {
       final caseDocumentsUrl = Uri.parse(
-          'https://pragmanxt.com/case_sync/services/intern/v1/index.php/case_history_documents');
+          'https://pragmanxt.com/case_sync_pro/services/intern/v1/index.php/case_history_documents');
       final caseDocumentsResponse = await http.post(
         caseDocumentsUrl,
         body: {'case_id': widget.caseId},

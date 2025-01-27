@@ -38,7 +38,7 @@ class _RemarkPageState extends State<ShowRemarkPage> {
 
       // Create a multipart request
       final uri = Uri.parse(
-          'https://pragmanxt.com/case_sync/services/intern/v1/index.php/task_remark_list');
+          'https://pragmanxt.com/case_sync_pro/services/intern/v1/index.php/task_remark_list');
       final request = http.MultipartRequest('POST', uri);
 
       // Add headers
@@ -77,7 +77,7 @@ class _RemarkPageState extends State<ShowRemarkPage> {
       } else {
         setState(() {
           _errorMessage =
-          'Failed to fetch remarks. Status code: ${response.statusCode}';
+              'Failed to fetch remarks. Status code: ${response.statusCode}';
           _isLoading = false;
         });
       }
@@ -135,51 +135,51 @@ class _RemarkPageState extends State<ShowRemarkPage> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _errorMessage.isNotEmpty
-          ? Center(child: Text(_errorMessage))
-          : SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Card(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12.0),
-          ),
-          elevation: 5,
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: _remarks.asMap().entries.map((entry) {
-                int index = entry.key;
-                Map<String, dynamic> remark = entry.value;
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildField('SR. No.', (index + 1).toString()),
-                    const SizedBox(height: 16),
-                    _buildField('Stage', remark['stage'] ?? 'N/A'),
-                    const SizedBox(height: 16),
-                    _buildField('Remark', remark['remarks'] ?? 'N/A'),
-                    const SizedBox(height: 16),
-                    _buildField(
-                      'Remark Date',
-                      _formatDate(remark['dos']),
+              ? Center(child: Text(_errorMessage))
+              : SingleChildScrollView(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Card(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12.0),
                     ),
-                    const SizedBox(height: 16),
-                    _buildField(
-                      'Next Date',
-                      _formatDate(remark['nextdate']),
+                    elevation: 5,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: _remarks.asMap().entries.map((entry) {
+                          int index = entry.key;
+                          Map<String, dynamic> remark = entry.value;
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildField('SR. No.', (index + 1).toString()),
+                              const SizedBox(height: 16),
+                              _buildField('Stage', remark['stage'] ?? 'N/A'),
+                              const SizedBox(height: 16),
+                              _buildField('Remark', remark['remarks'] ?? 'N/A'),
+                              const SizedBox(height: 16),
+                              _buildField(
+                                'Remark Date',
+                                _formatDate(remark['dos']),
+                              ),
+                              const SizedBox(height: 16),
+                              _buildField(
+                                'Next Date',
+                                _formatDate(remark['nextdate']),
+                              ),
+                              const SizedBox(height: 16),
+                              _buildField(
+                                  'Status', remark['status'] ?? 'Pending'),
+                              const Divider(thickness: 1),
+                              const SizedBox(height: 16),
+                            ],
+                          );
+                        }).toList(),
+                      ),
                     ),
-                    const SizedBox(height: 16),
-                    _buildField(
-                        'Status', remark['status'] ?? 'Pending'),
-                    const Divider(thickness: 1),
-                    const SizedBox(height: 16),
-                  ],
-                );
-              }).toList(),
-            ),
-          ),
-        ),
-      ),
+                  ),
+                ),
     );
   }
 
