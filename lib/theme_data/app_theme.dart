@@ -6,12 +6,13 @@ class AppTheme {
     return ThemeData(
       // Set the primary colors
       primaryColor: Colors.black,
-      scaffoldBackgroundColor: const Color.fromRGBO(243, 243, 243, 1.0),
+      scaffoldBackgroundColor: Color.fromRGBO(243, 243, 243, 1.0),
 
       textSelectionTheme: TextSelectionThemeData(
-          cursorColor: Colors.black,
-          selectionColor: Colors.black.withOpacity(.15),
-          selectionHandleColor: Colors.black),
+        cursorColor: Colors.black,
+        selectionColor: Colors.black.withOpacity(.15),
+        selectionHandleColor: Colors.black
+      ),
 
       // AppBar theme
       appBarTheme: const AppBarTheme(

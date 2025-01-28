@@ -6,9 +6,12 @@ import 'package:intern_side/screens/cases/view_docs.dart';
 import '../../components/list_app_bar.dart';
 
 class ViewCaseHistoryScreen extends StatefulWidget {
-  final String caseId; // Accepting case ID from the previous page
+  final String caseId;
 
-  const ViewCaseHistoryScreen({super.key, required this.caseId});
+  final String caseNo; // Accepting case ID from the previous page
+
+  const ViewCaseHistoryScreen(
+      {super.key, required this.caseId, required this.caseNo});
 
   @override
   State<ViewCaseHistoryScreen> createState() => _ViewCaseHistoryScreenState();
@@ -72,6 +75,7 @@ class _ViewCaseHistoryScreenState extends State<ViewCaseHistoryScreen> {
       MaterialPageRoute(
         builder: (context) => ViewDocs(
           caseId: widget.caseId,
+          caseNo: widget.caseNo,
         ),
       ),
     );

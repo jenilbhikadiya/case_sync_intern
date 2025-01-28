@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
+import 'package:intern_side/models/intern.dart';
 
-import '../../models/intern.dart';
+import '../../components/basicUIcomponent.dart';
 import '../../services/api_service.dart';
 import '../../services/shared_pref.dart';
+import '../../utils/validator.dart';
 import '../home.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -20,7 +22,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _obscureText = true;
   String _errorMessage = '';
-  bool _isLoading = false; // To handle loading state
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -29,17 +31,14 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  String? _validateEmail(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Please enter your email';
-    }
-    final RegExp emailRegExp = RegExp(
-      r'^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$',
-    );
-    if (!emailRegExp.hasMatch(value)) {
-      return 'Please enter a valid email address';
-    }
-    return null;
+  /// Validation for the User ID (email field)
+  String? _validateUserID(String? value) {
+    return validateAndTrimField(value, 'User ID');
+  }
+
+  /// Validation for the password
+  String? _validatePassword(String? value) {
+    return validateAndTrimField(value, 'Password');
   }
 
   Future<void> _login() async {
@@ -49,13 +48,13 @@ class _LoginScreenState extends State<LoginScreen> {
         _errorMessage = '';
       });
 
-      String email = _emailController.text;
-      String password = _passwordController.text;
+      // Trim the text values to ensure no leading/trailing spaces are included
+      String email = _emailController.text.trim();
+      String password = _passwordController.text.trim();
 
       try {
         // Call the login API
-        final response = await ApiService.loginUser(email, password);
-        print("Variable Response: ${response['data']}");
+        var response = await ApiService.loginUser(email, password);
 
         // Check if the login was successful
         if (response['success'] == true) {
@@ -65,7 +64,7 @@ class _LoginScreenState extends State<LoginScreen> {
           if (data is List && data.isNotEmpty) {
             // Cast the first item in the list to Map<String, dynamic>
             Map<String, dynamic> userJson =
-                (data as Map).cast<String, dynamic>();
+                (data[0] as Map).cast<String, dynamic>();
             Intern intern = Intern.fromJson(userJson);
             await SharedPrefService.saveUser(intern);
           } else if (data is Map) {
@@ -75,15 +74,18 @@ class _LoginScreenState extends State<LoginScreen> {
             await SharedPrefService.saveUser(intern);
           }
 
-          // Navigate to the home screen
           Get.offAll(() => const HomeScreen());
         } else {
-          // Handle login failure
-          Get.snackbar('Login Error', response['message']);
+          Get.snackbar('Login failed, please try again.',
+              'Incorrect Username or Password');
         }
       } catch (e) {
         print('An error occurred: $e');
         Get.snackbar('Error', 'Login failed, please try again.');
+      } finally {
+        setState(() {
+          _isLoading = false;
+        });
       }
     }
   }
@@ -104,29 +106,27 @@ class _LoginScreenState extends State<LoginScreen> {
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 SizedBox(height: screenHeight * 0.25),
+                // App Icon (Logo)
                 SvgPicture.asset('assets/icons/casesync_text.svg'),
                 const SizedBox(height: 50),
+                // User ID Field
                 TextFormField(
                   controller: _emailController,
-                  decoration: InputDecoration(
+                  decoration: AppTheme.textFieldDecoration(
                     labelText: 'User ID',
                     hintText: 'Your email',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(20.0),
-                    ),
                   ),
-                  validator: _validateEmail,
+                  validator: _validateUserID,
                 ),
                 const SizedBox(height: 20),
+                // Password Field
                 TextFormField(
                   controller: _passwordController,
                   obscureText: _obscureText,
-                  decoration: InputDecoration(
+                  decoration: AppTheme.textFieldDecoration(
                     labelText: 'Password',
                     hintText: 'Password',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(20.0),
-                    ),
+                  ).copyWith(
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscureText ? Icons.visibility : Icons.visibility_off,
@@ -138,19 +138,16 @@ class _LoginScreenState extends State<LoginScreen> {
                       },
                     ),
                   ),
+                  validator: _validatePassword,
                 ),
                 const SizedBox(height: 100),
+                // Login Button
                 SizedBox(
                   width: screenWidth * 0.5,
                   height: 70,
                   child: ElevatedButton(
                     onPressed: _login,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.black,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(50.0),
-                      ),
-                    ),
+                    style: AppTheme.elevatedButtonStyle,
                     child: _isLoading
                         ? const CircularProgressIndicator(
                             color: Colors.white,
@@ -165,6 +162,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 const SizedBox(height: 10),
+                // Error Message
                 if (_errorMessage.isNotEmpty)
                   Text(
                     _errorMessage,

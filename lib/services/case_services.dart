@@ -22,7 +22,9 @@ Future<void> populateCaseData() async {
 
     for (var caseItem in cases) {
       // Extract year and month from srDate
+      print(caseItem.srDate);
       String year = caseItem.srDate.year.toString();
+      print(year);
       String month =
           DateFormat('MMMM').format(caseItem.srDate); // Full month name
 
@@ -49,6 +51,7 @@ Future<void> populateCaseData() async {
     years.sort();
 
     print('Case data populated successfully.');
+    print(caseData);
   } catch (e) {
     print('Error populating case data: $e');
   }

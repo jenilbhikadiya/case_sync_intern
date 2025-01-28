@@ -31,11 +31,14 @@ class ListAppBar extends StatelessWidget implements PreferredSizeWidget {
           Navigator.pop(context);
         },
       ),
+      leadingWidth: 56 + 10,
+      titleSpacing: -10,
+      toolbarHeight: 70,
       title: Text(
         title,
         style: const TextStyle(
           color: Colors.black,
-          fontSize: 20,
+          fontSize: 30,
           fontWeight: FontWeight.bold,
         ),
       ),
@@ -60,5 +63,5 @@ class ListAppBar extends StatelessWidget implements PreferredSizeWidget {
   }
 
   @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+  Size get preferredSize => const Size.fromHeight(70);
 }
