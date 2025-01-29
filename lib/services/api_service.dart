@@ -68,12 +68,20 @@ class ApiService {
 }
 
 class CaseApiService {
-  static Future<List<CaseListData>> fetchCaseList() async {
-    final response = await http.get(Uri.parse('$baseUrl/intern_case_history'));
+  static Future<List<CaseListData>> fetchCaseList(String intern_id) async {
+    var request = http.MultipartRequest(
+      'POST',
+      Uri.parse('$baseUrl/intern_case_history'),
+    );
+
+    request.fields['intern_id'] = intern_id;
+
+    var response = await request.send();
 
     if (response.statusCode == 200) {
-      final responseData = json.decode(response.body);
+      final responseData = json.decode(await response.stream.bytesToString());
       if (responseData['success']) {
+        print("Response Data: ${responseData['data']}");
         final List<dynamic> data = responseData['data'];
         return data.map((item) => CaseListData.fromJson(item)).toList();
       } else {

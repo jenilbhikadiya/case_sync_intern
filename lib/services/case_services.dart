@@ -7,53 +7,47 @@ import '../services/api_service.dart'; // Ensure correct import path for your AP
 final Map<String, Map<String, List<CaseListData>>> caseData = {};
 final List<String> years = []; // New variable to store distinct years
 
-Future<void> populateCaseData() async {
+Future<void> populateCaseData(String internId) async {
   try {
-    // Fetch data from API
-    final List<CaseListData> cases = await CaseApiService.fetchCaseList();
+    caseData.clear();
+    years.clear();
 
-    if (kDebugMode) {
-      print(cases);
+    print('Entered Here');
+
+    // Fetch data from API
+    final List<CaseListData> cases =
+        await CaseApiService.fetchCaseList(internId);
+
+    print(cases.length);
+
+    if (cases.isEmpty) {
+      print("No cases found for intern: $internId");
+      return; // Exit early if no data
     }
 
-    // Clear existing data to avoid duplication
-    caseData.clear();
-    years.clear(); // Clear years list to avoid duplication
+    if (kDebugMode) {
+      print("Fetched cases: ${cases.length}");
+    }
 
     for (var caseItem in cases) {
-      // Extract year and month from srDate
-      print(caseItem.srDate);
       String year = caseItem.srDate.year.toString();
-      print(year);
-      String month =
-          DateFormat('MMMM').format(caseItem.srDate); // Full month name
+      String month = DateFormat('MMMM').format(caseItem.srDate);
 
-      // Add the year to the years list if not already present
       if (!years.contains(year)) {
         years.add(year);
       }
 
-      // Initialize nested map for the year if it doesn't exist
-      if (!caseData.containsKey(year)) {
-        caseData[year] = {};
-      }
+      caseData.putIfAbsent(year, () => {});
+      caseData[year]!.putIfAbsent(month, () => []);
 
-      // Initialize list for the month if it doesn't exist
-      if (!caseData[year]!.containsKey(month)) {
-        caseData[year]![month] = [];
-      }
-
-      // Add the case to the appropriate year and month
       caseData[year]![month]!.add(caseItem);
     }
 
-    // Sort the years list in ascending order
     years.sort();
 
-    print('Case data populated successfully.');
-    print(caseData);
+    print("Case data populated successfully: ${caseData.length} years loaded.");
   } catch (e) {
-    print('Error populating case data: $e');
+    print("Error populating case data: $e");
   }
 }
 

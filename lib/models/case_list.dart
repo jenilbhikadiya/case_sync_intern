@@ -35,25 +35,16 @@ class CaseListData {
       applicant: json['applicant'] ?? '',
       opponent: json['opp_name'] ?? '',
       courtName: json['court_name'] ?? '',
-      srDate: DateTime.now(), // Default to now if no value is provided
+      srDate: DateTime.parse((json['summon_date'] == '0000-00-00' ||
+              json['summon_date'] == '00-00-0000' ||
+              json['summon_date'] == '')
+          ? '0001-01-01'
+          : json['summon_date']),
       cityName: json['city_name'] ?? '',
       companyName: json['company_name'] ?? '',
       caseTypeName: json['case_type_name'] ?? '',
       status: json['status'] ?? '',
       summonDate: json['summon_date'] ?? '',
     );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'case_no': caseNo,
-      'handle_by': handleBy,
-      'applicant': applicant,
-      'opp_name': opponent,
-      'court_name': courtName,
-      'sr_date': srDate.toIso8601String(),
-      'city_name': cityName,
-    };
   }
 }

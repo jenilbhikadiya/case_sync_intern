@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
-import 'package:intern_side/screens/cases/task_page.dart';
+import 'package:intern_side/services/case_services.dart';
 
 import '../models/intern.dart';
 import '../services/shared_pref.dart';
 import 'appbar/notification_drawer.dart';
 import 'appbar/settings_drawer.dart';
 import 'cases/case_history.dart';
+import 'cases/task_page.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -17,12 +18,19 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  late Future<Intern?> _userData;
+  late Intern? _userData;
 
   @override
   void initState() {
     super.initState();
-    _userData = SharedPrefService.getUser();
+  }
+
+  Future<Intern?> initializeUserData() async {
+    Intern? user = await SharedPrefService.getUser();
+    if (user != null) {
+      await populateCaseData(user.id);
+    }
+    return user;
   }
 
   String getGreeting() {
@@ -38,11 +46,37 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    return FutureBuilder<Intern?>(
+      future: initializeUserData(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            backgroundColor: Color.fromRGBO(243, 243, 243, 1),
+            body: Center(
+                child: CircularProgressIndicator(
+              color: Colors.black,
+              backgroundColor: Colors.white,
+            )),
+          );
+        } else if (snapshot.hasError) {
+          return Center(child: Text('Error: ${snapshot.error}'));
+        } else if (!snapshot.hasData || snapshot.data == null) {
+          return const Center(child: Text('No user data available'));
+        }
+
+        // Assign the fetched user data
+        _userData = snapshot.data!;
+
+        return _buildHomeScreen();
+      },
+    );
+  }
+
+  Widget _buildHomeScreen() {
     final screenWidth = MediaQuery.of(context).size.width;
 
     double cardWidth = screenWidth * 0.40;
     double cardHeight = 72;
-    double fullCardWidth = screenWidth * 0.93;
     double cardIconPositionX = cardWidth * 0.08;
     double cardIconPositionY = cardHeight * 0.21;
     double cardTextPositionY = cardHeight * 0.57;
@@ -90,91 +124,77 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      body: FutureBuilder<Intern?>(
-        future: _userData,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return const Center(child: Text('Error loading user data'));
-          } else if (snapshot.hasData && snapshot.data != null) {
-            var userData = snapshot.data!;
-            String userName = userData.name ?? 'User';
-
-            return Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10),
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      getGreeting(),
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.black,
-                        height: 0.95,
-                      ),
-                    ),
-                    Text(
-                      userName,
-                      style: const TextStyle(
-                        fontSize: 40,
-                        fontWeight: FontWeight.w900,
-                        color: Color.fromRGBO(37, 27, 70, 1.0),
-                        height: 1.1,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    const Text(
-                      'Cases',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    GridView.count(
-                      crossAxisCount: 2,
-                      crossAxisSpacing: 2,
-                      mainAxisSpacing: 2,
-                      childAspectRatio: cardWidth / cardHeight,
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      children: [
-                        _buildCard(
-                          'Task',
-                          'assets/icons/unassigned.svg',
-                          cardWidth,
-                          cardHeight,
-                          cardIconPositionX,
-                          cardIconPositionY,
-                          cardTextPositionY,
-                          TaskPage(),
-                        ),
-                        _buildCard(
-                          'Case History',
-                          'assets/icons/case_history.svg',
-                          cardWidth,
-                          cardHeight,
-                          cardIconPositionX,
-                          cardIconPositionY,
-                          cardTextPositionY,
-                          const CaseHistoryScreen(),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                  ],
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                getGreeting(),
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black,
+                  height: 0.95,
                 ),
               ),
-            );
-          } else {
-            return const Center(child: Text('User not found'));
-          }
-        },
+              Text(
+                _userData!.name ??
+                    'User', // _userData is now guaranteed to be initialized
+                style: const TextStyle(
+                  fontSize: 40,
+                  fontWeight: FontWeight.w900,
+                  color: Color.fromRGBO(37, 27, 70, 1.0),
+                  height: 1.1,
+                ),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'Cases',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
+              ),
+              const SizedBox(height: 10),
+              GridView.count(
+                crossAxisCount: 2,
+                crossAxisSpacing: 2,
+                mainAxisSpacing: 2,
+                childAspectRatio: cardWidth / cardHeight,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                children: [
+                  _buildCard(
+                    'Task',
+                    'assets/icons/unassigned.svg',
+                    cardWidth,
+                    cardHeight,
+                    cardIconPositionX,
+                    cardIconPositionY,
+                    cardTextPositionY,
+                    TaskPage(),
+                  ),
+                  _buildCard(
+                    'Case History',
+                    'assets/icons/case_history.svg',
+                    cardWidth,
+                    cardHeight,
+                    cardIconPositionX,
+                    cardIconPositionY,
+                    cardTextPositionY,
+                    CaseHistoryScreen(
+                      internId: _userData!.id,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+            ],
+          ),
+        ),
       ),
     );
   }
