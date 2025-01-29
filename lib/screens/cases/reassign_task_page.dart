@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:intern_side/services/shared_pref.dart';
 import 'package:intl/intl.dart';
 
 class ReAssignTaskPage extends StatefulWidget {
@@ -19,12 +20,22 @@ class _ReAssignTaskPageState extends State<ReAssignTaskPage> {
   DateTime _selectedDate = DateTime.now();
   String? _selectedIntern;
   String? _responseMessage;
+  String? _internId;
   List<Map<String, String>> _internList = [];
 
   @override
   void initState() {
     super.initState();
     fetchInternList();
+    _fetchInternId();
+  }
+  Future<void> _fetchInternId() async {
+      final userData = await SharedPrefService.getUser();
+      if (userData != null && userData.id.isNotEmpty) {
+        setState(() {
+          _internId = userData.id;
+        });
+      }
   }
 
   Future<void> fetchInternList() async {
@@ -39,6 +50,7 @@ class _ReAssignTaskPageState extends State<ReAssignTaskPage> {
         if (responseData['success']) {
           setState(() {
             _internList = (responseData['data'] as List<dynamic>)
+                .where((item) => item['id'].toString() != _internId) // Exclude logged-in user
                 .map((item) => {
                       'id': item['id'].toString(),
                       'name': item['name'].toString(),
@@ -279,6 +291,7 @@ class _ReAssignTaskPageState extends State<ReAssignTaskPage> {
                         child: ElevatedButton(
                           onPressed: reassignTask,
                           style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.all(20),
                             backgroundColor: Colors.black,
                             shape: RoundedRectangleBorder(
                               borderRadius:
@@ -286,7 +299,7 @@ class _ReAssignTaskPageState extends State<ReAssignTaskPage> {
                             ),
                           ),
                           child: const Text(
-                            'Save',
+                            'Reassign',
                             style: TextStyle(
                               fontSize: 20, // Adjusted font size to 20
                               color: Colors.white,

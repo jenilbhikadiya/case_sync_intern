@@ -107,8 +107,7 @@ class TaskPageState extends State<TaskPage> {
   }
 
   void _showDropdownMenu(BuildContext context, TaskItem taskItem) {
-    bool isRealloted = taskItem.status.toLowerCase() == 're_alloted';
-
+    bool isRealloted = (taskItem.status.toLowerCase() == 're_alloted' || taskItem.status.toLowerCase() == 'completed');
     showModalBottomSheet(
       context: context,
       builder: (BuildContext context) {

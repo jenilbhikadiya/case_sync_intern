@@ -209,7 +209,7 @@ class AddRemarkPageState extends State<AddRemarkPage> {
         RadioListTile(
           title: const Text('Pending'),
           activeColor: Colors.black,
-          value: 'Pending',
+          value: 'pending',
           groupValue: _status,
           onChanged: (value) {
             setState(() {
@@ -220,7 +220,7 @@ class AddRemarkPageState extends State<AddRemarkPage> {
         RadioListTile(
           title: const Text('Completed'),
           activeColor: Colors.black,
-          value: 'Completed',
+          value: 'completed',
           groupValue: _status,
           onChanged: (value) {
             setState(() {
