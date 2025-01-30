@@ -41,13 +41,6 @@ class _RemarkPageState extends State<ShowRemarkPage> {
           'https://pragmanxt.com/case_sync_pro/services/intern/v1/index.php/task_remark_list');
       final request = http.MultipartRequest('POST', uri);
 
-      // Add headers
-      request.headers.addAll({
-        'User-Agent': 'Apidog/1.0.0 (https://apidog.com)',
-        'Accept': '*/*',
-        'Host': 'pragmanxt.com',
-      });
-
       // Add fields
       request.fields['task_id'] = widget.taskItem.task_id;
 
@@ -133,7 +126,7 @@ class _RemarkPageState extends State<ShowRemarkPage> {
         ),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator(color: Colors.black,))
           : _errorMessage.isNotEmpty
               ? Center(child: Text(_errorMessage))
               : SingleChildScrollView(

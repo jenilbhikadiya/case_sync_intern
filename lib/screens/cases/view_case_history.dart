@@ -34,11 +34,6 @@ class _ViewCaseHistoryScreenState extends State<ViewCaseHistoryScreen> {
         Uri.parse(
           'https://pragmanxt.com/case_sync_pro/services/intern/v1/index.php/case_history_view',
         ),
-        headers: {
-          'User-Agent': 'Apidog/1.0.0 (https://apidog.com)',
-          'Accept': '*/*',
-          'Host': 'pragmanxt.com',
-        },
         body: {'case_id': widget.caseId},
       );
 
@@ -89,7 +84,7 @@ class _ViewCaseHistoryScreenState extends State<ViewCaseHistoryScreen> {
         title: 'View Case History',
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator(color: Colors.black,))
           : _errorMessage.isNotEmpty
               ? Center(child: Text(_errorMessage))
               : ListView.builder(

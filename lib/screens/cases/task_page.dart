@@ -193,7 +193,7 @@ class TaskPageState extends State<TaskPage> {
       ),
       backgroundColor: const Color(0xFFF3F3F3),
       body: isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator(color: Colors.black,))
           : taskList.isNotEmpty
               ? ListView.builder(
                   itemCount: taskList.length,
