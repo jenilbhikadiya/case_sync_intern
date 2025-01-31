@@ -1,9 +1,11 @@
 import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 import '../../models/task_item_list.dart';
 import '../../services/shared_pref.dart';
+import '../../utils/constants.dart';
 
 class AddRemarkPage extends StatefulWidget {
   final TaskItem taskItem;
@@ -44,6 +46,80 @@ class AddRemarkPageState extends State<AddRemarkPage> {
     if (userData != null && userData.id.isNotEmpty) {
       setState(() {
         _internId = userData.id;
+      });
+    }
+  }
+
+  Future<void> _submitForm() async {
+    if (_formKey.currentState!.validate()) {
+      setState(() {
+        _isSubmitting = true;
+      });
+
+      final url = Uri.parse(
+          'https://pragmanxt.com/case_sync_pro/services/intern/v1/index.php/add_task_remark');
+
+      try {
+        var request = http.MultipartRequest('POST', url);
+
+        // Attach JSON data
+        final jsonData = jsonEncode({
+          "task_id": widget.task_id,
+          "remark": _remarkController.text,
+          "remark_date": DateFormat('yyyy/MM/dd').format(_remarkDate),
+          "stage_id": widget.stage_id,
+          "case_id": widget.case_id,
+          "intern_id": _internId,
+          "status": _status
+        });
+
+        request.fields['data'] = jsonData;
+
+        // Pick files before sending request (MOVE FILE PICKER OUTSIDE SUBMIT)
+        if (_documentPath.isNotEmpty) {
+          List<String> documentPaths = _documentPath.split(', ');
+
+          for (String path in documentPaths) {
+            request.files.add(
+              await http.MultipartFile.fromPath(
+                'documents[]', // Adjust the key as per your API
+                path.trim(),
+              ),
+            );
+          }
+        }
+
+        // Send the request
+        var response = await request.send();
+
+        if (response.statusCode == 200) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Task Added Successfully'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          Navigator.pop(context, true);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content:
+                  Text('Failed to add task. Error: ${response.reasonPhrase}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+
+      setState(() {
+        _isSubmitting = false;
       });
     }
   }
@@ -271,44 +347,23 @@ class AddRemarkPageState extends State<AddRemarkPage> {
 
   Future<void> _uploadDocument() async {
     try {
-      FilePickerResult? result = await FilePicker.platform.pickFiles();
-      if (result != null) {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        allowMultiple: true,
+        type: FileType.image, // Keep this based on your requirements
+      );
+
+      if (result != null && result.files.isNotEmpty) {
         setState(() {
-          _documentPath = result.files.single.path ?? '';
+          _documentPath = result.files.map((file) => file.name).join(", ");
         });
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-            content: Text('Error picking file: $e'),
-            backgroundColor: Colors.red),
-      );
-    }
-  }
-
-  Future<void> _submitForm() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isSubmitting = true;
-      });
-
-      // Simulate an API call delay
-      await Future.delayed(const Duration(seconds: 2));
-
-      // Show success message
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Task Added Successfully'),
-          backgroundColor: Colors.green,
+          content: Text('Error picking file: $e'),
+          backgroundColor: Colors.red,
         ),
       );
-
-      setState(() {
-        _isSubmitting = false;
-      });
-
-      // Navigate back to the task page
-      Navigator.pop(context, true);
     }
   }
 }
