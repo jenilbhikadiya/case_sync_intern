@@ -29,13 +29,14 @@ class _ReAssignTaskPageState extends State<ReAssignTaskPage> {
     fetchInternList();
     _fetchInternId();
   }
+
   Future<void> _fetchInternId() async {
-      final userData = await SharedPrefService.getUser();
-      if (userData != null && userData.id.isNotEmpty) {
-        setState(() {
-          _internId = userData.id;
-        });
-      }
+    final userData = await SharedPrefService.getUser();
+    if (userData != null && userData.id.isNotEmpty) {
+      setState(() {
+        _internId = userData.id;
+      });
+    }
   }
 
   Future<void> fetchInternList() async {
@@ -50,7 +51,9 @@ class _ReAssignTaskPageState extends State<ReAssignTaskPage> {
         if (responseData['success']) {
           setState(() {
             _internList = (responseData['data'] as List<dynamic>)
-                .where((item) => item['id'].toString() != _internId) // Exclude logged-in user
+                .where((item) =>
+                    item['id'].toString() !=
+                    _internId) // Exclude logged-in user
                 .map((item) => {
                       'id': item['id'].toString(),
                       'name': item['name'].toString(),
@@ -73,7 +76,7 @@ class _ReAssignTaskPageState extends State<ReAssignTaskPage> {
 
   Future<void> reassignTask() async {
     final url = Uri.parse(
-        'https://pragmanxt.com/case_sync/services/intern/v1/index.php/task_reassign');
+        'https://pragmanxt.com/case_sync_pro/services/intern/v1/index.php/task_reassign');
     var request = http.MultipartRequest('POST', url);
 
     request.fields['data'] = jsonEncode({

@@ -135,7 +135,7 @@ class _ViewCaseHistoryScreenState extends State<ViewCaseHistoryScreen> {
         onPressed: _viewDocument,
         label: const Text('View Document'),
         icon: const Icon(Icons.visibility),
-        backgroundColor: Colors.blue,
+        backgroundColor: Colors.black,
       ),
     );
   }

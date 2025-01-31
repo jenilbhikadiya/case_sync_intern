@@ -90,7 +90,7 @@ class AddRemarkPageState extends State<AddRemarkPage> {
               _buildDocumentBoxField(),
               _buildFieldTitle('Status'),
               _buildStatusRadioButtons(),
-              const SizedBox(height: 30),
+              const SizedBox(height: 10),
               _buildSubmitButton(),
             ],
           ),
@@ -155,14 +155,20 @@ class AddRemarkPageState extends State<AddRemarkPage> {
 
   Widget _buildRemarkBoxField() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+      padding: const EdgeInsets.only(bottom: 20),
       child: _buildOutlinedBoxField(
-        child: ListTile(
-          title: Text(
-            '${_remarkDate.day.toString().padLeft(2, '0')}/${_remarkDate.month.toString().padLeft(2, '0')}/${_remarkDate.year}',
-          ),
-          trailing: const Icon(Icons.calendar_today),
-          onTap: () => _selectDate(_remarkDate),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              '${_remarkDate.day.toString().padLeft(2, '0')}/${_remarkDate.month.toString().padLeft(2, '0')}/${_remarkDate.year}',
+              style: const TextStyle(fontSize: 16),
+            ),
+            GestureDetector(
+              onTap: () => _selectDate(_remarkDate),
+              child: const Icon(Icons.calendar_today),
+            ),
+          ],
         ),
       ),
     );
@@ -270,20 +276,12 @@ class AddRemarkPageState extends State<AddRemarkPage> {
         setState(() {
           _documentPath = result.files.single.path ?? '';
         });
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('No file selected'),
-            backgroundColor: Colors.orange,
-          ),
-        );
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error picking file: $e'),
-          backgroundColor: Colors.red,
-        ),
+            content: Text('Error picking file: $e'),
+            backgroundColor: Colors.red),
       );
     }
   }
@@ -294,62 +292,23 @@ class AddRemarkPageState extends State<AddRemarkPage> {
         _isSubmitting = true;
       });
 
-      final submittedData = {
-        "task_id": widget.task_id,
-        "remark": _remarkController.text,
-        "remark_date":
-            "${_remarkDate.year}/${_remarkDate.month.toString().padLeft(2, '0')}/${_remarkDate.day.toString().padLeft(2, '0')}",
-        "stage_id": widget.stage_id,
-        "case_id": widget.case_id,
-        "intern_id": _internId,
-        "status": _status,
-      };
+      // Simulate an API call delay
+      await Future.delayed(const Duration(seconds: 2));
 
-      try {
-        final uri = Uri.parse(
-            'https://pragmanxt.com/case_sync_pro/services/intern/v1/index.php/add_task_remark');
-        final request = http.MultipartRequest('POST', uri);
-        request.fields['data'] = json.encode(submittedData);
+      // Show success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Task Added Successfully'),
+          backgroundColor: Colors.green,
+        ),
+      );
 
-        if (_documentPath.isNotEmpty) {
-          request.files.add(await http.MultipartFile.fromPath(
-            'task_image',
-            _documentPath,
-          ));
-        }
+      setState(() {
+        _isSubmitting = false;
+      });
 
-        final response = await request.send();
-
-        if (response.statusCode == 200) {
-          final responseBody = await response.stream.bytesToString();
-          final jsonResponse = json.decode(responseBody);
-
-          if (jsonResponse['success'] == true) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(jsonResponse['message']),
-                backgroundColor: Colors.green,
-              ),
-            );
-            Navigator.pop(context);
-          } else {
-            throw Exception(jsonResponse['message']);
-          }
-        } else {
-          throw Exception('Failed to submit remark');
-        }
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      } finally {
-        setState(() {
-          _isSubmitting = false;
-        });
-      }
+      // Navigate back to the task page
+      Navigator.pop(context, true);
     }
   }
 }
