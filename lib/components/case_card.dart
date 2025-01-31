@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:intern_side/screens/cases/view_case_history.dart';
-import 'package:intern_side/screens/cases/view_docs.dart';
 
 import '../models/case_list.dart';
+import '../screens/cases/view_case_history.dart';
 
 class CaseCard extends StatelessWidget {
   final CaseListData caseItem; // Required case item parameter
@@ -24,15 +23,10 @@ class CaseCard extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => isTask
-                ? ViewCaseHistoryScreen(
-                    caseId: caseItem.id,
-                    caseNo: caseItem.caseNo,
-                  )
-                : ViewDocs(
-                    caseId: caseItem.id,
-                    caseNo: caseItem.caseNo,
-                  ),
+            builder: (context) => ViewCaseHistoryScreen(
+              caseId: caseItem.id,
+              caseNo: caseItem.caseNo,
+            ),
           ),
         );
       },
