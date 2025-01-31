@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intern_side/screens/cases/view_case_history.dart';
 
 import '../models/case_list.dart';
 import '../screens/cases/view_case_history.dart';
 
 class CaseCard extends StatelessWidget {
-  final CaseListData caseItem; // Required case item parameter
-  final bool isHighlighted; // Determines if the card is highlighted
-  final bool isTask; // Determines if it's a task card
+  final CaseListData caseItem;
+  final bool isHighlighted;
+  final bool isTask;
 
   const CaseCard({
     super.key,
-    required this.caseItem, // Required argument
+    required this.caseItem,
     this.isHighlighted = false,
     this.isTask = false,
   });

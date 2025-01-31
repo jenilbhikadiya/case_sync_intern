@@ -6,9 +6,6 @@ import '../models/case_list.dart';
 import '../utils/constants.dart';
 
 class ApiService {
-  static const Map<String, String> headers = {
-    'User-Agent': 'Apidog/1.0.0 (https://apidog.com)',
-  };
 
   // General method to send requests
   static Future<Map<String, dynamic>> _sendRequest(
@@ -19,7 +16,6 @@ class ApiService {
         Uri.parse(baseUrl + endpoint),
       );
       request.fields.addAll({'data': jsonEncode(bodyData)});
-      request.headers.addAll(headers);
 
       // Send the request and handle timeout
       http.StreamedResponse response =

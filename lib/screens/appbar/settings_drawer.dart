@@ -53,7 +53,7 @@ class _SettingsDrawerState extends State<SettingsDrawer> {
               opacity: 0.1,
               child: Center(
                 child: Image.asset(
-                  'assets/icons/app_icon.png', // Replace with your actual logo path
+                  'assets/icons/app_icon.png',
                   width: screenWidth * 0.5,
                   fit: BoxFit.contain,
                 ),
@@ -76,7 +76,9 @@ class _SettingsDrawerState extends State<SettingsDrawer> {
                       radius: 25,
                       backgroundColor: Colors.black,
                       child: Text(
-                        userName != null ? userName![0] : '?', // Display the first letter of the name
+                        userName != null
+                            ? userName![0]
+                            : '?', // Display the first letter of the name
                         style: const TextStyle(
                           fontSize: 20,
                           color: Colors.white,
@@ -89,19 +91,23 @@ class _SettingsDrawerState extends State<SettingsDrawer> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          userName ?? 'Guest', // Fallback to 'Guest' if name is null
+                          userName ??
+                              'Guest', // Fallback to 'Guest' if name is null
                           style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
-                            color: Color.fromARGB(255, 0, 0, 0), // Ensure text is visible
+                            color: Color.fromARGB(
+                                255, 0, 0, 0), // Ensure text is visible
                           ),
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          userRole ?? 'Intern', // Fallback to 'N/A' if role is null
+                          userRole ??
+                              'Intern', // Fallback to 'N/A' if role is null
                           style: const TextStyle(
                             fontSize: 14,
-                            color: Color.fromARGB(179, 0, 0, 0), // Ensure text is visible
+                            color: Color.fromARGB(
+                                179, 0, 0, 0), // Ensure text is visible
                           ),
                         ),
                       ],
@@ -122,7 +128,8 @@ class _SettingsDrawerState extends State<SettingsDrawer> {
                       // Show snack bar for feedback
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('You have been logged out successfully.'),
+                          content:
+                              Text('You have been logged out successfully.'),
                         ),
                       );
 

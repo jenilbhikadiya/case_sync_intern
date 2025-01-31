@@ -1,9 +1,13 @@
 import 'dart:convert';
+import 'dart:io';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../../models/task_item_list.dart';
 import '../../services/shared_pref.dart';
+import '../../utils/constants.dart';
 
 class AddRemarkPage extends StatefulWidget {
   final TaskItem taskItem;
@@ -45,6 +49,104 @@ class AddRemarkPageState extends State<AddRemarkPage> {
       setState(() {
         _internId = userData.id;
       });
+    }
+  }
+
+  Future<void> _submitForm() async {
+    if (_formKey.currentState!.validate()) {
+      setState(() {
+        _isSubmitting = true;
+      });
+
+      final url = Uri.parse(
+        'https://pragmanxt.com/case_sync_pro/services/intern/v1/index.php/add_task_remark',
+      );
+
+      try {
+        var request = http.MultipartRequest('POST', url);
+
+        // Attach JSON data
+        final jsonData = jsonEncode({
+          "task_id": widget.task_id,
+          "remark": _remarkController.text,
+          "remark_date": DateFormat('yyyy/MM/dd').format(_remarkDate),
+          "stage_id": widget.stage_id,
+          "case_id": widget.case_id,
+          "intern_id": _internId,
+          "status": _status
+        });
+
+        request.fields['data'] = jsonData;
+
+        // Upload documents if available
+        if (_documentPath.isNotEmpty) {
+          List<String> documentPaths = _documentPath.split(', ');
+
+          for (String path in documentPaths) {
+            File file = File(path.trim());
+
+            if (!await file.exists()) {
+              // print("File does not exist at path: $path");
+              return;
+            }
+
+            request.files.add(
+              await http.MultipartFile.fromPath(
+                'task_image', // Change from 'documents[]' to 'task_image'
+                file.path,
+              ),
+            );
+          }
+        }
+
+        // Send the request
+        var response = await request.send();
+        var responseBody = await response.stream.bytesToString();
+        // print("API Response: $responseBody");
+        // print("Document Path: $_documentPath");
+
+        if (response.statusCode == 200) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Task Added Successfully'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          Navigator.pop(context, true);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to add task. Error: $responseBody'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        // print("$e");
+      }
+
+      setState(() {
+        _isSubmitting = false;
+      });
+    }
+  }
+
+  Future<void> _requestPermission() async {
+    var status = await Permission.storage.request();
+    if (!status.isGranted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Storage permission denied'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
     }
   }
 
@@ -90,7 +192,7 @@ class AddRemarkPageState extends State<AddRemarkPage> {
               _buildDocumentBoxField(),
               _buildFieldTitle('Status'),
               _buildStatusRadioButtons(),
-              const SizedBox(height: 30),
+              const SizedBox(height: 10),
               _buildSubmitButton(),
             ],
           ),
@@ -155,14 +257,20 @@ class AddRemarkPageState extends State<AddRemarkPage> {
 
   Widget _buildRemarkBoxField() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+      padding: const EdgeInsets.only(bottom: 20),
       child: _buildOutlinedBoxField(
-        child: ListTile(
-          title: Text(
-            '${_remarkDate.day.toString().padLeft(2, '0')}/${_remarkDate.month.toString().padLeft(2, '0')}/${_remarkDate.year}',
-          ),
-          trailing: const Icon(Icons.calendar_today),
-          onTap: () => _selectDate(_remarkDate),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              '${_remarkDate.day.toString().padLeft(2, '0')}/${_remarkDate.month.toString().padLeft(2, '0')}/${_remarkDate.year}',
+              style: const TextStyle(fontSize: 16),
+            ),
+            GestureDetector(
+              onTap: () => _selectDate(_remarkDate),
+              child: const Icon(Icons.calendar_today),
+            ),
+          ],
         ),
       ),
     );
@@ -265,18 +373,17 @@ class AddRemarkPageState extends State<AddRemarkPage> {
 
   Future<void> _uploadDocument() async {
     try {
-      FilePickerResult? result = await FilePicker.platform.pickFiles();
-      if (result != null) {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        allowMultiple: true,
+        type: FileType.any, // Change this if you're uploading PDFs
+      );
+
+      if (result != null && result.files.isNotEmpty) {
         setState(() {
-          _documentPath = result.files.single.path ?? '';
+          _documentPath = result.files.map((file) => file.path ?? "").join(",");
         });
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('No file selected'),
-            backgroundColor: Colors.orange,
-          ),
-        );
+
+        // print("Selected Files: $_documentPath");
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -285,71 +392,6 @@ class AddRemarkPageState extends State<AddRemarkPage> {
           backgroundColor: Colors.red,
         ),
       );
-    }
-  }
-
-  Future<void> _submitForm() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isSubmitting = true;
-      });
-
-      final submittedData = {
-        "task_id": widget.task_id,
-        "remark": _remarkController.text,
-        "remark_date":
-            "${_remarkDate.year}/${_remarkDate.month.toString().padLeft(2, '0')}/${_remarkDate.day.toString().padLeft(2, '0')}",
-        "stage_id": widget.stage_id,
-        "case_id": widget.case_id,
-        "intern_id": _internId,
-        "status": _status,
-      };
-
-      try {
-        final uri = Uri.parse(
-            'https://pragmanxt.com/case_sync_pro/services/intern/v1/index.php/add_task_remark');
-        final request = http.MultipartRequest('POST', uri);
-        request.fields['data'] = json.encode(submittedData);
-
-        if (_documentPath.isNotEmpty) {
-          request.files.add(await http.MultipartFile.fromPath(
-            'task_image',
-            _documentPath,
-          ));
-        }
-
-        final response = await request.send();
-
-        if (response.statusCode == 200) {
-          final responseBody = await response.stream.bytesToString();
-          final jsonResponse = json.decode(responseBody);
-
-          if (jsonResponse['success'] == true) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(jsonResponse['message']),
-                backgroundColor: Colors.green,
-              ),
-            );
-            Navigator.pop(context);
-          } else {
-            throw Exception(jsonResponse['message']);
-          }
-        } else {
-          throw Exception('Failed to submit remark');
-        }
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      } finally {
-        setState(() {
-          _isSubmitting = false;
-        });
-      }
     }
   }
 }

@@ -107,7 +107,9 @@ class TaskPageState extends State<TaskPage> {
   }
 
   void _showDropdownMenu(BuildContext context, TaskItem taskItem) {
-    bool isRealloted = (taskItem.status.toLowerCase() == 're_alloted' || taskItem.status.toLowerCase() == 'completed');
+    bool isRealloted = (taskItem.status.toLowerCase() == 're_alloted' ||
+        taskItem.status.toLowerCase() == 'completed');
+
     showModalBottomSheet(
       context: context,
       builder: (BuildContext context) {
@@ -116,34 +118,34 @@ class TaskPageState extends State<TaskPage> {
             ListTile(
               leading: const Icon(Icons.edit),
               title: const Text('Add Remark'),
-              enabled: !isRealloted, // Disable if status is "re_alloted"
-              onTap: isRealloted
-                  ? null
-                  : () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => AddRemarkPage(
-                            taskItem: taskItem,
-                            task_id: taskItem.task_id,
-                            case_id: taskItem.case_id,
-                            stage_id: taskItem.stage_id,
-                          ),
-                        ),
-                      );
-                    },
+              enabled: !isRealloted,
+              onTap: () async {
+                Navigator.pop(context); // Close dropdown first
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => AddRemarkPage(
+                      taskItem: taskItem,
+                      task_id: taskItem.task_id,
+                      case_id: taskItem.case_id,
+                      stage_id: taskItem.stage_id,
+                    ),
+                  ),
+                );
+                if (result == true) {
+                  fetchTasks(); // Refresh the task list after returning
+                }
+              },
             ),
             ListTile(
               leading: const Icon(Icons.visibility),
               title: const Text('Show Remark'),
               onTap: () {
-                Navigator.pop(context);
+                Navigator.pop(context); // Close dropdown first
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => ShowRemarkPage(
-                      taskItem: taskItem,
-                    ),
+                    builder: (context) => ShowRemarkPage(taskItem: taskItem),
                   ),
                 );
               },
@@ -152,12 +154,10 @@ class TaskPageState extends State<TaskPage> {
               leading: const Icon(Icons.assignment_returned),
               title: const Text('Reassign Task'),
               enabled: !isRealloted,
-              onTap: isRealloted
-                  ? null
-                  : () {
-                      Navigator.pop(context);
-                      _navigateToReAssignTask(taskItem);
-                    },
+              onTap: () {
+                Navigator.pop(context); // Close dropdown first
+                _navigateToReAssignTask(taskItem);
+              },
             ),
           ],
         );
@@ -193,7 +193,7 @@ class TaskPageState extends State<TaskPage> {
       ),
       backgroundColor: const Color(0xFFF3F3F3),
       body: isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator(color: Colors.black,))
           : taskList.isNotEmpty
               ? ListView.builder(
                   itemCount: taskList.length,
