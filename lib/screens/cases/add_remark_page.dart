@@ -1,8 +1,10 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../../models/task_item_list.dart';
 import '../../services/shared_pref.dart';
 import '../../utils/constants.dart';
@@ -57,7 +59,8 @@ class AddRemarkPageState extends State<AddRemarkPage> {
       });
 
       final url = Uri.parse(
-          'https://pragmanxt.com/case_sync_pro/services/intern/v1/index.php/add_task_remark');
+        'https://pragmanxt.com/case_sync_pro/services/intern/v1/index.php/add_task_remark',
+      );
 
       try {
         var request = http.MultipartRequest('POST', url);
@@ -75,15 +78,22 @@ class AddRemarkPageState extends State<AddRemarkPage> {
 
         request.fields['data'] = jsonData;
 
-        // Pick files before sending request (MOVE FILE PICKER OUTSIDE SUBMIT)
+        // Upload documents if available
         if (_documentPath.isNotEmpty) {
           List<String> documentPaths = _documentPath.split(', ');
 
           for (String path in documentPaths) {
+            File file = File(path.trim());
+
+            if (!await file.exists()) {
+              // print("File does not exist at path: $path");
+              return;
+            }
+
             request.files.add(
               await http.MultipartFile.fromPath(
-                'documents[]', // Adjust the key as per your API
-                path.trim(),
+                'task_image', // Change from 'documents[]' to 'task_image'
+                file.path,
               ),
             );
           }
@@ -91,6 +101,9 @@ class AddRemarkPageState extends State<AddRemarkPage> {
 
         // Send the request
         var response = await request.send();
+        var responseBody = await response.stream.bytesToString();
+        // print("API Response: $responseBody");
+        // print("Document Path: $_documentPath");
 
         if (response.statusCode == 200) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -103,8 +116,7 @@ class AddRemarkPageState extends State<AddRemarkPage> {
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content:
-                  Text('Failed to add task. Error: ${response.reasonPhrase}'),
+              content: Text('Failed to add task. Error: $responseBody'),
               backgroundColor: Colors.red,
             ),
           );
@@ -116,11 +128,25 @@ class AddRemarkPageState extends State<AddRemarkPage> {
             backgroundColor: Colors.red,
           ),
         );
+        // print("$e");
       }
 
       setState(() {
         _isSubmitting = false;
       });
+    }
+  }
+
+  Future<void> _requestPermission() async {
+    var status = await Permission.storage.request();
+    if (!status.isGranted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Storage permission denied'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
     }
   }
 
@@ -349,13 +375,15 @@ class AddRemarkPageState extends State<AddRemarkPage> {
     try {
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         allowMultiple: true,
-        type: FileType.image, // Keep this based on your requirements
+        type: FileType.any, // Change this if you're uploading PDFs
       );
 
       if (result != null && result.files.isNotEmpty) {
         setState(() {
-          _documentPath = result.files.map((file) => file.name).join(", ");
+          _documentPath = result.files.map((file) => file.path ?? "").join(",");
         });
+
+        // print("Selected Files: $_documentPath");
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
