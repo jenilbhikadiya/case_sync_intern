@@ -53,10 +53,13 @@ dependencies:
   rename_app: ^1.6.2
   flutter_launcher_icons: ^0.14.3
 
-flutter_icons:
-  android: true
+flutter_launcher_icons:
+  android: "launcher_icon"
+  adaptive_icon_background: "#ffffff"
+  adaptive_icon_foreground: "assets/icons/app_icon.png"
   ios: true
   image_path: "assets/icons/app_icon.png"
+  min_sdk_android: 21
 
 dev_dependencies:
   flutter_test:
