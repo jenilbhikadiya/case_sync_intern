@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  // Button Theme
   static ButtonStyle elevatedButtonStyle = ElevatedButton.styleFrom(
     backgroundColor: Colors.black,
     shape: RoundedRectangleBorder(
@@ -10,7 +9,6 @@ class AppTheme {
     padding: const EdgeInsets.all(15),
   );
 
-  // Optional: If you still need customization per button instance
   static ButtonStyle getElevatedButtonStyle({Color? backgroundColor}) {
     return ElevatedButton.styleFrom(
       backgroundColor: backgroundColor ?? Colors.black,
@@ -52,4 +50,13 @@ class AppTheme {
   static const Color primaryColor = Colors.black;
   static const Color secondaryColor = Colors.white;
   static const Color errorColor = Colors.red;
+
+  // Refresh Indicator Theme
+  static Color getRefreshIndicatorColor(Brightness brightness) {
+    return brightness == Brightness.dark ? Colors.white : Colors.black;
+  }
+
+  static Color getRefreshIndicatorBackgroundColor() {
+    return Colors.white; // Always white background
+  }
 }

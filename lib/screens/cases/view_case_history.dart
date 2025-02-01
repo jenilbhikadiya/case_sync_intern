@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:intern_side/screens/cases/view_docs.dart';
 
+import '../../components/basicUIcomponent.dart';
 import '../../components/list_app_bar.dart';
+import '../../utils/constants.dart';
 
 class ViewCaseHistoryScreen extends StatefulWidget {
   final String caseId;
@@ -32,24 +34,23 @@ class _ViewCaseHistoryScreenState extends State<ViewCaseHistoryScreen> {
     try {
       final response = await http.post(
         Uri.parse(
-          'https://pragmanxt.com/case_sync_pro/services/intern/v1/index.php/case_history_view',
+          '$baseUrl/case_history_view',
         ),
         body: {'case_id': widget.caseId},
       );
 
+      if (!mounted) return;
+
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        if (data['success'] == true && data['data'] != null) {
-          setState(() {
+        setState(() {
+          if (data['success'] == true && data['data'] != null) {
             _caseHistory = data['data'];
-            _isLoading = false;
-          });
-        } else {
-          setState(() {
+          } else {
             _errorMessage = data['message'] ?? 'No data found.';
-            _isLoading = false;
-          });
-        }
+          }
+          _isLoading = false;
+        });
       } else {
         setState(() {
           _errorMessage = 'Failed to load case history.';
@@ -57,10 +58,13 @@ class _ViewCaseHistoryScreenState extends State<ViewCaseHistoryScreen> {
         });
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _errorMessage = 'An error occurred: $e';
         _isLoading = false;
       });
+    } finally {
+      _isLoading = false;
     }
   }
 
@@ -83,54 +87,72 @@ class _ViewCaseHistoryScreenState extends State<ViewCaseHistoryScreen> {
         onSearchPressed: () {},
         title: 'View Case History',
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: Colors.black,))
-          : _errorMessage.isNotEmpty
-              ? Center(child: Text(_errorMessage))
-              : ListView.builder(
-                  itemCount: _caseHistory.length,
-                  itemBuilder: (context, index) {
-                    final caseData = _caseHistory[index];
-                    return Card(
-                      margin: const EdgeInsets.symmetric(
-                          vertical: 8.0, horizontal: 10.0),
-                      elevation: 3,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                        side: const BorderSide(
-                          color: Colors.black,
-                          style: BorderStyle.solid,
-                        ),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(12.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Intern: ${caseData['intern_name']}',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 18,
-                              ),
-                            ),
-                            const SizedBox(height: 0),
-                            Text('Advocate: ${caseData['advocate_name']}'),
-                            Text(
-                              'Stage: ${caseData['stage_name']}',
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                            Text('Remarks: ${caseData['remarks']}'),
-                            Text('Date of Summon: ${caseData['fdos']}'),
-                            Text('Next Date: ${caseData['nextdate']}'),
-                            Text('Status: ${caseData['status']}'),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
+      body: RefreshIndicator(
+        onRefresh: () async {
+          await _fetchCaseHistory();
+        },
+        color: AppTheme.getRefreshIndicatorColor(Theme.of(context).brightness),
+        backgroundColor: AppTheme.getRefreshIndicatorBackgroundColor(),
+        child: _isLoading
+            ? const Center(
+                child: CircularProgressIndicator(
+                  color: Colors.black,
                 ),
+              )
+            : _errorMessage.isNotEmpty
+                ? ListView(
+                    // ✅ Wrap error message in a ListView so pull-to-refresh works
+                    children: [
+                      SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.4),
+                      Center(child: Text(_errorMessage)),
+                    ],
+                  )
+                : ListView.builder(
+                    itemCount: _caseHistory.length,
+                    itemBuilder: (context, index) {
+                      final caseData = _caseHistory[index];
+                      return Card(
+                        margin: const EdgeInsets.symmetric(
+                            vertical: 8.0, horizontal: 10.0),
+                        elevation: 3,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                          side: const BorderSide(
+                            color: Colors.black,
+                            style: BorderStyle.solid,
+                          ),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Intern: ${caseData['intern_name']}',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 18,
+                                ),
+                              ),
+                              const SizedBox(height: 0),
+                              Text('Advocate: ${caseData['advocate_name']}'),
+                              Text(
+                                'Stage: ${caseData['stage_name']}',
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold),
+                              ),
+                              Text('Remarks: ${caseData['remarks']}'),
+                              Text('Date of Summon: ${caseData['fdos']}'),
+                              Text('Next Date: ${caseData['nextdate']}'),
+                              Text('Status: ${caseData['status']}'),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _viewDocument,
         label: const Text('View Document'),

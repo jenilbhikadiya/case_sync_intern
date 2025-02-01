@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 
+import '../../components/basicUIcomponent.dart';
 import '../../components/case_card.dart';
 import '../../components/list_app_bar.dart';
 import '../../models/case_list.dart';
@@ -78,12 +79,12 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
 
   List<String> _getMonthsForYear(String year) {
     if (!caseData.containsKey(year)) return [];
-    return caseData[year]
-            ?.entries
-            .where((entry) => entry.value.isNotEmpty)
-            .map((entry) => entry.key)
-            .toList() ??
-        [];
+
+    return caseData[year]!
+        .keys
+        .where((month) => caseData[year]![month]!.isNotEmpty)
+        .toList()
+      ..sort((a, b) => months.indexOf(a).compareTo(months.indexOf(b)));
   }
 
   @override
@@ -429,11 +430,16 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
                 margin:
                     const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
                 child: RefreshIndicator(
-                  color: Colors.black,
+                  color: AppTheme.getRefreshIndicatorColor(
+                      Theme.of(context).brightness),
+                  backgroundColor:
+                      AppTheme.getRefreshIndicatorBackgroundColor(),
                   onRefresh: () async {
+                    print("Before refresh: ${caseData[selectedYear]}");
+                    await populateCaseData(widget.internId);
+                    print("After refresh: ${caseData[selectedYear]}");
                     setState(() {
-                      populateCaseData(widget.internId);
-                      allCases = getCaseDataForMonth(selectedYear, month);
+                      monthsWithCases = _getMonthsForYear(selectedYear);
                     });
                   },
                   child: allCases.isEmpty

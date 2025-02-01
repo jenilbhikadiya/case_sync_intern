@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:http/http.dart' as http;
 
+import '../../components/basicUIcomponent.dart';
 import '../../models/task_item_list.dart';
 
 class ShowRemarkPage extends StatefulWidget {
@@ -26,6 +27,11 @@ class _RemarkPageState extends State<ShowRemarkPage> {
   }
 
   Future<void> _fetchRemarkData() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = '';
+    });
+
     try {
       debugPrint('Task ID: ${widget.taskItem.task_id}');
       if (widget.taskItem.task_id.isEmpty) {
@@ -36,15 +42,11 @@ class _RemarkPageState extends State<ShowRemarkPage> {
         return;
       }
 
-      // Create a multipart request
       final uri = Uri.parse(
           'https://pragmanxt.com/case_sync_pro/services/intern/v1/index.php/task_remark_list');
       final request = http.MultipartRequest('POST', uri);
-
-      // Add fields
       request.fields['task_id'] = widget.taskItem.task_id;
 
-      // Send the request
       final streamedResponse = await request.send();
       final response = await http.Response.fromStream(streamedResponse);
 
@@ -59,25 +61,25 @@ class _RemarkPageState extends State<ShowRemarkPage> {
           setState(() {
             _remarks.clear();
             _remarks.addAll(List<Map<String, dynamic>>.from(data['data']));
-            _isLoading = false;
           });
         } else {
           setState(() {
             _errorMessage = data['message'] ?? 'No remarks found.';
-            _isLoading = false;
           });
         }
       } else {
         setState(() {
           _errorMessage =
               'Failed to fetch remarks. Status code: ${response.statusCode}';
-          _isLoading = false;
         });
       }
     } catch (e) {
       debugPrint('Error occurred: $e');
       setState(() {
         _errorMessage = 'An error occurred: $e';
+      });
+    } finally {
+      setState(() {
         _isLoading = false;
       });
     }
@@ -116,63 +118,73 @@ class _RemarkPageState extends State<ShowRemarkPage> {
             Navigator.pop(context);
           },
         ),
-        title: Text(
+        title: const Text(
           'Show Remark',
-          style: const TextStyle(
+          style: TextStyle(
             color: Colors.black,
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
         ),
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: Colors.black,))
-          : _errorMessage.isNotEmpty
-              ? Center(child: Text(_errorMessage))
-              : SingleChildScrollView(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Card(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12.0),
-                    ),
-                    elevation: 5,
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: _remarks.asMap().entries.map((entry) {
-                          int index = entry.key;
-                          Map<String, dynamic> remark = entry.value;
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _buildField('SR. No.', (index + 1).toString()),
-                              const SizedBox(height: 16),
-                              _buildField('Stage', remark['stage'] ?? 'N/A'),
-                              const SizedBox(height: 16),
-                              _buildField('Remark', remark['remarks'] ?? 'N/A'),
-                              const SizedBox(height: 16),
-                              _buildField(
-                                'Remark Date',
-                                _formatDate(remark['dos']),
-                              ),
-                              const SizedBox(height: 16),
-                              _buildField(
-                                'Next Date',
-                                _formatDate(remark['nextdate']),
-                              ),
-                              const SizedBox(height: 16),
-                              _buildField(
-                                  'Status', remark['status'] ?? 'Pending'),
-                              const Divider(thickness: 1),
-                              const SizedBox(height: 16),
-                            ],
-                          );
-                        }).toList(),
+      body: RefreshIndicator(
+        onRefresh: _fetchRemarkData,
+        color: AppTheme.getRefreshIndicatorColor(Theme.of(context).brightness),
+        backgroundColor: AppTheme.getRefreshIndicatorBackgroundColor(),
+        child: _isLoading
+            ? const Center(
+                child: CircularProgressIndicator(
+                color: Colors.black,
+              ))
+            : _errorMessage.isNotEmpty
+                ? Center(child: Text(_errorMessage))
+                : SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.all(16.0),
+                    child: Card(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.0),
+                      ),
+                      elevation: 5,
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: _remarks.asMap().entries.map((entry) {
+                            int index = entry.key;
+                            Map<String, dynamic> remark = entry.value;
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildField('SR. No.', (index + 1).toString()),
+                                const SizedBox(height: 16),
+                                _buildField('Stage', remark['stage'] ?? 'N/A'),
+                                const SizedBox(height: 16),
+                                _buildField(
+                                    'Remark', remark['remarks'] ?? 'N/A'),
+                                const SizedBox(height: 16),
+                                _buildField(
+                                  'Remark Date',
+                                  _formatDate(remark['dos']),
+                                ),
+                                const SizedBox(height: 16),
+                                _buildField(
+                                  'Next Date',
+                                  _formatDate(remark['nextdate']),
+                                ),
+                                const SizedBox(height: 16),
+                                _buildField(
+                                    'Status', remark['status'] ?? 'Pending'),
+                                const Divider(thickness: 1),
+                                const SizedBox(height: 16),
+                              ],
+                            );
+                          }).toList(),
+                        ),
                       ),
                     ),
                   ),
-                ),
+      ),
     );
   }
 

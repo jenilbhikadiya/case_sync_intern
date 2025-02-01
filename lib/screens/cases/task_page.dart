@@ -1,11 +1,10 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:http/http.dart' as http;
 import 'package:intern_side/screens/cases/reassign_task_page.dart';
 import 'package:intern_side/services/shared_pref.dart';
-
+import '../../components/basicUIcomponent.dart';
 import '../../models/intern.dart';
 import '../../models/task_item_list.dart';
 import 'add_remark_page.dart';
@@ -193,90 +192,90 @@ class TaskPageState extends State<TaskPage> {
       ),
       backgroundColor: const Color(0xFFF3F3F3),
       body: isLoading
-          ? const Center(child: CircularProgressIndicator(color: Colors.black,))
-          : taskList.isNotEmpty
-              ? ListView.builder(
-                  itemCount: taskList.length,
-                  itemBuilder: (context, index) {
-                    final taskItem =
-                        taskList.reversed.toList()[index]; // Reverse the list
-                    return GestureDetector(
-                      onTap: () {
-                        _showDropdownMenu(context, taskItem);
-                      },
-                      child: Card(
-                        margin: const EdgeInsets.symmetric(
-                            vertical: 8.0, horizontal: 10.0),
-                        color: Colors.white,
-                        elevation: 3,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                          side: const BorderSide(
-                              color: Colors.black, style: BorderStyle.solid),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(12.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Instruction: ${taskItem.instruction}',
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                    color: Colors.black),
+          ? const Center(
+              child: CircularProgressIndicator(
+              color: Colors.black,
+            ))
+          : RefreshIndicator(
+              onRefresh: fetchTasks,
+              color: AppTheme.getRefreshIndicatorColor(
+                  Theme.of(context).brightness),
+              backgroundColor: AppTheme.getRefreshIndicatorBackgroundColor(),
+              child: taskList.isNotEmpty
+                  ? ListView.builder(
+                      itemCount: taskList.length,
+                      itemBuilder: (context, index) {
+                        final taskItem = taskList.reversed.toList()[index];
+                        return GestureDetector(
+                          onTap: () {
+                            _showDropdownMenu(context, taskItem);
+                          },
+                          child: Card(
+                            margin: const EdgeInsets.symmetric(
+                                vertical: 8.0, horizontal: 10.0),
+                            color: Colors.white,
+                            elevation: 3,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                              side: const BorderSide(
+                                  color: Colors.black,
+                                  style: BorderStyle.solid),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(12.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Instruction: ${taskItem.instruction}',
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                        color: Colors.black),
+                                  ),
+                                  const SizedBox(height: 5),
+                                  Text('Case No: ${taskItem.caseNo}',
+                                      style: const TextStyle(
+                                          fontSize: 14, color: Colors.black)),
+                                  const SizedBox(height: 5),
+                                  Text('Alloted By: ${taskItem.allotedBy}',
+                                      style: const TextStyle(
+                                          fontSize: 14, color: Colors.black)),
+                                  const SizedBox(height: 5),
+                                  Text(
+                                      'Alloted Date: ${taskItem.allotedDate?.toLocal().toString().split(' ')[0]}',
+                                      style: const TextStyle(
+                                          fontSize: 14, color: Colors.black)),
+                                  const SizedBox(height: 5),
+                                  Text(
+                                      'End Date: ${taskItem.expectedEndDate?.toLocal().toString().split(' ')[0]}',
+                                      style: const TextStyle(
+                                          fontSize: 14, color: Colors.black)),
+                                  const SizedBox(height: 5),
+                                  Text('Status: ${taskItem.status}',
+                                      style: const TextStyle(
+                                          fontSize: 14, color: Colors.black)),
+                                  const SizedBox(height: 5),
+                                  Text('Current Stage: ${taskItem.stage}',
+                                      style: const TextStyle(
+                                          fontSize: 14, color: Colors.black)),
+                                ],
                               ),
-                              const SizedBox(height: 5),
-                              Text(
-                                'Case No: ${taskItem.caseNo}',
-                                style: const TextStyle(
-                                    fontSize: 14, color: Colors.black),
-                              ),
-                              const SizedBox(height: 5),
-                              Text(
-                                'Alloted By: ${taskItem.allotedBy}',
-                                style: const TextStyle(
-                                    fontSize: 14, color: Colors.black),
-                              ),
-                              const SizedBox(height: 5),
-                              Text(
-                                'Alloted Date: ${taskItem.allotedDate?.toLocal().toString().split(' ')[0]}',
-                                style: const TextStyle(
-                                    fontSize: 14, color: Colors.black),
-                              ),
-                              const SizedBox(height: 5),
-                              Text(
-                                'End Date: ${taskItem.expectedEndDate?.toLocal().toString().split(' ')[0]}',
-                                style: const TextStyle(
-                                    fontSize: 14, color: Colors.black),
-                              ),
-                              const SizedBox(height: 5),
-                              Text(
-                                'Status: ${taskItem.status}',
-                                style: const TextStyle(
-                                    fontSize: 14, color: Colors.black),
-                              ),
-                              const SizedBox(height: 5),
-                              Text(
-                                'Current Stage: ${taskItem.stage}',
-                                style: const TextStyle(
-                                    fontSize: 14, color: Colors.black),
-                              ),
-                            ],
+                            ),
                           ),
-                        ),
+                        );
+                      },
+                    )
+                  : Center(
+                      child: Text(
+                        errorMessage.isNotEmpty
+                            ? errorMessage
+                            : 'No tasks available.',
+                        style:
+                            const TextStyle(fontSize: 16, color: Colors.black),
                       ),
-                    );
-                  },
-                )
-              : Center(
-                  child: Text(
-                    errorMessage.isNotEmpty
-                        ? errorMessage
-                        : 'No tasks available.',
-                    style: const TextStyle(fontSize: 16, color: Colors.black),
-                  ),
-                ),
+                    ),
+            ),
     );
   }
 }

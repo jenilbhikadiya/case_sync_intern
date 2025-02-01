@@ -10,6 +10,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../../components/basicUIcomponent.dart';
 import '../../utils/constants.dart';
 import '../../utils/file_already_exists_dialog.dart';
 
@@ -35,6 +36,7 @@ class ViewDocsState extends State<ViewDocs> {
   }
 
   Future<void> _fetchDocuments() async {
+    _documents.clear();
     if (!mounted) return;
     setState(() {
       _isLoading = true;
@@ -120,7 +122,9 @@ class ViewDocsState extends State<ViewDocs> {
             )
           else
             RefreshIndicator(
-              color: Colors.black,
+              color: AppTheme.getRefreshIndicatorColor(
+                  Theme.of(context).brightness),
+              backgroundColor: AppTheme.getRefreshIndicatorBackgroundColor(),
               onRefresh: () async {
                 setState(() {
                   _fetchDocuments();
