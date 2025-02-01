@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:intern_side/screens/cases/view_case_history.dart';
 
 import '../models/case_list.dart';
+import '../screens/cases/view_case_history.dart';
 
 class CaseCard extends StatelessWidget {
   final CaseListData caseItem;
