@@ -5,10 +5,10 @@ import 'package:intern_side/services/case_services.dart';
 
 import '../models/intern.dart';
 import '../services/shared_pref.dart';
+import 'Case_History/case_history.dart';
+import 'Tasks/task_page.dart';
 import 'appbar/notification_drawer.dart';
 import 'appbar/settings_drawer.dart';
-import 'cases/case_history.dart';
-import 'cases/task_page.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});

@@ -6,7 +6,6 @@ import '../models/case_list.dart';
 import '../utils/constants.dart';
 
 class ApiService {
-
   // General method to send requests
   static Future<Map<String, dynamic>> _sendRequest(
       String endpoint, Map<String, dynamic> bodyData) async {
@@ -77,7 +76,7 @@ class CaseApiService {
     if (response.statusCode == 200) {
       final responseData = json.decode(await response.stream.bytesToString());
       if (responseData['success']) {
-        print("Response Data: ${responseData['data']}");
+        // print("Response Data: ${responseData['data']}");
         final List<dynamic> data = responseData['data'];
         return data.map((item) => CaseListData.fromJson(item)).toList();
       } else {

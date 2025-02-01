@@ -2,12 +2,12 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:http/http.dart' as http;
-import 'package:intern_side/screens/cases/reassign_task_page.dart';
+import 'package:intern_side/screens/Tasks/reassign_task_page.dart';
 import 'package:intern_side/services/shared_pref.dart';
 import '../../components/basicUIcomponent.dart';
 import '../../models/intern.dart';
 import '../../models/task_item_list.dart';
-import 'add_remark_page.dart';
+import '../Tasks/add_remark_page.dart';
 import 'show_remark_page.dart';
 
 class TaskPage extends StatefulWidget {

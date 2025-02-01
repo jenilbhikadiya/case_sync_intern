@@ -172,7 +172,7 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
     // Extract year and month from the search result
     final yearMonth = _resultTabs[_currentResultIndex].split('-');
     final targetYear = (yearMonth[0] == '') ? '-1' : yearMonth[0];
-    print(targetYear);
+    // print(targetYear);
     final targetMonth = yearMonth[1];
 
     // Ensure a state update occurs for any valid year
@@ -180,7 +180,7 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
       setState(() {
         // Update the year and months
         selectedYear = targetYear;
-        print(selectedYear);
+        // print(selectedYear);
         monthsWithCases = _getMonthsForYear(selectedYear);
 
         // Recreate the TabController for the new year
@@ -210,7 +210,7 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
         }
       });
     } else {
-      print("Target year $targetYear not found in caseData");
+      // print("Target year $targetYear not found in caseData");
     }
   }
 
@@ -435,9 +435,9 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
                   backgroundColor:
                       AppTheme.getRefreshIndicatorBackgroundColor(),
                   onRefresh: () async {
-                    print("Before refresh: ${caseData[selectedYear]}");
+                    // print("Before refresh: ${caseData[selectedYear]}");
                     await populateCaseData(widget.internId);
-                    print("After refresh: ${caseData[selectedYear]}");
+                    // print("After refresh: ${caseData[selectedYear]}");
                     setState(() {
                       monthsWithCases = _getMonthsForYear(selectedYear);
                     });

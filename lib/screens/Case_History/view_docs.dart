@@ -67,7 +67,7 @@ class ViewDocsState extends State<ViewDocs> {
 
             // Add only unique documents
             _documents.addAll(filteredDocuments);
-            print("Filtered unique documents: $_documents");
+            // print("Filtered unique documents: $_documents");
           });
         } else {
           if (!mounted) return;
@@ -77,7 +77,7 @@ class ViewDocsState extends State<ViewDocs> {
         if (!mounted) return;
         setState(() => _errorMessage =
             'Failed to fetch documents. Status code: ${response.statusCode}');
-        print('Request body: ${{'case_id': widget.caseId}}');
+        // print('Request body: ${{'case_id': widget.caseId}}');
       }
     } catch (e) {
       if (!mounted) return;

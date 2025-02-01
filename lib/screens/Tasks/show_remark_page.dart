@@ -33,7 +33,7 @@ class _RemarkPageState extends State<ShowRemarkPage> {
     });
 
     try {
-      debugPrint('Task ID: ${widget.taskItem.task_id}');
+      // debugPrint('Task ID: ${widget.taskItem.task_id}');
       if (widget.taskItem.task_id.isEmpty) {
         setState(() {
           _errorMessage = 'Task ID is missing or invalid.';
@@ -50,8 +50,8 @@ class _RemarkPageState extends State<ShowRemarkPage> {
       final streamedResponse = await request.send();
       final response = await http.Response.fromStream(streamedResponse);
 
-      debugPrint('Response Status Code: ${response.statusCode}');
-      debugPrint('Response Body: ${response.body}');
+      // debugPrint('Response Status Code: ${response.statusCode}');
+      // debugPrint('Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -74,7 +74,7 @@ class _RemarkPageState extends State<ShowRemarkPage> {
         });
       }
     } catch (e) {
-      debugPrint('Error occurred: $e');
+      // debugPrint('Error occurred: $e');
       setState(() {
         _errorMessage = 'An error occurred: $e';
       });

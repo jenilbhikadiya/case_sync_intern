@@ -59,4 +59,23 @@ class AppTheme {
   static Color getRefreshIndicatorBackgroundColor() {
     return Colors.white; // Always white background
   }
+
+  // Calendar Theme
+  static ThemeData calendarTheme = ThemeData(
+    colorScheme: const ColorScheme.light(
+      primary: Colors.black, // Selected date color
+      onPrimary: Colors.white, // Text on selected date
+      surface: Colors.white, // Background color
+      onSurface: Colors.black, // Default text color
+    ),
+    textTheme: const TextTheme(
+      titleLarge: TextStyle(
+          fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black),
+      bodyMedium: TextStyle(fontSize: 16, color: Colors.black),
+    ),
+    dialogBackgroundColor: Colors.white,
+    buttonTheme: const ButtonThemeData(
+      textTheme: ButtonTextTheme.primary,
+    ),
+  );
 }

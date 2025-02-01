@@ -12,21 +12,21 @@ Future<void> populateCaseData(String internId) async {
     caseData.clear();
     years.clear();
 
-    print('Entered Here');
+    // print('Entered Here');
 
     // Fetch data from API
     final List<CaseListData> cases =
         await CaseApiService.fetchCaseList(internId);
 
-    print(cases.length);
+    // print(cases.length);
 
     if (cases.isEmpty) {
-      print("No cases found for intern: $internId");
+      // print("No cases found for intern: $internId");
       return; // Exit early if no data
     }
 
     if (kDebugMode) {
-      print("Fetched cases: ${cases.length}");
+      // print("Fetched cases: ${cases.length}");
     }
 
     for (var caseItem in cases) {
@@ -45,9 +45,9 @@ Future<void> populateCaseData(String internId) async {
 
     years.sort();
 
-    print("Case data populated successfully: ${caseData.length} years loaded.");
+    // print("Case data populated successfully: ${caseData.length} years loaded.");
   } catch (e) {
-    print("Error populating case data: $e");
+    // print("Error populating case data: $e");
   }
 }
 
