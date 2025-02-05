@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../forms/login.dart';
@@ -29,10 +28,14 @@ class SplashScreenState extends State<SplashScreen> {
 
     if (userData != null) {
       // User is logged in, navigate to HomeScreen
-      Get.off(() => const HomeScreen());
+      // Get.off(() => const HomeScreen());
+      Navigator.pushReplacement(
+          context, MaterialPageRoute(builder: (context) => const HomeScreen()));
     } else {
       // User is not logged in, navigate to LoginScreen
-      Get.off(() => LoginScreen());
+      // Get.off(() => LoginScreen());
+      Navigator.pushReplacement(context,
+          MaterialPageRoute(builder: (context) => const LoginScreen()));
     }
   }
 

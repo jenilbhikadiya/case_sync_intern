@@ -1,13 +1,14 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:http/http.dart' as http;
-import 'package:flutter/material.dart';
+
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
+
 import '../../models/task_item_list.dart';
 import '../../services/shared_pref.dart';
-import '../../utils/constants.dart';
 
 class AddRemarkPage extends StatefulWidget {
   final TaskItem taskItem;
@@ -361,8 +362,8 @@ class AddRemarkPageState extends State<AddRemarkPage> {
     DateTime? picked = await showDatePicker(
       context: context,
       initialDate: date,
-      firstDate: DateTime(2021),
-      lastDate: DateTime(2101),
+      firstDate: DateTime(1800),
+      lastDate: DateTime(2100),
     );
     if (picked != null && picked != date) {
       setState(() {

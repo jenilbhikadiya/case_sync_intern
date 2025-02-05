@@ -1,5 +1,6 @@
-import 'package:flutter/material.dart';
 import 'dart:convert';
+
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:intern_side/services/shared_pref.dart';
 import 'package:intl/intl.dart';
@@ -138,7 +139,7 @@ class _ReAssignTaskPageState extends State<ReAssignTaskPage> {
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: _selectedDate,
-      firstDate: DateTime(2000),
+      firstDate: DateTime(1800),
       lastDate: DateTime(2101),
     );
     if (picked != null && picked != _selectedDate) {

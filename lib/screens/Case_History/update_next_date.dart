@@ -1,7 +1,9 @@
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:intern_side/utils/constants.dart';
+
 import '../../components/basicUIcomponent.dart';
 
 class UpdateNextDateForm extends StatefulWidget {
@@ -119,7 +121,7 @@ class _UpdateNextDateFormState extends State<UpdateNextDateForm> {
     DateTime? picked = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
-      firstDate: DateTime.now(),
+      firstDate: DateTime(1800),
       lastDate: DateTime(2100),
       builder: (context, child) {
         return Theme(data: AppTheme.calendarTheme, child: child!);

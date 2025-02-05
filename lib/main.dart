@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:intern_side/screens/cases/splash_screen.dart';
+
 import 'theme_data/app_theme.dart';
 
 void main() {
@@ -12,7 +12,7 @@ class CaseSyncApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GetMaterialApp(
+    return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: AppTheme.theme,
       home: const SplashScreen(),

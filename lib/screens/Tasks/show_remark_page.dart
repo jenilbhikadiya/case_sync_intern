@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:http/http.dart' as http;
@@ -12,10 +13,10 @@ class ShowRemarkPage extends StatefulWidget {
   const ShowRemarkPage({Key? key, required this.taskItem}) : super(key: key);
 
   @override
-  _RemarkPageState createState() => _RemarkPageState();
+  RemarkPageState createState() => RemarkPageState();
 }
 
-class _RemarkPageState extends State<ShowRemarkPage> {
+class RemarkPageState extends State<ShowRemarkPage> {
   final List<Map<String, dynamic>> _remarks = [];
   bool _isLoading = true;
   String _errorMessage = '';
@@ -23,10 +24,10 @@ class _RemarkPageState extends State<ShowRemarkPage> {
   @override
   void initState() {
     super.initState();
-    _fetchRemarkData();
+    fetchRemarkData();
   }
 
-  Future<void> _fetchRemarkData() async {
+  Future<void> fetchRemarkData() async {
     setState(() {
       _isLoading = true;
       _errorMessage = '';
@@ -128,7 +129,7 @@ class _RemarkPageState extends State<ShowRemarkPage> {
         ),
       ),
       body: RefreshIndicator(
-        onRefresh: _fetchRemarkData,
+        onRefresh: fetchRemarkData,
         color: AppTheme.getRefreshIndicatorColor(Theme.of(context).brightness),
         backgroundColor: AppTheme.getRefreshIndicatorBackgroundColor(),
         child: _isLoading
@@ -168,11 +169,11 @@ class _RemarkPageState extends State<ShowRemarkPage> {
                                   _formatDate(remark['dos']),
                                 ),
                                 const SizedBox(height: 16),
-                                _buildField(
-                                  'Next Date',
-                                  _formatDate(remark['nextdate']),
-                                ),
-                                const SizedBox(height: 16),
+                                // _buildField(
+                                //   'Next Date',
+                                //   _formatDate(remark['nextdate']),
+                                // ),
+                                // const SizedBox(height: 16),
                                 _buildField(
                                     'Status', remark['status'] ?? 'Pending'),
                                 const Divider(thickness: 1),

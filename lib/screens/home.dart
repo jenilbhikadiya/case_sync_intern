@@ -1,7 +1,12 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:get/get.dart';
+import 'package:http/http.dart' as http;
+import 'package:intern_side/models/notification_item.dart';
 import 'package:intern_side/services/case_services.dart';
+import 'package:intern_side/utils/constants.dart';
 
 import '../models/intern.dart';
 import '../services/shared_pref.dart';
@@ -18,68 +23,79 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  late Intern? _userData;
+  ValueNotifier<int> caseCount = ValueNotifier<int>(-1);
+  ValueNotifier<int> taskCount = ValueNotifier<int>(-1);
+  String errorMessage = '';
+  late Intern? user;
+  ValueNotifier<List<NotificationItem>> taskList =
+      ValueNotifier<List<NotificationItem>>([]);
 
   @override
   void initState() {
     super.initState();
+    initialisation();
   }
 
-  Future<Intern?> initializeUserData() async {
-    Intern? user = await SharedPrefService.getUser();
+  Future<void> initialisation() async {
+    taskList.value = await fetchInternData();
+  }
+
+  Future<List<NotificationItem>> fetchInternData() async {
+    user = await SharedPrefService.getUser();
+    print("UserId: ${user?.id}");
     if (user != null) {
-      await populateCaseData(user.id);
+      print("Fetching");
+      taskList.value = await fetchCaseAndTaskCounters(user!.id);
+      print("Fetched: ");
+      populateCaseData(user!.id);
+
+      return taskList.value;
     }
-    return user;
+    return [];
+  }
+
+  Future<List<NotificationItem>> fetchCaseAndTaskCounters(
+      String internId) async {
+    try {
+      final response = await http.post(Uri.parse('$baseUrl/notification'),
+          body: {'intern_id': internId});
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        if (responseData['success']) {
+          taskList.value = (responseData['data'] as List)
+              .map((item) => NotificationItem.fromJson(item))
+              .toList();
+
+          caseCount.value =
+              int.parse(responseData['counters'][0]['case_count']);
+          taskCount.value =
+              int.parse(responseData['counters'][1]['task_count']);
+          return taskList.value;
+        } else {
+          errorMessage = responseData['message'];
+        }
+      } else {
+        errorMessage = "Failed to fetch data.";
+      }
+    } catch (e) {
+      errorMessage = "Error: $e";
+    }
+    return [];
   }
 
   String getGreeting() {
     var hour = DateTime.now().hour;
-    if (hour < 12) {
-      return 'Good Morning';
-    } else if (hour < 17) {
-      return 'Good Afternoon';
-    } else {
-      return 'Good Evening';
-    }
+    if (hour < 12) return 'Good Morning';
+    if (hour < 17) return 'Good Afternoon';
+    return 'Good Evening';
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<Intern?>(
-      future: initializeUserData(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
-            backgroundColor: Color.fromRGBO(243, 243, 243, 1),
-            body: Center(
-                child: CircularProgressIndicator(
-              color: Colors.black,
-              backgroundColor: Colors.white,
-            )),
-          );
-        } else if (snapshot.hasError) {
-          return Center(child: Text('Error: ${snapshot.error}'));
-        } else if (!snapshot.hasData || snapshot.data == null) {
-          return const Center(child: Text('No user data available'));
-        }
-
-        // Assign the fetched user data
-        _userData = snapshot.data!;
-
-        return _buildHomeScreen();
-      },
-    );
-  }
-
-  Widget _buildHomeScreen() {
     final screenWidth = MediaQuery.of(context).size.width;
-
     double cardWidth = screenWidth * 0.40;
     double cardHeight = 72;
-    double cardIconPositionX = cardWidth * 0.08;
-    double cardIconPositionY = cardHeight * 0.21;
-    double cardTextPositionY = cardHeight * 0.57;
 
     return Scaffold(
       backgroundColor: const Color.fromRGBO(243, 243, 243, 1),
@@ -87,35 +103,75 @@ class _HomeScreenState extends State<HomeScreen> {
         surfaceTintColor: Colors.transparent,
         backgroundColor: const Color.fromRGBO(243, 243, 243, 1),
         elevation: 0,
-        leadingWidth: 86,
-        leading: IconButton(
-          icon: SvgPicture.asset(
-            'assets/icons/notification.svg',
-            width: 35,
-            height: 35,
+        leading: SizedBox(
+          width: 40,
+          height: 40,
+          child: Center(
+            child: Stack(
+              children: [
+                IconButton(
+                  icon: SvgPicture.asset('assets/icons/notification.svg',
+                      width: 35, height: 35),
+                  onPressed: () {
+                    showModalBottomSheet(
+                      context: context,
+                      backgroundColor: const Color.fromRGBO(201, 201, 201, 1),
+                      builder: (context) => NotificationDrawer(
+                        taskItem: taskList.value,
+                        onRefresh: fetchInternData,
+                      ),
+                    );
+                  },
+                ),
+                ValueListenableBuilder<List<NotificationItem>>(
+                  valueListenable: taskList,
+                  builder: (context, cases, child) {
+                    return cases.isNotEmpty
+                        ? // Show badge only if there are notifications
+                        Positioned(
+                            right: 5,
+                            top: -3,
+                            child: Container(
+                              padding: const EdgeInsets.all(5),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Color(0xFF292D32),
+                                  width: 2,
+                                ),
+                              ),
+                              constraints: const BoxConstraints(
+                                minWidth: 20,
+                                minHeight: 20,
+                              ),
+                              child: Text(
+                                taskList.value.length.toString(),
+                                style: const TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          )
+                        : const SizedBox();
+                  },
+                ),
+              ],
+            ),
           ),
-          onPressed: () {
-            showModalBottomSheet(
-              context: context,
-              isScrollControlled: true,
-              backgroundColor: const Color.fromRGBO(201, 201, 201, 1),
-              builder: (context) => const NotificationDrawer(),
-            );
-          },
         ),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 20),
             child: IconButton(
-              icon: SvgPicture.asset(
-                'assets/icons/settings.svg',
-                width: 35,
-                height: 35,
-              ),
+              icon: SvgPicture.asset('assets/icons/settings.svg',
+                  width: 35, height: 35),
               onPressed: () {
                 showModalBottomSheet(
                   context: context,
-                  isScrollControlled: true,
                   backgroundColor: const Color.fromRGBO(201, 201, 201, 1),
                   builder: (context) => const SettingsDrawer(),
                 );
@@ -130,68 +186,72 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                getGreeting(),
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.black,
-                  height: 0.95,
-                ),
+              FutureBuilder<Intern?>(
+                future: SharedPrefService.getUser(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const CircularProgressIndicator(color: Colors.black);
+                  } else if (snapshot.hasError) {
+                    return const Text('Error loading user data');
+                  } else if (!snapshot.hasData || snapshot.data == null) {
+                    return const Text('No user data available');
+                  }
+
+                  Intern user = snapshot.data!;
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(getGreeting(),
+                          style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.black)),
+                      Text(
+                        user.name,
+                        style: const TextStyle(
+                            fontSize: 40,
+                            fontWeight: FontWeight.w900,
+                            color: Color.fromRGBO(37, 27, 70, 1.0)),
+                      ),
+                      const SizedBox(height: 20),
+                      const Text('Cases',
+                          style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black)),
+                      const SizedBox(height: 10),
+                      GridView.count(
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 2,
+                        mainAxisSpacing: 2,
+                        childAspectRatio: cardWidth / cardHeight,
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        children: [
+                          _buildCard(
+                            title: 'Tasks',
+                            iconPath: 'assets/icons/tasks.svg',
+                            cardWidth: cardWidth,
+                            cardHeight: cardHeight,
+                            destinationScreen: TaskPage(),
+                            counterNotifier: taskCount,
+                          ),
+                          _buildCard(
+                            title: 'Case History',
+                            iconPath: 'assets/icons/case_history.svg',
+                            cardWidth: cardWidth,
+                            cardHeight: cardHeight,
+                            destinationScreen:
+                                CaseHistoryScreen(internId: user.id),
+                            counterNotifier: caseCount,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                    ],
+                  );
+                },
               ),
-              Text(
-                _userData!.name ??
-                    'User', // _userData is now guaranteed to be initialized
-                style: const TextStyle(
-                  fontSize: 40,
-                  fontWeight: FontWeight.w900,
-                  color: Color.fromRGBO(37, 27, 70, 1.0),
-                  height: 1.1,
-                ),
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                'Cases',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                ),
-              ),
-              const SizedBox(height: 10),
-              GridView.count(
-                crossAxisCount: 2,
-                crossAxisSpacing: 2,
-                mainAxisSpacing: 2,
-                childAspectRatio: cardWidth / cardHeight,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                children: [
-                  _buildCard(
-                    'Task',
-                    'assets/icons/unassigned.svg',
-                    cardWidth,
-                    cardHeight,
-                    cardIconPositionX,
-                    cardIconPositionY,
-                    cardTextPositionY,
-                    TaskPage(),
-                  ),
-                  _buildCard(
-                    'Case History',
-                    'assets/icons/case_history.svg',
-                    cardWidth,
-                    cardHeight,
-                    cardIconPositionX,
-                    cardIconPositionY,
-                    cardTextPositionY,
-                    CaseHistoryScreen(
-                      internId: _userData!.id,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
             ],
           ),
         ),
@@ -199,16 +259,15 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildCard(
-    String title,
-    String iconPath,
-    double cardWidth,
-    double cardHeight,
-    double iconPositionX,
-    double iconPositionY,
-    double textPositionY,
-    Widget destinationScreen,
-  ) {
+  Widget _buildCard({
+    required String title,
+    required String iconPath,
+    required double cardWidth,
+    required double cardHeight,
+    required Widget destinationScreen,
+    bool shouldDisplayCounter = true,
+    required ValueNotifier<int> counterNotifier,
+  }) {
     return Card(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
@@ -219,41 +278,107 @@ class _HomeScreenState extends State<HomeScreen> {
         borderRadius: BorderRadius.circular(20),
         child: InkWell(
           borderRadius: BorderRadius.circular(20),
-          onTap: () {
-            Get.to(() => destinationScreen);
+          onTap: () async {
+            HapticFeedback.mediumImpact();
+            var result = await Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => destinationScreen),
+            );
+
+            if (result == false) {
+              fetchCaseAndTaskCounters(user!.id);
+            }
           },
-          splashColor: Colors.grey.withOpacity(0.2),
-          child: SizedBox(
-            width: cardWidth,
-            height: cardHeight,
-            child: Stack(
-              children: [
-                Positioned(
-                  left: iconPositionX,
-                  top: iconPositionY,
-                  child: SvgPicture.asset(
-                    iconPath,
-                    width: 24,
-                    height: 24,
-                  ),
-                ),
-                Positioned(
-                  top: textPositionY,
-                  left: iconPositionX,
-                  child: Text(
-                    title,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w500,
-                      fontSize: 13,
-                      color: Colors.black,
+          child: Stack(
+            children: [
+              // Card Content (Icon + Title)
+              SizedBox(
+                width: cardWidth,
+                height: cardHeight,
+                child: Row(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(left: 12.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const SizedBox(height: 4),
+                          SvgPicture.asset(iconPath, width: 30, height: 30),
+                          const SizedBox(height: 4),
+                          Text(
+                            title,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w500,
+                              fontSize: 13,
+                              color: Colors.black,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+
+              // Badge positioned at the top-right corner
+              if (shouldDisplayCounter)
+                Positioned(
+                  top: ((cardHeight / 2) - 19),
+                  right: 8,
+                  child: _BadgeCounter(counterNotifier: counterNotifier),
+                ),
+            ],
           ),
         ),
       ),
+    );
+  }
+}
+
+class _BadgeCounter extends StatelessWidget {
+  final ValueNotifier<int> counterNotifier;
+
+  const _BadgeCounter({required this.counterNotifier});
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<int>(
+      valueListenable: counterNotifier,
+      builder: (context, value, child) {
+        return Container(
+          width: 40, // Fixed size for uniformity
+          height: 40,
+          decoration: BoxDecoration(
+            color: value == -1 ? Colors.transparent : Colors.white,
+            borderRadius: BorderRadius.circular(30), // Circular shape
+            border: Border.all(
+              color: Colors.black,
+              width: 2,
+            ),
+          ),
+          alignment: Alignment.center,
+          child: value == -1
+              ? SizedBox(
+                  width: 18,
+                  height: 6,
+                  child: LinearProgressIndicator(
+                    backgroundColor: Colors.white,
+                    color: Colors.black,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                )
+              : Text(
+                  "${value == -2 ? "</>" : value}",
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                    color: Colors.black,
+                  ),
+                ),
+        );
+      },
     );
   }
 }
