@@ -52,6 +52,7 @@ class _LoginScreenState extends State<LoginScreen> {
       try {
         // Call the login API
         var response = await ApiService.loginUser(email, password);
+        print(response['success']);
 
         // Check if the login was successful
         if (response['success'] == true) {
@@ -72,9 +73,16 @@ class _LoginScreenState extends State<LoginScreen> {
           }
 
           Get.offAll(() => const HomeScreen());
+          Navigator.pushReplacement(context,
+              MaterialPageRoute(builder: (context) => const HomeScreen()));
         } else {
-          Get.snackbar('Login failed, please try again.',
-              'Incorrect Username or Password');
+          if (response['message'] == false) {
+            Get.snackbar('Error',
+                'Login failed because of no Internet Connection. Check the Internet Connection and try again.');
+            return;
+          } else {
+            Get.snackbar('Login failed', 'Incorrect Username or Password');
+          }
         }
       } catch (e) {
         print('An error occurred: $e');

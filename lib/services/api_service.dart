@@ -38,7 +38,7 @@ class ApiService {
         };
       }
     } catch (error) {
-      return {'success': false, 'message': 'Error occurred: $error'};
+      return {'success': false, 'message': false};
     }
   }
 

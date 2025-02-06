@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'dart:convert';
 
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -19,10 +21,12 @@ class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<HomeScreen> createState() => HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class HomeScreenState extends State<HomeScreen> {
+  StreamSubscription<List<ConnectivityResult>>? subscription;
+  bool isInternetConnected = true;
   ValueNotifier<int> caseCount = ValueNotifier<int>(-1);
   ValueNotifier<int> taskCount = ValueNotifier<int>(-1);
   String errorMessage = '';
@@ -36,6 +40,8 @@ class _HomeScreenState extends State<HomeScreen> {
     initialisation();
   }
 
+  Future<void> checkInternetConnection() async {}
+
   Future<void> initialisation() async {
     taskList.value = await fetchInternData();
   }
@@ -46,7 +52,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (user != null) {
       print("Fetching");
       taskList.value = await fetchCaseAndTaskCounters(user!.id);
-      print("Fetched: ");
+      print("Fetched: ${taskList.value}");
       populateCaseData(user!.id);
 
       return taskList.value;
@@ -99,163 +105,184 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       backgroundColor: const Color.fromRGBO(243, 243, 243, 1),
-      appBar: AppBar(
-        surfaceTintColor: Colors.transparent,
-        backgroundColor: const Color.fromRGBO(243, 243, 243, 1),
-        elevation: 0,
-        leading: SizedBox(
-          width: 40,
-          height: 40,
-          child: Center(
-            child: Stack(
-              children: [
-                IconButton(
-                  icon: SvgPicture.asset('assets/icons/notification.svg',
-                      width: 35, height: 35),
-                  onPressed: () {
-                    showModalBottomSheet(
-                      context: context,
-                      backgroundColor: const Color.fromRGBO(201, 201, 201, 1),
-                      builder: (context) => NotificationDrawer(
-                        taskItem: taskList.value,
-                        onRefresh: fetchInternData,
-                      ),
-                    );
-                  },
-                ),
-                ValueListenableBuilder<List<NotificationItem>>(
-                  valueListenable: taskList,
-                  builder: (context, cases, child) {
-                    return cases.isNotEmpty
-                        ? // Show badge only if there are notifications
-                        Positioned(
-                            right: 5,
-                            top: -3,
-                            child: Container(
-                              padding: const EdgeInsets.all(5),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: Color(0xFF292D32),
-                                  width: 2,
-                                ),
-                              ),
-                              constraints: const BoxConstraints(
-                                minWidth: 20,
-                                minHeight: 20,
-                              ),
-                              child: Text(
-                                taskList.value.length.toString(),
-                                style: const TextStyle(
-                                  color: Colors.black,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
+      appBar: isInternetConnected
+          ? AppBar(
+              surfaceTintColor: Colors.transparent,
+              backgroundColor: const Color.fromRGBO(243, 243, 243, 1),
+              elevation: 0,
+              leading: SizedBox(
+                width: 40,
+                height: 40,
+                child: Center(
+                  child: Stack(
+                    children: [
+                      IconButton(
+                        icon: SvgPicture.asset('assets/icons/notification.svg',
+                            width: 35, height: 35),
+                        onPressed: () {
+                          showModalBottomSheet(
+                            context: context,
+                            backgroundColor:
+                                const Color.fromRGBO(201, 201, 201, 1),
+                            builder: (context) => NotificationDrawer(
+                              taskItem: taskList.value,
+                              onRefresh: fetchInternData,
                             ),
-                          )
-                        : const SizedBox();
-                  },
+                          );
+                        },
+                      ),
+                      ValueListenableBuilder<List<NotificationItem>>(
+                        valueListenable: taskList,
+                        builder: (context, cases, child) {
+                          return cases.isNotEmpty
+                              ? // Show badge only if there are notifications
+                              Positioned(
+                                  right: 5,
+                                  top: -3,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(5),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: Color(0xFF292D32),
+                                        width: 2,
+                                      ),
+                                    ),
+                                    constraints: const BoxConstraints(
+                                      minWidth: 20,
+                                      minHeight: 20,
+                                    ),
+                                    child: Text(
+                                      taskList.value.length.toString(),
+                                      style: const TextStyle(
+                                        color: Colors.black,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                )
+                              : const SizedBox();
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              actions: [
+                Padding(
+                  padding: const EdgeInsets.only(right: 20),
+                  child: IconButton(
+                    icon: SvgPicture.asset('assets/icons/settings.svg',
+                        width: 35, height: 35),
+                    onPressed: () {
+                      showModalBottomSheet(
+                        context: context,
+                        backgroundColor: const Color.fromRGBO(201, 201, 201, 1),
+                        builder: (context) => const SettingsDrawer(),
+                      );
+                    },
+                  ),
                 ),
               ],
-            ),
-          ),
-        ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 20),
-            child: IconButton(
-              icon: SvgPicture.asset('assets/icons/settings.svg',
-                  width: 35, height: 35),
-              onPressed: () {
-                showModalBottomSheet(
-                  context: context,
-                  backgroundColor: const Color.fromRGBO(201, 201, 201, 1),
-                  builder: (context) => const SettingsDrawer(),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10),
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              FutureBuilder<Intern?>(
-                future: SharedPrefService.getUser(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const CircularProgressIndicator(color: Colors.black);
-                  } else if (snapshot.hasError) {
-                    return const Text('Error loading user data');
-                  } else if (!snapshot.hasData || snapshot.data == null) {
-                    return const Text('No user data available');
-                  }
+            )
+          : AppBar(),
+      body: isInternetConnected
+          ? Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10),
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    FutureBuilder<Intern?>(
+                      future: SharedPrefService.getUser(),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const CircularProgressIndicator(
+                              color: Colors.black);
+                        } else if (snapshot.hasError) {
+                          return const Text('Error loading user data');
+                        } else if (!snapshot.hasData || snapshot.data == null) {
+                          return const Text('No user data available');
+                        }
 
-                  Intern user = snapshot.data!;
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(getGreeting(),
-                          style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.black)),
-                      Text(
-                        user.name,
-                        style: const TextStyle(
-                            fontSize: 40,
-                            fontWeight: FontWeight.w900,
-                            color: Color.fromRGBO(37, 27, 70, 1.0)),
-                      ),
-                      const SizedBox(height: 20),
-                      const Text('Cases',
-                          style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black)),
-                      const SizedBox(height: 10),
-                      GridView.count(
-                        crossAxisCount: 2,
-                        crossAxisSpacing: 2,
-                        mainAxisSpacing: 2,
-                        childAspectRatio: cardWidth / cardHeight,
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        children: [
-                          _buildCard(
-                            title: 'Tasks',
-                            iconPath: 'assets/icons/tasks.svg',
-                            cardWidth: cardWidth,
-                            cardHeight: cardHeight,
-                            destinationScreen: TaskPage(),
-                            counterNotifier: taskCount,
-                          ),
-                          _buildCard(
-                            title: 'Case History',
-                            iconPath: 'assets/icons/case_history.svg',
-                            cardWidth: cardWidth,
-                            cardHeight: cardHeight,
-                            destinationScreen:
-                                CaseHistoryScreen(internId: user.id),
-                            counterNotifier: caseCount,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-                    ],
-                  );
-                },
+                        Intern user = snapshot.data!;
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(getGreeting(),
+                                style: const TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w500,
+                                    color: Colors.black)),
+                            Text(
+                              user.name,
+                              style: const TextStyle(
+                                  fontSize: 40,
+                                  fontWeight: FontWeight.w900,
+                                  color: Color.fromRGBO(37, 27, 70, 1.0)),
+                            ),
+                            const SizedBox(height: 20),
+                            const Text('Cases',
+                                style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black)),
+                            const SizedBox(height: 10),
+                            GridView.count(
+                              crossAxisCount: 2,
+                              crossAxisSpacing: 2,
+                              mainAxisSpacing: 2,
+                              childAspectRatio: cardWidth / cardHeight,
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              children: [
+                                _buildCard(
+                                  title: 'Tasks',
+                                  iconPath: 'assets/icons/tasks.svg',
+                                  cardWidth: cardWidth,
+                                  cardHeight: cardHeight,
+                                  destinationScreen: const TaskPage(),
+                                  counterNotifier: taskCount,
+                                ),
+                                _buildCard(
+                                  title: 'Case History',
+                                  iconPath: 'assets/icons/case_history.svg',
+                                  cardWidth: cardWidth,
+                                  cardHeight: cardHeight,
+                                  destinationScreen:
+                                      CaseHistoryScreen(internId: user.id),
+                                  counterNotifier: caseCount,
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 20),
+                          ],
+                        );
+                      },
+                    ),
+                  ],
+                ),
               ),
-            ],
-          ),
-        ),
-      ),
+            )
+          : GestureDetector(
+              onLongPress: () {
+                initState();
+              },
+              child: const Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text('No Internet Connected.'),
+                    Text('Long Press the Screen to try again.')
+                  ],
+                ),
+              ),
+            ),
     );
   }
 
