@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart'; // Add this import for GetX
+import 'package:get/get.dart';
 import 'package:intern_side/screens/cases/splash_screen.dart';
 import 'theme_data/app_theme.dart';
 

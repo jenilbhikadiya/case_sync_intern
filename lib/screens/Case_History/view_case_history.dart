@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:intern_side/screens/Case_History/view_docs.dart';
@@ -77,6 +78,8 @@ class _ViewCaseHistoryScreenState extends State<ViewCaseHistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    double screenWidth = MediaQuery.of(context).size.width;
+
     return Scaffold(
       appBar: ListAppBar(
         onSearchPressed: () {},
@@ -89,7 +92,7 @@ class _ViewCaseHistoryScreenState extends State<ViewCaseHistoryScreen> {
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           child: Padding(
-            padding: const EdgeInsets.symmetric(),
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Column(
               children: [
                 _isLoading
@@ -106,66 +109,49 @@ class _ViewCaseHistoryScreenState extends State<ViewCaseHistoryScreen> {
                           )
                         : Column(
                             children: _caseHistory.map((caseData) {
-                              return Card(
-                                margin:
-                                    const EdgeInsets.symmetric(vertical: 8.0),
-                                elevation: 3,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(20),
-                                  side: const BorderSide(
-                                      color: Colors.black,
-                                      style: BorderStyle.solid),
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(12.0),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text('Intern: ${caseData['intern_name']}',
-                                          style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 18)),
-                                      const SizedBox(height: 0),
-                                      Text(
-                                          'Advocate: ${caseData['advocate_name']}'),
-                                      Text('Stage: ${caseData['stage_name']}',
-                                          style: const TextStyle(
-                                              fontWeight: FontWeight.bold)),
-                                      Text('Remarks: ${caseData['remarks']}'),
-                                      Text(
-                                          'Date of Summon: ${caseData['fdos']}'),
-                                      Text(
-                                          'Next Date: ${caseData['nextdate']}'),
-                                      Text('Status: ${caseData['status']}'),
-                                    ],
+                              return Center(
+                                child: Card(
+                                  margin:
+                                      const EdgeInsets.symmetric(vertical: 8.0),
+                                  elevation: 3,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                    side: const BorderSide(
+                                        color: Colors.black,
+                                        style: BorderStyle.solid),
+                                  ),
+                                  child: Container(
+                                    width: screenWidth *
+                                        0.9, // Adjust width according to screen width
+                                    padding: const EdgeInsets.all(12.0),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                            'Intern: ${caseData['intern_name']}',
+                                            style: const TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 18)),
+                                        const SizedBox(height: 0),
+                                        Text(
+                                            'Advocate: ${caseData['advocate_name']}'),
+                                        Text('Stage: ${caseData['stage_name']}',
+                                            style: const TextStyle(
+                                                fontWeight: FontWeight.bold)),
+                                        Text('Remarks: ${caseData['remarks']}'),
+                                        Text(
+                                            'Date of Summon: ${caseData['fdos']}'),
+                                        Text(
+                                            'Next Date: ${caseData['nextdate']}'),
+                                        Text('Status: ${caseData['status']}'),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               );
                             }).toList(),
                           ),
-                const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    ElevatedButton(
-                      onPressed: () {
-                        // Add functionality for adding next date
-                      },
-                      child: const Text('Add Next Date'),
-                    ),
-                    ElevatedButton(
-                      onPressed: () {
-                        // Add functionality for adding next stage
-                      },
-                      child: const Text('Add Next Stage'),
-                    ),
-                  ],
-                ),
-                ElevatedButton(
-                  onPressed: _viewDocument,
-                  child: const Text('View Document'),
-                ),
                 const SizedBox(height: 20),
               ],
             ),
