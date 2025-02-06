@@ -31,12 +31,10 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  /// Validation for the User ID (email field)
   String? _validateUserID(String? value) {
     return validateAndTrimField(value, 'User ID');
   }
 
-  /// Validation for the password
   String? _validatePassword(String? value) {
     return validateAndTrimField(value, 'Password');
   }
@@ -48,7 +46,6 @@ class _LoginScreenState extends State<LoginScreen> {
         _errorMessage = '';
       });
 
-      // Trim the text values to ensure no leading/trailing spaces are included
       String email = _emailController.text.trim();
       String password = _passwordController.text.trim();
 

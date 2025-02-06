@@ -16,33 +16,25 @@ class ApiService {
       );
       request.fields.addAll({'data': jsonEncode(bodyData)});
 
-      // Send the request and handle timeout
-      http.StreamedResponse response =
+      http.StreamedResponse streamedResponse =
           await request.send().timeout(const Duration(seconds: 10));
 
-      // Handle response status
-      if (response.statusCode == 200) {
-        String responseBody = await response.stream.bytesToString();
+      String responseBody = await streamedResponse.stream.bytesToString();
+      print('Raw API Response: $responseBody'); // Debugging
+
+      if (streamedResponse.statusCode == 200) {
         var decodedResponse = jsonDecode(responseBody);
 
-        if (decodedResponse['success'] == true) {
-          return {
-            'success': true,
-            'data': decodedResponse['data'],
-            'message': decodedResponse['message'],
-            'error': decodedResponse['error'] ?? '',
-          };
-        } else {
-          return {
-            'success': false,
-            'message': decodedResponse['message'] ?? 'Operation failed',
-            'error': decodedResponse['error'] ?? '',
-          };
-        }
+        return {
+          'success': decodedResponse['success'] ?? false,
+          'data': decodedResponse['data'] ?? {},
+          'message': decodedResponse['message'] ?? 'No message',
+          'error': decodedResponse['error'] ?? '',
+        };
       } else {
         return {
           'success': false,
-          'message': 'Server error: ${response.reasonPhrase}',
+          'message': 'Server error: ${streamedResponse.reasonPhrase}',
         };
       }
     } catch (error) {
