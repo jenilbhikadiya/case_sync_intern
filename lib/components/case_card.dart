@@ -15,11 +15,11 @@ class CaseCard extends StatefulWidget {
   final bool isTask;
 
   const CaseCard({
-    Key? key,
+    super.key,
     required this.caseItem,
     this.isHighlighted = false,
     this.isTask = false,
-  }) : super(key: key);
+  });
 
   @override
   _CaseCardState createState() => _CaseCardState();
@@ -150,7 +150,7 @@ class _CaseCardState extends State<CaseCard> {
             ),
             ListTile(
               leading: const Icon(Icons.calendar_month),
-              title: const Text('Update Next Date And Next Stage'),
+              title: const Text('Proceed Case'),
               enabled: !isRealloted,
               onTap: () async {
                 Navigator.pop(context); // Close dropdown first

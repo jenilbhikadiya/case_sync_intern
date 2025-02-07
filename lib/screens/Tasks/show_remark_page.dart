@@ -1,10 +1,10 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:http/http.dart' as http;
-
+import 'package:intern_side/utils/constants.dart';
 import '../../components/basicUIcomponent.dart';
+import '../../components/remark_card.dart';
 import '../../models/task_item_list.dart';
 
 class ShowRemarkPage extends StatefulWidget {
@@ -34,7 +34,6 @@ class RemarkPageState extends State<ShowRemarkPage> {
     });
 
     try {
-      // debugPrint('Task ID: ${widget.taskItem.task_id}');
       if (widget.taskItem.task_id.isEmpty) {
         setState(() {
           _errorMessage = 'Task ID is missing or invalid.';
@@ -43,16 +42,12 @@ class RemarkPageState extends State<ShowRemarkPage> {
         return;
       }
 
-      final uri = Uri.parse(
-          'https://pragmanxt.com/case_sync_pro/services/intern/v1/index.php/task_remark_list');
+      final uri = Uri.parse('$baseUrl/task_remark_list');
       final request = http.MultipartRequest('POST', uri);
       request.fields['task_id'] = widget.taskItem.task_id;
 
       final streamedResponse = await request.send();
       final response = await http.Response.fromStream(streamedResponse);
-
-      // debugPrint('Response Status Code: ${response.statusCode}');
-      // debugPrint('Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -75,7 +70,6 @@ class RemarkPageState extends State<ShowRemarkPage> {
         });
       }
     } catch (e) {
-      // debugPrint('Error occurred: $e');
       setState(() {
         _errorMessage = 'An error occurred: $e';
       });
@@ -83,21 +77,6 @@ class RemarkPageState extends State<ShowRemarkPage> {
       setState(() {
         _isLoading = false;
       });
-    }
-  }
-
-  String _formatDate(String? dateString) {
-    try {
-      if (dateString == null ||
-          dateString.isEmpty ||
-          dateString == "0000-00-00" ||
-          dateString.startsWith("0000")) {
-        return 'N/A';
-      }
-      final parsedDate = DateTime.parse(dateString);
-      return '${parsedDate.day.toString().padLeft(2, '0')}/${parsedDate.month.toString().padLeft(2, '0')}/${parsedDate.year}';
-    } catch (e) {
-      return 'Invalid Date';
     }
   }
 
@@ -134,85 +113,25 @@ class RemarkPageState extends State<ShowRemarkPage> {
         backgroundColor: AppTheme.getRefreshIndicatorBackgroundColor(),
         child: _isLoading
             ? const Center(
-                child: CircularProgressIndicator(
-                color: Colors.black,
-              ))
+                child: CircularProgressIndicator(color: Colors.black))
             : _errorMessage.isNotEmpty
                 ? Center(child: Text(_errorMessage))
                 : SingleChildScrollView(
                     physics: const AlwaysScrollableScrollPhysics(),
                     padding: const EdgeInsets.all(16.0),
-                    child: Card(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12.0),
-                      ),
-                      elevation: 5,
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: _remarks.asMap().entries.map((entry) {
-                            int index = entry.key;
-                            Map<String, dynamic> remark = entry.value;
-                            return Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                _buildField('SR. No.', (index + 1).toString()),
-                                const SizedBox(height: 16),
-                                _buildField('Stage', remark['stage'] ?? 'N/A'),
-                                const SizedBox(height: 16),
-                                _buildField(
-                                    'Remark', remark['remarks'] ?? 'N/A'),
-                                const SizedBox(height: 16),
-                                _buildField(
-                                  'Remark Date',
-                                  _formatDate(remark['dos']),
-                                ),
-                                const SizedBox(height: 16),
-                                // _buildField(
-                                //   'Next Date',
-                                //   _formatDate(remark['nextdate']),
-                                // ),
-                                // const SizedBox(height: 16),
-                                _buildField(
-                                    'Status', remark['status'] ?? 'Pending'),
-                                const Divider(thickness: 1),
-                                const SizedBox(height: 16),
-                              ],
-                            );
-                          }).toList(),
-                        ),
-                      ),
+                    child: Column(
+                      children: _remarks.asMap().entries.map((entry) {
+                        int index = entry.key;
+                        Map<String, dynamic> remark = entry.value;
+
+                        return RemarkCard(
+                          index: index,
+                          remark: remark,
+                        );
+                      }).toList(),
                     ),
                   ),
       ),
-    );
-  }
-
-  Widget _buildField(String label, String value) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          flex: 2,
-          child: Text(
-            label,
-            style: const TextStyle(
-              fontSize: 16.0,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-        Expanded(
-          flex: 3,
-          child: Text(
-            value,
-            style: const TextStyle(
-              fontSize: 16.0,
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

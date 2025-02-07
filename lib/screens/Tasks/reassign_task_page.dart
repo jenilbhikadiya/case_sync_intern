@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:intern_side/services/shared_pref.dart';
+import 'package:intern_side/utils/constants.dart';
 import 'package:intl/intl.dart';
 
 class ReAssignTaskPage extends StatefulWidget {
@@ -76,8 +77,7 @@ class _ReAssignTaskPageState extends State<ReAssignTaskPage> {
   }
 
   Future<void> reassignTask() async {
-    final url = Uri.parse(
-        'https://pragmanxt.com/case_sync_pro/services/intern/v1/index.php/task_reassign');
+    final url = Uri.parse('$baseUrl/task_reassign');
     var request = http.MultipartRequest('POST', url);
 
     request.fields['data'] = jsonEncode({

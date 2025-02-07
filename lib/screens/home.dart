@@ -29,6 +29,9 @@ class HomeScreenState extends State<HomeScreen> {
   bool isInternetConnected = true;
   ValueNotifier<int> caseCount = ValueNotifier<int>(-1);
   ValueNotifier<int> taskCount = ValueNotifier<int>(-1);
+  ValueNotifier<int> todays_case_count = ValueNotifier<int>(-1);
+  ValueNotifier<int> counters_count = ValueNotifier<int>(-1);
+
   String errorMessage = '';
   late Intern? user;
   ValueNotifier<List<NotificationItem>> taskList =
@@ -77,6 +80,11 @@ class HomeScreenState extends State<HomeScreen> {
               int.parse(responseData['counters'][0]['case_count']);
           taskCount.value =
               int.parse(responseData['counters'][1]['task_count']);
+          todays_case_count.value =
+              int.parse(responseData['counters'][2]['todays_case_count']);
+          counters_count.value =
+              int.parse(responseData['counters'][3]['counters_count']);
+
           return taskList.value;
         } else {
           errorMessage = responseData['message'];
@@ -225,6 +233,43 @@ class HomeScreenState extends State<HomeScreen> {
                                   fontSize: 40,
                                   fontWeight: FontWeight.w900,
                                   color: Color.fromRGBO(37, 27, 70, 1.0)),
+                            ),
+                            const Text(
+                              'Notice',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            GridView.count(
+                              crossAxisCount: 2,
+                              crossAxisSpacing: 2,
+                              mainAxisSpacing: 2,
+                              childAspectRatio: cardWidth / cardHeight,
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              children: [
+                                _buildCard(
+                                  title: 'Case Counter',
+                                  iconPath: 'assets/icons/case_counter.svg',
+                                  cardWidth: cardWidth,
+                                  cardHeight: cardHeight,
+                                  destinationScreen: TaskPage(),
+                                  counterNotifier: counters_count,
+                                  shouldDisplayCounter: true,
+                                ),
+                                _buildCard(
+                                  title: 'Today\'s Cases',
+                                  iconPath: 'assets/icons/cases_today.svg',
+                                  cardWidth: cardWidth,
+                                  cardHeight: cardHeight,
+                                  destinationScreen: TaskPage(),
+                                  counterNotifier: todays_case_count,
+                                  shouldDisplayCounter: true,
+                                ),
+                              ],
                             ),
                             const SizedBox(height: 20),
                             const Text('Cases',

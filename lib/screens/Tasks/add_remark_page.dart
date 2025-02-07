@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:intern_side/utils/constants.dart';
 import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -59,8 +60,11 @@ class AddRemarkPageState extends State<AddRemarkPage> {
         _isSubmitting = true;
       });
 
+      final trimmedRemark =
+          _remarkController.text.trimRight(); // Trim bottom spaces
+
       final url = Uri.parse(
-        'https://pragmanxt.com/case_sync_pro/services/intern/v1/index.php/add_task_remark',
+        '$baseUrl/add_task_remark',
       );
 
       try {
@@ -69,7 +73,7 @@ class AddRemarkPageState extends State<AddRemarkPage> {
         // Attach JSON data
         final jsonData = jsonEncode({
           "task_id": widget.task_id,
-          "remark": _remarkController.text,
+          "remark": trimmedRemark, // Use trimmed remark
           "remark_date": DateFormat('yyyy/MM/dd').format(_remarkDate),
           "stage_id": widget.stage_id,
           "case_id": widget.case_id,
@@ -87,13 +91,12 @@ class AddRemarkPageState extends State<AddRemarkPage> {
             File file = File(path.trim());
 
             if (!await file.exists()) {
-              // print("File does not exist at path: $path");
               return;
             }
 
             request.files.add(
               await http.MultipartFile.fromPath(
-                'task_image', // Change from 'documents[]' to 'task_image'
+                'task_image',
                 file.path,
               ),
             );
@@ -103,8 +106,6 @@ class AddRemarkPageState extends State<AddRemarkPage> {
         // Send the request
         var response = await request.send();
         var responseBody = await response.stream.bytesToString();
-        // print("API Response: $responseBody");
-        // print("Document Path: $_documentPath");
 
         if (response.statusCode == 200) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -129,7 +130,6 @@ class AddRemarkPageState extends State<AddRemarkPage> {
             backgroundColor: Colors.red,
           ),
         );
-        // print("$e");
       }
 
       setState(() {
@@ -184,6 +184,7 @@ class AddRemarkPageState extends State<AddRemarkPage> {
               _buildFieldTitle('Remark'),
               _buildTextField(
                 controller: _remarkController,
+                isMultiline: true,
                 inputType: TextInputType.text,
                 label: 'Enter remark',
               ),
@@ -216,6 +217,7 @@ class AddRemarkPageState extends State<AddRemarkPage> {
     required String label,
     required TextEditingController controller,
     required TextInputType inputType,
+    bool isMultiline = false, // Added a flag to allow multiline input
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 20),
@@ -227,7 +229,8 @@ class AddRemarkPageState extends State<AddRemarkPage> {
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         ),
-        keyboardType: inputType,
+        keyboardType: isMultiline ? TextInputType.multiline : inputType,
+        maxLines: isMultiline ? null : 1, // Allows multiple lines if needed
         validator: (value) {
           if (value == null || value.isEmpty) {
             return 'Please enter $label';

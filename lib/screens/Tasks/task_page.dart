@@ -4,6 +4,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:http/http.dart' as http;
 import 'package:intern_side/screens/Tasks/reassign_task_page.dart';
 import 'package:intern_side/services/shared_pref.dart';
+import 'package:intern_side/utils/constants.dart';
 import '../../components/basicUIcomponent.dart';
 import '../../models/intern.dart';
 import '../../models/task_item_list.dart';
@@ -49,8 +50,7 @@ class TaskPageState extends State<TaskPage> {
   }
 
   Future<void> fetchTasks() async {
-    const String url =
-        'https://pragmanxt.com/case_sync_pro/services/intern/v1/index.php/intern_task_list';
+    const String url = '$baseUrl/intern_task_list';
 
     try {
       var request = http.MultipartRequest('POST', Uri.parse(url));
@@ -205,7 +205,7 @@ class TaskPageState extends State<TaskPage> {
                   ? ListView.builder(
                       itemCount: taskList.length,
                       itemBuilder: (context, index) {
-                        final taskItem = taskList.reversed.toList()[index];
+                        final taskItem = taskList.toList()[index];
                         return GestureDetector(
                           onTap: () {
                             _showDropdownMenu(context, taskItem);

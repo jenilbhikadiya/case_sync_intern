@@ -4,8 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../forms/login.dart';
-import '../home.dart';
+import 'forms/login.dart';
+import 'home.dart';
+
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
