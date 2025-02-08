@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:intern_side/screens/Case_History/task_info_screen.dart';
@@ -124,27 +123,6 @@ class _ViewCaseHistoryScreenState extends State<ViewCaseHistoryScreen> {
     );
   }
 
-  void _showRemarksDialog(BuildContext context, TaskItem taskItem) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Remarks'),
-          content: Text(
-              'Remarks: ${taskItem.instruction}'), // Assuming instruction is used for remarks
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('Close'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
@@ -206,15 +184,42 @@ class _ViewCaseHistoryScreenState extends State<ViewCaseHistoryScreen> {
                                               style: const TextStyle(
                                                   fontWeight: FontWeight.bold,
                                                   fontSize: 18)),
-                                          const SizedBox(height: 0),
+                                          const SizedBox(height: 8),
                                           Text('Case No: ${taskItem.caseNo}',
                                               style: const TextStyle(
                                                   fontWeight: FontWeight.bold,
                                                   fontSize: 18)),
-                                          const SizedBox(height: 5),
+                                          const SizedBox(height: 8),
                                           Text(
-                                              'Instruction: ${taskItem.instruction}'),
-                                          Text('Status: ${taskItem.status}'),
+                                              'Instruction: ${taskItem.instruction}',
+                                              style: const TextStyle(
+                                                  fontSize: 16)),
+                                          const SizedBox(height: 8),
+                                          Row(children: [
+                                            const Text(
+                                              'Status: ',
+                                            ),
+                                            Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        horizontal: 10,
+                                                        vertical: 2),
+                                                decoration: BoxDecoration(
+                                                  color: getStatusColor(
+                                                      taskItem.status),
+                                                  borderRadius:
+                                                      BorderRadius.circular(10),
+                                                ),
+                                                child: Center(
+                                                  child: Text(
+                                                    taskItem.status,
+                                                    style: const TextStyle(
+                                                        color: Colors.white,
+                                                        fontWeight:
+                                                            FontWeight.bold),
+                                                  ),
+                                                )),
+                                          ]),
                                         ],
                                       ),
                                     ),

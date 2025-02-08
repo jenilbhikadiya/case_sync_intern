@@ -18,6 +18,7 @@ class ShowRemarkPage extends StatefulWidget {
 
 class RemarkPageState extends State<ShowRemarkPage> {
   final List<Map<String, dynamic>> _remarks = [];
+  final GlobalKey<AnimatedListState> _listKey = GlobalKey<AnimatedListState>();
   bool _isLoading = true;
   String _errorMessage = '';
 
@@ -54,30 +55,50 @@ class RemarkPageState extends State<ShowRemarkPage> {
         if (data['success'] == true &&
             data['data'] != null &&
             data['data'].isNotEmpty) {
+          final remarks = List<Map<String, dynamic>>.from(data['data']);
           setState(() {
             _remarks.clear();
-            _remarks.addAll(List<Map<String, dynamic>>.from(data['data']));
+            _isLoading = false;
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              for (int i = 0; i < remarks.length; i++) {
+                _remarks.add(remarks[i]);
+                _listKey.currentState!.insertItem(i);
+              }
+            });
           });
         } else {
           setState(() {
             _errorMessage = data['message'] ?? 'No remarks found.';
+            _isLoading = false;
           });
         }
       } else {
         setState(() {
           _errorMessage =
               'Failed to fetch remarks. Status code: ${response.statusCode}';
+          _isLoading = false;
         });
       }
     } catch (e) {
       setState(() {
         _errorMessage = 'An error occurred: $e';
-      });
-    } finally {
-      setState(() {
         _isLoading = false;
       });
     }
+  }
+
+  Widget buildItem(
+      BuildContext context, int index, Animation<double> animation) {
+    return SlideTransition(
+      position: Tween<Offset>(
+        begin: Offset(1, 0),
+        end: Offset(0, 0),
+      ).animate(animation),
+      child: RemarkCard(
+        index: index,
+        remark: _remarks[index],
+      ),
+    );
   }
 
   @override
@@ -116,20 +137,18 @@ class RemarkPageState extends State<ShowRemarkPage> {
                 child: CircularProgressIndicator(color: Colors.black))
             : _errorMessage.isNotEmpty
                 ? Center(child: Text(_errorMessage))
-                : SingleChildScrollView(
+                : AnimatedList(
+                    key: _listKey,
+                    initialItemCount: _remarks.length,
                     physics: const AlwaysScrollableScrollPhysics(),
                     padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      children: _remarks.asMap().entries.map((entry) {
-                        int index = entry.key;
-                        Map<String, dynamic> remark = entry.value;
-
-                        return RemarkCard(
-                          index: index,
-                          remark: remark,
-                        );
-                      }).toList(),
-                    ),
+                    itemBuilder: (context, index, animation) {
+                      if (index < _remarks.length) {
+                        return buildItem(context, index, animation);
+                      } else {
+                        return SizedBox.shrink();
+                      }
+                    },
                   ),
       ),
     );

@@ -164,23 +164,6 @@ class TaskPageState extends State<TaskPage> {
     );
   }
 
-  Color getStatusColor(String status) {
-    switch (status.toLowerCase()) {
-      case 'completed':
-        return Colors.green;
-      case 'allotted':
-        return Colors.blueAccent;
-      case 'pending':
-        return Colors.yellow;
-      case 'reassign':
-        return Colors.lightBlue;
-      case 're_alloted':
-        return Colors.red;
-      default:
-        return Colors.grey;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(

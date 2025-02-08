@@ -1,3 +1,7 @@
+import 'dart:ui';
+
+import 'package:flutter/material.dart';
+
 const List<String> months = [
   'January',
   'February',
@@ -12,6 +16,23 @@ const List<String> months = [
   'November',
   'December'
 ];
+
+Color getStatusColor(String status) {
+  switch (status.toLowerCase()) {
+    case 'completed':
+      return Colors.green;
+    case 'allotted':
+      return Colors.blueAccent;
+    case 'pending':
+      return Colors.yellow;
+    case 'reassign':
+      return Colors.lightBlue;
+    case 're_alloted':
+      return Colors.red;
+    default:
+      return Colors.grey;
+  }
+}
 
 const baseUrl =
     "https://pragmanxt.com/case_sync_pro/services/intern/v1/index.php";

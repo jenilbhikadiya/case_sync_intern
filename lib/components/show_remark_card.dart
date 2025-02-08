@@ -54,7 +54,7 @@ class RemarkCard extends StatelessWidget {
             const SizedBox(height: 16),
             _buildField('Remark Date', _formatDate(remark['dos'])),
             const SizedBox(height: 16),
-            _buildStatusField('Remark Date', _formatDate(remark['dos'])),
+            _buildStatusField('Status', _formatDate(remark['dos'])),
           ],
         ),
       ),

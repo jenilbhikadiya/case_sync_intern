@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 
@@ -30,6 +31,7 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
   late List<String> monthsWithCases;
   late Future<void> _caseDataFuture;
   final ScrollController _scrollController = ScrollController();
+  final Map<int, GlobalKey> caseCardKeys = {};
 
   FocusNode fn = FocusNode();
 
@@ -80,11 +82,34 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
   List<String> _getMonthsForYear(String year) {
     if (!caseData.containsKey(year)) return [];
 
-    return caseData[year]!
-        .keys
-        .where((month) => caseData[year]![month]!.isNotEmpty)
-        .toList()
-      ..sort((a, b) => months.indexOf(a).compareTo(months.indexOf(b)));
+    List<String> monthOrder = [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December"
+    ];
+
+    // Get the list of months available for the given year
+    List<String> months = caseData[year]
+            ?.entries
+            .where((entry) => entry.value.isNotEmpty)
+            .map((entry) => entry.key)
+            .toList() ??
+        [];
+
+    // Sort months based on their index in the monthOrder list
+    months
+        .sort((a, b) => monthOrder.indexOf(a).compareTo(monthOrder.indexOf(b)));
+
+    return months;
   }
 
   @override
@@ -101,6 +126,7 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
       _filteredCases.clear();
       _resultTabs.clear();
 
+      // Search within the selected year first
       if (caseData.containsKey(selectedYear)) {
         caseData[selectedYear]?.forEach((month, cases) {
           final results = _filterCases(cases);
@@ -112,6 +138,11 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
         });
       }
 
+      // Debug print to check the filtered results
+      print('Filtered Cases: $_filteredCases');
+      print('Result Tabs: $_resultTabs');
+
+      // If no results, search other years
       if (_filteredCases.isEmpty) {
         caseData.forEach((year, monthlyCases) {
           if (year != selectedYear) {
@@ -126,6 +157,7 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
         });
       }
 
+      // Navigate to the first result if available
       if (_filteredCases.isNotEmpty) {
         _currentResultIndex = 0;
         _switchTabToResult();
@@ -166,39 +198,90 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
     if (_filteredCases.isEmpty) return;
 
     final yearMonth = _resultTabs[_currentResultIndex].split('-');
-    final targetYear = (yearMonth[0] == '') ? '-1' : yearMonth[0];
-    // print(targetYear);
+    final targetYear = yearMonth[0];
     final targetMonth = yearMonth[1];
 
-    if (caseData.containsKey(targetYear)) {
-      setState(() {
+    if (!caseData.containsKey(targetYear)) {
+      if (kDebugMode) {
+        print("🚨 Target year $targetYear not found in caseData");
+      }
+      return;
+    }
+
+    setState(() {
+      if (selectedYear != targetYear) {
         selectedYear = targetYear;
         monthsWithCases = _getMonthsForYear(selectedYear);
+      }
 
-        _tabController.dispose();
-        _tabController =
-            TabController(length: monthsWithCases.length, vsync: this);
+      final monthIndex = monthsWithCases.indexOf(targetMonth);
+      if (monthIndex != -1) {
+        _tabController.animateTo(monthIndex);
+      }
+    });
 
-        final monthIndex = months.indexOf(targetMonth);
-        if (monthIndex >= 0) {
-          _tabController.animateTo(monthIndex);
+    /// 🚀 Ensure UI is fully built before scrolling
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_scrollController.hasClients) {
+        if (kDebugMode) {
+          print("🚨 ScrollController not attached yet.");
         }
-      });
+        return;
+      }
 
-      Future.microtask(() {
-        final allCases = getCaseDataForMonth(selectedYear, targetMonth);
-        final highlightedIndex = allCases.indexWhere((caseItem) =>
-            caseItem.caseNo == _filteredCases[_currentResultIndex].caseNo);
+      final allCases = getCaseDataForMonth(selectedYear, targetMonth);
+      final highlightedIndex = allCases.indexWhere(
+        (caseItem) =>
+            caseItem.caseNo == _filteredCases[_currentResultIndex].caseNo,
+      );
 
-        if (highlightedIndex >= 0) {
+      if (highlightedIndex >= 0 && caseCardKeys.containsKey(highlightedIndex)) {
+        final context = caseCardKeys[highlightedIndex]!.currentContext;
+        if (context == null) return;
+
+        final box = context.findRenderObject() as RenderBox?;
+        if (box == null) return;
+
+        /// 🔥 Get the **exact height** of the CaseCard
+        double caseCardHeight = box.size.height;
+
+        /// 🔥 Get the **current scroll position**
+        double currentScroll = _scrollController.position.pixels;
+        double maxScrollExtent = _scrollController.position.maxScrollExtent;
+
+        /// 🔥 Calculate the **exact scroll position**
+        double scrollOffset = (highlightedIndex * caseCardHeight);
+
+        if (kDebugMode) {
+          print("🎯 Scrolling to index: $highlightedIndex");
+          print("📏 CaseCard Height: $caseCardHeight");
+          print("📌 Current Scroll Position: $currentScroll");
+          print("📌 Max Scroll Extent: $maxScrollExtent");
+          print(
+              "🚀 Calculated Scroll Offset Before Adjustments: $scrollOffset");
+        }
+
+        /// ✅ Ensure we don’t exceed max scroll limit
+        if (scrollOffset > maxScrollExtent) {
+          scrollOffset = maxScrollExtent;
+        }
+        if (scrollOffset < 0) {
+          scrollOffset = 0; // Prevent negative scroll
+        }
+
+        // /// 🚀 Step 1: Jump to position instantly
+        // _scrollController.jumpTo(scrollOffset);
+
+        /// 🚀 Step 2: Smoothly adjust for a better UX
+        Future.delayed(const Duration(milliseconds: 100), () {
           _scrollController.animateTo(
-            highlightedIndex * 200.0,
-            duration: const Duration(milliseconds: 300),
+            scrollOffset,
+            duration: const Duration(milliseconds: 500),
             curve: Curves.easeInOut,
           );
-        }
-      });
-    } else {}
+        });
+      }
+    });
   }
 
   @override

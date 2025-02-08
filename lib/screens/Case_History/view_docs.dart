@@ -12,7 +12,6 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../components/basicUIcomponent.dart';
 import '../../utils/constants.dart';
-import '../../utils/file_already_exists_dialog.dart';
 
 class ViewDocs extends StatefulWidget {
   final String caseNo;
@@ -167,68 +166,6 @@ class DocumentCardState extends State<DocumentCard> {
       }
 
       final filePath = '${directory.path}/$fileName';
-      final file = File(filePath);
-
-      if (file.existsSync()) {
-        if (isPersistent) {
-          final result = await showCupertinoDialog<bool>(
-            context: context,
-            builder: (context) => FileAlreadyExistsDialog(
-              title: 'File Already Exists',
-              message:
-                  'The file "$fileName" already exists. Do you want to open it or download again?',
-              cancelButtonText: 'Open',
-              confirmButtonText: 'Rewrite',
-              onConfirm: () async {
-                Navigator.of(context).pop(true);
-              },
-            ),
-          );
-
-          if (result == true) {
-            // User chose to rewrite (download again)
-            final response = await HttpClient()
-                .getUrl(Uri.parse(url))
-                .then((req) => req.close());
-            final totalBytes = response.contentLength;
-            int bytesDownloaded = 0;
-
-            final sink = file.openWrite();
-            await for (var chunk in response) {
-              bytesDownloaded += chunk.length;
-              sink.add(chunk);
-              setState(() {
-                _progress = bytesDownloaded / totalBytes;
-              });
-            }
-            await sink.close();
-          } else {
-            // User chose to open the existing file
-            await OpenFile.open(filePath);
-            return filePath;
-          }
-        } else {
-          await OpenFile.open(filePath);
-          return filePath;
-        }
-      } else {
-        // File does not exist, proceed with download
-        final response = await HttpClient()
-            .getUrl(Uri.parse(url))
-            .then((req) => req.close());
-        final totalBytes = response.contentLength;
-        int bytesDownloaded = 0;
-
-        final sink = file.openWrite();
-        await for (var chunk in response) {
-          bytesDownloaded += chunk.length;
-          sink.add(chunk);
-          setState(() {
-            _progress = bytesDownloaded / totalBytes;
-          });
-        }
-        await sink.close();
-      }
 
       setState(() {
         _progress = 1.0;
