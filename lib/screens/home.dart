@@ -7,6 +7,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:http/http.dart' as http;
 import 'package:intern_side/models/notification_item.dart';
+import 'package:intern_side/screens/Notice/case_counter_list.dart';
+import 'package:intern_side/screens/Notice/todays_case_list.dart';
 import 'package:intern_side/services/case_services.dart';
 import 'package:intern_side/utils/constants.dart';
 
@@ -256,7 +258,7 @@ class HomeScreenState extends State<HomeScreen> {
                                   iconPath: 'assets/icons/case_counter.svg',
                                   cardWidth: cardWidth,
                                   cardHeight: cardHeight,
-                                  destinationScreen: TaskPage(),
+                                  destinationScreen: const CounterCases(),
                                   counterNotifier: counters_count,
                                   shouldDisplayCounter: true,
                                 ),
@@ -265,7 +267,7 @@ class HomeScreenState extends State<HomeScreen> {
                                   iconPath: 'assets/icons/cases_today.svg',
                                   cardWidth: cardWidth,
                                   cardHeight: cardHeight,
-                                  destinationScreen: TaskPage(),
+                                  destinationScreen: const CasesToday(),
                                   counterNotifier: todays_case_count,
                                   shouldDisplayCounter: true,
                                 ),

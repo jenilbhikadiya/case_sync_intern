@@ -75,15 +75,6 @@ class _NotificationDrawerState extends State<NotificationDrawer> {
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               Text(
-                                'No TaskItems with less than 10 days of counter',
-                                style: TextStyle(
-                                  color: Colors.black,
-                                  fontSize: 16,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                              SizedBox(height: screenHeight * 0.03),
-                              Text(
                                 'Long Press Here to Refresh 👇🏼',
                                 style: TextStyle(
                                   color: Colors.black,

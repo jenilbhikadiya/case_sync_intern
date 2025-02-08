@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intern_side/screens/Case_History/case_info.dart';
 import 'package:intern_side/screens/Case_History/update_next_date.dart';
 import 'package:intern_side/screens/Case_History/view_case_history.dart';
 import 'package:intern_side/screens/Case_History/view_docs.dart';
@@ -129,7 +130,7 @@ class _CaseCardState extends State<CaseCard> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.visibility),
+              leading: const Icon(Icons.history),
               title: const Text('View Case History'),
               enabled: !isRealloted,
               onTap: () async {
@@ -138,6 +139,26 @@ class _CaseCardState extends State<CaseCard> {
                   context,
                   MaterialPageRoute(
                     builder: (context) => ViewCaseHistoryScreen(
+                      caseId: caseListData.id,
+                      caseNo: caseListData.caseNo,
+                    ),
+                  ),
+                );
+                if (result == true) {
+                  fetchTasks(); // Refresh the task list after returning
+                }
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.visibility),
+              title: const Text('View Case Info'),
+              enabled: !isRealloted,
+              onTap: () async {
+                Navigator.pop(context); // Close dropdown first
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => CaseInfoPage(
                       caseId: caseListData.id,
                       caseNo: caseListData.caseNo,
                     ),
