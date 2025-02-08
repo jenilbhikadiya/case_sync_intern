@@ -2,10 +2,14 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:intern_side/screens/Case_History/view_docs.dart';
+import 'package:intern_side/screens/Case_History/task_info_screen.dart';
+import 'package:intern_side/screens/Tasks/show_remark_page.dart';
 
 import '../../components/basicUIcomponent.dart';
 import '../../components/list_app_bar.dart';
+import '../../models/intern.dart';
+import '../../models/task_item_list.dart';
+import '../../services/shared_pref.dart';
 import '../../utils/constants.dart';
 
 class ViewCaseHistoryScreen extends StatefulWidget {
@@ -22,19 +26,31 @@ class ViewCaseHistoryScreen extends StatefulWidget {
 class _ViewCaseHistoryScreenState extends State<ViewCaseHistoryScreen> {
   bool _isLoading = true;
   String _errorMessage = '';
-  List<dynamic> _caseHistory = [];
+  List<TaskItem> _caseHistory = [];
 
   @override
   void initState() {
     super.initState();
-    _fetchCaseHistory();
+    _fetchInternTaskList();
   }
 
-  Future<void> _fetchCaseHistory() async {
+  Future<void> _fetchInternTaskList() async {
     try {
+      Intern? internData = await SharedPrefService.getUser();
+      if (internData == null || internData.id.isEmpty) {
+        setState(() {
+          _errorMessage = 'Intern data not found.';
+          _isLoading = false;
+        });
+        return;
+      }
+
       final response = await http.post(
-        Uri.parse('$baseUrl/case_history_view'),
-        body: {'case_id': widget.caseId},
+        Uri.parse('$baseUrl/intern_task_list'),
+        body: {
+          'case_id': widget.caseId,
+          'intern_id': internData.id,
+        },
       );
 
       if (!mounted) return;
@@ -43,7 +59,9 @@ class _ViewCaseHistoryScreenState extends State<ViewCaseHistoryScreen> {
         final data = json.decode(response.body);
         setState(() {
           if (data['success'] == true && data['data'] != null) {
-            _caseHistory = data['data'];
+            _caseHistory = (data['data'] as List)
+                .map((taskData) => TaskItem.fromJson(taskData))
+                .toList();
           } else {
             _errorMessage = data['message'] ?? 'No data found.';
           }
@@ -64,15 +82,66 @@ class _ViewCaseHistoryScreenState extends State<ViewCaseHistoryScreen> {
     }
   }
 
-  void _viewDocument() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => ViewDocs(
-          caseId: widget.caseId,
-          caseNo: widget.caseNo,
-        ),
-      ),
+  void _showDropdownMenu(BuildContext context, TaskItem taskItem) {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.info),
+              title: const Text('View Task Info'),
+              onTap: () {
+                Navigator.pop(context); // Close dropdown first
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => TaskInfoScreen(
+                      taskItem: taskItem,
+                    ),
+                  ),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.visibility),
+              title: const Text('View Remark List'),
+              onTap: () {
+                Navigator.pop(context); // Close dropdown first
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ShowRemarkPage(
+                      taskItem: taskItem,
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showRemarksDialog(BuildContext context, TaskItem taskItem) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Remarks'),
+          content: Text(
+              'Remarks: ${taskItem.instruction}'), // Assuming instruction is used for remarks
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -86,7 +155,7 @@ class _ViewCaseHistoryScreenState extends State<ViewCaseHistoryScreen> {
         title: 'View Case History',
       ),
       body: RefreshIndicator(
-        onRefresh: _fetchCaseHistory,
+        onRefresh: _fetchInternTaskList,
         color: AppTheme.getRefreshIndicatorColor(Theme.of(context).brightness),
         backgroundColor: AppTheme.getRefreshIndicatorBackgroundColor(),
         child: SingleChildScrollView(
@@ -108,44 +177,46 @@ class _ViewCaseHistoryScreenState extends State<ViewCaseHistoryScreen> {
                             ],
                           )
                         : Column(
-                            children: _caseHistory.map((caseData) {
-                              return Center(
-                                child: Card(
-                                  margin:
-                                      const EdgeInsets.symmetric(vertical: 8.0),
-                                  elevation: 3,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(20),
-                                    side: const BorderSide(
-                                        color: Colors.black,
-                                        style: BorderStyle.solid),
-                                  ),
-                                  child: Container(
-                                    width: screenWidth *
-                                        0.9, // Adjust width according to screen width
-                                    padding: const EdgeInsets.all(12.0),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                            'Intern: ${caseData['intern_name']}',
-                                            style: const TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 18)),
-                                        const SizedBox(height: 0),
-                                        Text(
-                                            'Advocate: ${caseData['advocate_name']}'),
-                                        Text('Stage: ${caseData['stage_name']}',
-                                            style: const TextStyle(
-                                                fontWeight: FontWeight.bold)),
-                                        Text('Remarks: ${caseData['remarks']}'),
-                                        Text(
-                                            'Date of Summon: ${caseData['fdos']}'),
-                                        Text(
-                                            'Next Date: ${caseData['nextdate']}'),
-                                        Text('Status: ${caseData['status']}'),
-                                      ],
+                            children: _caseHistory.asMap().entries.map((entry) {
+                              int index = entry.key + 1; // for serial number
+                              TaskItem taskItem = entry.value;
+                              return GestureDetector(
+                                onTap: () {
+                                  _showDropdownMenu(context, taskItem);
+                                },
+                                child: Center(
+                                  child: Card(
+                                    margin: const EdgeInsets.symmetric(
+                                        vertical: 8.0),
+                                    elevation: 3,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(20),
+                                      side: const BorderSide(
+                                          color: Colors.black,
+                                          style: BorderStyle.solid),
+                                    ),
+                                    child: Container(
+                                      width: screenWidth * 0.9,
+                                      padding: const EdgeInsets.all(12.0),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text('Sr No: $index',
+                                              style: const TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 18)),
+                                          const SizedBox(height: 0),
+                                          Text('Case No: ${taskItem.caseNo}',
+                                              style: const TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 18)),
+                                          const SizedBox(height: 5),
+                                          Text(
+                                              'Instruction: ${taskItem.instruction}'),
+                                          Text('Status: ${taskItem.status}'),
+                                        ],
+                                      ),
                                     ),
                                   ),
                                 ),

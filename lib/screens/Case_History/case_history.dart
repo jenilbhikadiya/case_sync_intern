@@ -101,7 +101,6 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
       _filteredCases.clear();
       _resultTabs.clear();
 
-      // Search within the selected year first
       if (caseData.containsKey(selectedYear)) {
         caseData[selectedYear]?.forEach((month, cases) {
           final results = _filterCases(cases);
@@ -113,7 +112,6 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
         });
       }
 
-      // If no results, search other years
       if (_filteredCases.isEmpty) {
         caseData.forEach((year, monthlyCases) {
           if (year != selectedYear) {
@@ -128,7 +126,6 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
         });
       }
 
-      // Navigate to the first result if available
       if (_filteredCases.isNotEmpty) {
         _currentResultIndex = 0;
         _switchTabToResult();
@@ -156,7 +153,6 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
     });
   }
 
-  // Navigate to next search result
   void _navigateToNextResult() {
     setState(() {
       if (_currentResultIndex < _filteredCases.length - 1) {
@@ -169,33 +165,26 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
   void _switchTabToResult() {
     if (_filteredCases.isEmpty) return;
 
-    // Extract year and month from the search result
     final yearMonth = _resultTabs[_currentResultIndex].split('-');
     final targetYear = (yearMonth[0] == '') ? '-1' : yearMonth[0];
     // print(targetYear);
     final targetMonth = yearMonth[1];
 
-    // Ensure a state update occurs for any valid year
     if (caseData.containsKey(targetYear)) {
       setState(() {
-        // Update the year and months
         selectedYear = targetYear;
-        // print(selectedYear);
         monthsWithCases = _getMonthsForYear(selectedYear);
 
-        // Recreate the TabController for the new year
         _tabController.dispose();
         _tabController =
             TabController(length: monthsWithCases.length, vsync: this);
 
-        // Navigate to the correct month tab
         final monthIndex = months.indexOf(targetMonth);
         if (monthIndex >= 0) {
           _tabController.animateTo(monthIndex);
         }
       });
 
-      // Scroll to the highlighted case
       Future.microtask(() {
         final allCases = getCaseDataForMonth(selectedYear, targetMonth);
         final highlightedIndex = allCases.indexWhere((caseItem) =>
@@ -203,15 +192,13 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
 
         if (highlightedIndex >= 0) {
           _scrollController.animateTo(
-            highlightedIndex * 200.0, // Approximate height per case card
+            highlightedIndex * 200.0,
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeInOut,
           );
         }
       });
-    } else {
-      // print("Target year $targetYear not found in caseData");
-    }
+    } else {}
   }
 
   @override

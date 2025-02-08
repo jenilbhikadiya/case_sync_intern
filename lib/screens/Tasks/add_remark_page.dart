@@ -34,7 +34,7 @@ class AddRemarkPageState extends State<AddRemarkPage> {
   final _currentStageController = TextEditingController();
   String _documentPath = '';
   DateTime _remarkDate = DateTime.now();
-  String _status = 'Pending';
+  String _status = 'pending';
   bool _isSubmitting = false;
   String? _internId;
 
@@ -42,6 +42,7 @@ class AddRemarkPageState extends State<AddRemarkPage> {
   void initState() {
     super.initState();
     _currentStageController.text = widget.taskItem.stage;
+    _status = 'pending'; // Set default selection
     _fetchInternId();
   }
 
@@ -319,10 +320,10 @@ class AddRemarkPageState extends State<AddRemarkPage> {
     return Column(
       children: [
         RadioListTile(
-          title: const Text('Pending'),
+          title: const Text('pending'),
           activeColor: Colors.black,
           value: 'pending',
-          groupValue: _status,
+          groupValue: _status, // This ensures "Pending" is selected by default
           onChanged: (value) {
             setState(() {
               _status = value!;
@@ -330,7 +331,7 @@ class AddRemarkPageState extends State<AddRemarkPage> {
           },
         ),
         RadioListTile(
-          title: const Text('Completed'),
+          title: const Text('completed'),
           activeColor: Colors.black,
           value: 'completed',
           groupValue: _status,

@@ -103,7 +103,7 @@ class NotificationCard extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    'Task Instruction: ${taskItem.instruction}',
+                    taskItem.instruction,
                     style: TextStyle(
                       fontSize: 15,
                       color: isHighlighted ? Colors.white : Colors.black,

@@ -22,6 +22,17 @@ class RemarkCard extends StatelessWidget {
     }
   }
 
+  Color getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'completed':
+        return Colors.green;
+      case 'pending':
+        return Colors.yellow;
+      default:
+        return Colors.grey;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -43,8 +54,7 @@ class RemarkCard extends StatelessWidget {
             const SizedBox(height: 16),
             _buildField('Remark Date', _formatDate(remark['dos'])),
             const SizedBox(height: 16),
-            _buildField('Status', remark['status'] ?? 'Pending'),
-            const SizedBox(height: 16),
+            _buildStatusField('Remark Date', _formatDate(remark['dos'])),
           ],
         ),
       ),
@@ -73,6 +83,40 @@ class RemarkCard extends StatelessWidget {
               fontSize: 16.0,
             ),
           ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatusField(String label, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          flex: 2,
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontSize: 16.0,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        Expanded(
+          flex: 3,
+          child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+              decoration: BoxDecoration(
+                color: getStatusColor(remark['status']),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Center(
+                child: Text(
+                  remark['status'],
+                  style: const TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.bold),
+                ),
+              )),
         ),
       ],
     );

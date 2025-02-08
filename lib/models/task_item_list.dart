@@ -48,4 +48,21 @@ class TaskItem {
       stage_id: json['stage_id'] ?? '',
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'intern_id': intern_id,
+      'caseNo': caseNo,
+      'instruction': instruction,
+      'allotedTo': allotedTo,
+      'allotedBy': allotedBy,
+      'allotedDate': allotedDate?.toIso8601String(),
+      'expectedEndDate': expectedEndDate?.toIso8601String(),
+      'status': status,
+      'task_id': task_id,
+      'stage': stage,
+      'case_id': case_id,
+      'stage_id': stage_id,
+    };
+  }
 }

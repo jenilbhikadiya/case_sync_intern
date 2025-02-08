@@ -4,7 +4,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:http/http.dart' as http;
 import 'package:intern_side/utils/constants.dart';
 import '../../components/basicUIcomponent.dart';
-import '../../components/remark_card.dart';
+import '../../components/show_remark_card.dart';
 import '../../models/task_item_list.dart';
 
 class ShowRemarkPage extends StatefulWidget {

@@ -164,6 +164,23 @@ class TaskPageState extends State<TaskPage> {
     );
   }
 
+  Color getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'completed':
+        return Colors.green;
+      case 'allotted':
+        return Colors.blueAccent;
+      case 'pending':
+        return Colors.yellow;
+      case 'reassign':
+        return Colors.lightBlue;
+      case 're_alloted':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -252,9 +269,31 @@ class TaskPageState extends State<TaskPage> {
                                       style: const TextStyle(
                                           fontSize: 14, color: Colors.black)),
                                   const SizedBox(height: 5),
-                                  Text('Status: ${taskItem.status}',
-                                      style: const TextStyle(
-                                          fontSize: 14, color: Colors.black)),
+                                  Row(
+                                    children: [
+                                      const Text('Status: ',
+                                          style: TextStyle(
+                                              fontSize: 14,
+                                              color: Colors.black)),
+                                      const SizedBox(width: 5),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 10, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color:
+                                              getStatusColor(taskItem.status),
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                        ),
+                                        child: Text(
+                                          taskItem.status,
+                                          style: const TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                   const SizedBox(height: 5),
                                   Text('Current Stage: ${taskItem.stage}',
                                       style: const TextStyle(

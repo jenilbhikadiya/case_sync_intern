@@ -131,7 +131,7 @@ class _CaseCardState extends State<CaseCard> {
             ),
             ListTile(
               leading: const Icon(Icons.history),
-              title: const Text('View Case History'),
+              title: const Text('View Case Tasks'),
               enabled: !isRealloted,
               onTap: () async {
                 Navigator.pop(context); // Close dropdown first
