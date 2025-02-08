@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:intern_side/components/todays_case_card.dart';
 
+import '../../components/basicUIcomponent.dart';
 import '../../components/list_app_bar.dart';
 import '../../models/case.dart';
 import '../../utils/constants.dart';
@@ -222,7 +223,10 @@ class CasesTodayState extends State<CasesToday> {
                     : _filteredCases.isEmpty
                         ? const Center(child: Text('No cases found.'))
                         : RefreshIndicator(
-                            color: Colors.black,
+                            color: AppTheme.getRefreshIndicatorColor(
+                                Theme.of(context).brightness),
+                            backgroundColor:
+                                AppTheme.getRefreshIndicatorBackgroundColor(),
                             onRefresh: () async {
                               setState(() {
                                 fetchCases();
