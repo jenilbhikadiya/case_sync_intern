@@ -12,9 +12,11 @@ import 'package:intern_side/screens/Notice/todays_case_list.dart';
 import 'package:intern_side/services/case_services.dart';
 import 'package:intern_side/utils/constants.dart';
 
+import '../components/basicUIcomponent.dart';
 import '../models/intern.dart';
 import '../services/shared_pref.dart';
 import 'Case_History/case_history.dart';
+import 'Case_History/intern_case_history.dart';
 import 'Tasks/task_page.dart';
 import 'appbar/notification_drawer.dart';
 import 'appbar/settings_drawer.dart';
@@ -98,6 +100,13 @@ class HomeScreenState extends State<HomeScreen> {
       errorMessage = "Error: $e";
     }
     return [];
+  }
+
+  Future<void> _refreshCounters() async {
+    if (user != null) {
+      await fetchCaseAndTaskCounters(user!.id);
+      setState(() {}); // Ensures UI updates with new counter values
+    }
   }
 
   String getGreeting() {
@@ -200,119 +209,155 @@ class HomeScreenState extends State<HomeScreen> {
             )
           : AppBar(),
       body: isInternetConnected
-          ? Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10),
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    FutureBuilder<Intern?>(
-                      future: SharedPrefService.getUser(),
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return const CircularProgressIndicator(
-                              color: Colors.black);
-                        } else if (snapshot.hasError) {
-                          return const Text('Error loading user data');
-                        } else if (!snapshot.hasData || snapshot.data == null) {
-                          return const Text('No user data available');
-                        }
+          ? RefreshIndicator(
+              onRefresh: _refreshCounters,
+              color: AppTheme.getRefreshIndicatorColor(
+                  Theme.of(context).brightness),
+              backgroundColor: AppTheme.getRefreshIndicatorBackgroundColor(),
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10),
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      FutureBuilder<Intern?>(
+                        future: SharedPrefService.getUser(),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return const CircularProgressIndicator(
+                                color: Colors.black);
+                          } else if (snapshot.hasError) {
+                            return const Text('Error loading user data');
+                          } else if (!snapshot.hasData ||
+                              snapshot.data == null) {
+                            return const Text('No user data available');
+                          }
 
-                        Intern user = snapshot.data!;
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(getGreeting(),
+                          Intern user = snapshot.data!;
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(getGreeting(),
+                                  style: const TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.black)),
+                              Text(
+                                user.name,
                                 style: const TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.w500,
-                                    color: Colors.black)),
-                            Text(
-                              user.name,
-                              style: const TextStyle(
-                                  fontSize: 40,
-                                  fontWeight: FontWeight.w900,
-                                  color: Color.fromRGBO(37, 27, 70, 1.0)),
-                            ),
-                            const Text(
-                              'Notice',
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black,
+                                    fontSize: 40,
+                                    fontWeight: FontWeight.w900,
+                                    color: Color.fromRGBO(37, 27, 70, 1.0)),
                               ),
-                            ),
-                            const SizedBox(height: 10),
-                            GridView.count(
-                              crossAxisCount: 2,
-                              crossAxisSpacing: 2,
-                              mainAxisSpacing: 2,
-                              childAspectRatio: cardWidth / cardHeight,
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              children: [
-                                _buildCard(
-                                  title: 'Case Counter',
-                                  iconPath: 'assets/icons/case_counter.svg',
-                                  cardWidth: cardWidth,
-                                  cardHeight: cardHeight,
-                                  destinationScreen: const CounterCases(),
-                                  counterNotifier: counters_count,
-                                  shouldDisplayCounter: true,
-                                ),
-                                _buildCard(
-                                  title: 'Today\'s Cases',
-                                  iconPath: 'assets/icons/cases_today.svg',
-                                  cardWidth: cardWidth,
-                                  cardHeight: cardHeight,
-                                  destinationScreen: const CasesToday(),
-                                  counterNotifier: todays_case_count,
-                                  shouldDisplayCounter: true,
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 20),
-                            const Text('Cases',
+                              const Text(
+                                'Notice',
                                 style: TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black)),
-                            const SizedBox(height: 10),
-                            GridView.count(
-                              crossAxisCount: 2,
-                              crossAxisSpacing: 2,
-                              mainAxisSpacing: 2,
-                              childAspectRatio: cardWidth / cardHeight,
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              children: [
-                                _buildCard(
-                                  title: 'Tasks',
-                                  iconPath: 'assets/icons/tasks.svg',
-                                  cardWidth: cardWidth,
-                                  cardHeight: cardHeight,
-                                  destinationScreen: const TaskPage(),
-                                  counterNotifier: taskCount,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black,
                                 ),
-                                _buildCard(
-                                  title: 'Case History',
-                                  iconPath: 'assets/icons/case_history.svg',
-                                  cardWidth: cardWidth,
-                                  cardHeight: cardHeight,
-                                  destinationScreen:
-                                      CaseHistoryScreen(internId: user.id),
-                                  counterNotifier: caseCount,
+                              ),
+                              const SizedBox(height: 10),
+                              GridView.count(
+                                crossAxisCount: 2,
+                                crossAxisSpacing: 2,
+                                mainAxisSpacing: 2,
+                                childAspectRatio: cardWidth / cardHeight,
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                children: [
+                                  _buildCard(
+                                    title: 'Case Counter',
+                                    iconPath: 'assets/icons/case_counter.svg',
+                                    cardWidth: cardWidth,
+                                    cardHeight: cardHeight,
+                                    destinationScreen: const CounterCases(),
+                                    counterNotifier: counters_count,
+                                    shouldDisplayCounter: true,
+                                  ),
+                                  _buildCard(
+                                    title: 'Today\'s Cases',
+                                    iconPath: 'assets/icons/cases_today.svg',
+                                    cardWidth: cardWidth,
+                                    cardHeight: cardHeight,
+                                    destinationScreen: const CasesToday(),
+                                    counterNotifier: todays_case_count,
+                                    shouldDisplayCounter: true,
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 20),
+                              const Text('Cases',
+                                  style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black)),
+                              const SizedBox(height: 10),
+                              GridView.count(
+                                crossAxisCount: 2,
+                                crossAxisSpacing: 2,
+                                mainAxisSpacing: 2,
+                                childAspectRatio: cardWidth / cardHeight,
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                children: [
+                                  _buildCard(
+                                    title: 'Tasks',
+                                    iconPath: 'assets/icons/tasks.svg',
+                                    cardWidth: cardWidth,
+                                    cardHeight: cardHeight,
+                                    destinationScreen: const TaskPage(),
+                                    counterNotifier: taskCount,
+                                  ),
+                                  _buildCard(
+                                    title: 'Intern Case History',
+                                    iconPath: 'assets/icons/case_history.svg',
+                                    cardWidth: cardWidth,
+                                    cardHeight: cardHeight,
+                                    destinationScreen: InternCaseHistoryScreen(
+                                        internId: user.id),
+                                    counterNotifier: caseCount,
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 20),
+                              const Text(
+                                'CaseSync Case History',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black,
                                 ),
-                              ],
-                            ),
-                            const SizedBox(height: 20),
-                          ],
-                        );
-                      },
-                    ),
-                  ],
+                              ),
+                              const SizedBox(height: 10),
+                              GridView.count(
+                                crossAxisCount: 2,
+                                crossAxisSpacing: 2,
+                                mainAxisSpacing: 2,
+                                childAspectRatio: cardWidth / cardHeight,
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                children: [
+                                  _buildCard(
+                                    title: 'Case History',
+                                    iconPath: 'assets/icons/case_history.svg',
+                                    cardWidth: cardWidth,
+                                    cardHeight: cardHeight,
+                                    destinationScreen:
+                                        CaseHistoryScreen(internId: user.id),
+                                    counterNotifier: caseCount,
+                                  ),
+                                ],
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                    ],
+                  ),
                 ),
               ),
             )
