@@ -33,7 +33,7 @@ class Case {
 
   factory Case.fromJson(Map<String, dynamic> json) {
     return Case(
-      id: json['id'] ?? '',
+      id: json['case_id'] ?? '',
       caseNo: json['case_no'] ?? '',
       handleBy: json['handle_by'] ?? '',
       applicant: json['applicant'] ?? '',

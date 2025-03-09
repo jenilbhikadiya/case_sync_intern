@@ -4,9 +4,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
-import 'package:intern_side/components/todays_case_card.dart';
 
 import '../../components/basicUIcomponent.dart';
+import '../../components/case_counter_card.dart';
 import '../../components/list_app_bar.dart';
 import '../../models/case.dart';
 import '../../utils/constants.dart';
@@ -224,7 +224,7 @@ class CounterCasesState extends State<CounterCases> {
                               itemCount: _filteredCases.length,
                               itemBuilder: (context, index) {
                                 final caseItem = _filteredCases[index];
-                                return CaseCardNew(caseItem: caseItem);
+                                return CaseCounterCard(caseItem: caseItem);
                               },
                             ),
                           ),

@@ -51,6 +51,63 @@ class CasesTodayState extends State<CasesToday> {
     super.dispose();
   }
 
+  void _showFilterOptions() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              DropdownButtonFormField<String>(
+                value: _selectedCity,
+                hint: const Text('Select City'),
+                items: ['All', ..._cities]
+                    .map((city) => DropdownMenuItem(
+                          value: city,
+                          child: Text(city),
+                        ))
+                    .toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _selectedCity = value;
+                    _updateFilteredCases();
+                  });
+                },
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                value: _selectedCourt,
+                hint: const Text('Select Court'),
+                items: ['All', ..._courts]
+                    .map((court) => DropdownMenuItem(
+                          value: court,
+                          child: Text(court),
+                        ))
+                    .toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _selectedCourt = value;
+                    _updateFilteredCases();
+                  });
+                },
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pop(); // Close the filter panel
+                  _updateFilteredCases();
+                },
+                child: const Text('Apply Filters'),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   Future<int> fetchCases([bool isOnPage = true]) async {
     try {
       _errorMessage = '';
@@ -58,7 +115,7 @@ class CasesTodayState extends State<CasesToday> {
 
       // Create multipart request
       var request = http.MultipartRequest('POST', url);
-      request.fields['intern_id'] = '8'; // Replace with actual intern_id
+      // request.fields['intern_id'] = '8'; // Uncomment if needed
 
       // Send request
       var streamedResponse = await request.send();
@@ -75,10 +132,6 @@ class CasesTodayState extends State<CasesToday> {
         final data = jsonDecode(response.body);
 
         if (data['success'] == true) {
-          if (kDebugMode) {
-            print("API Success. Data: ${data['data']}");
-          }
-
           _caseList = (data['data'] as List)
               .map((item) => Case.fromJson(item))
               .toList();
@@ -99,11 +152,13 @@ class CasesTodayState extends State<CasesToday> {
           return _caseList.length;
         } else {
           _showError(data['message'] ?? "No cases found.");
-          print("API returned success = false.");
+          print("API returned success = false. Message: ${data['message']}");
         }
       } else {
-        _showError("Failed to fetch cases.");
-        print("Failed API response: ${response.statusCode}");
+        // Print detailed error info
+        print("Failed to fetch cases. Status code: ${response.statusCode}");
+        print("Response body: ${response.body}");
+        _showError("Failed to fetch cases. Status: ${response.statusCode}");
       }
     } catch (e) {
       _showError("An error occurred: $e");
@@ -191,6 +246,7 @@ class CasesTodayState extends State<CasesToday> {
             }
           });
         },
+        onFilterPressed: _showFilterOptions, // Add this line
       ),
       backgroundColor: const Color(0xFFF3F3F3),
       body: Column(
@@ -237,7 +293,7 @@ class CasesTodayState extends State<CasesToday> {
                               itemCount: _filteredCases.length,
                               itemBuilder: (context, index) {
                                 final caseItem = _filteredCases[index];
-                                return CaseCardNew(caseItem: caseItem);
+                                return TodaysCaseCard(caseItem: caseItem);
                               },
                             ),
                           ),
