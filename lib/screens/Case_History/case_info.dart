@@ -7,6 +7,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 
+import '../../models/case_info_list.dart';
 import '../../utils/constants.dart';
 
 class CaseInfoPage extends StatefulWidget {
@@ -42,38 +43,10 @@ class CaseInfoPageState extends State<CaseInfoPage> {
         if (data['success'] == true && data['data'].isNotEmpty) {
           final caseData = data['data'][0];
 
-          DateTime? parseDate(String? date) {
-            if (date == null || date.isEmpty || date == '0000-00-00') {
-              return null;
-            }
-            try {
-              return DateTime.parse(date);
-            } catch (_) {
-              return null;
-            }
-          }
-
           if (mounted) {
             setState(() {
-              _caseDetails = {
-                'case_no': caseData['case_no'],
-                'year': caseData['year'],
-                'case_type': caseData['case_type'],
-                'stage_name': caseData['stage_name'],
-                'company_name': caseData['company_name'],
-                'advocate_name': caseData['advocate_name'],
-                'applicant': caseData['applicant'],
-                'opp_name': caseData['opp_name'],
-                'court_name': caseData['court_name'],
-                'city_name': caseData['city_name'],
-                'next_date': parseDate(caseData['next_date']),
-                'next_stage': caseData['next_stage'],
-                'sr_date': parseDate(caseData['sr_date']),
-                'complainant_advocate': caseData['complainant_advocate'],
-                'respondent_advocate': caseData['respondent_advocate'],
-                'date_of_filing': parseDate(caseData['date_of_filing']),
-                'case_counter': caseData['case_counter'],
-              };
+              final caseDetail = CaseInfoDetail.fromJson(caseData);
+              _caseDetails = caseDetail.toMap();
               _isLoading = false;
             });
           }
@@ -88,35 +61,6 @@ class CaseInfoPageState extends State<CaseInfoPage> {
     }
   }
 
-  // Future<void> _fetchStageList() async {
-  //   try {
-  //     final url = Uri.parse('$baseUrl/stage_list');
-  //     var request = http.MultipartRequest("POST", url);
-  //     request.fields['case_id'] = widget.caseId;
-  //
-  //     var response = await request.send();
-  //     var responseData = await response.stream.bytesToString();
-  //     var data = jsonDecode(responseData);
-  //
-  //     if (data['success'] == true) {
-  //       setState(() {
-  //         stageList = List<Map<String, dynamic>>.from(data['data']);
-  //         if (kDebugMode) {
-  //           print(stageList);
-  //         }
-  //         selectedStage = stageList.isNotEmpty ? stageList.first['id'] : null;
-  //         if (kDebugMode) {
-  //           print(selectedStage);
-  //         }
-  //       });
-  //     }
-  //   } catch (e) {
-  //     if (kDebugMode) {
-  //       print("Error fetching stage list: $e");
-  //     }
-  //   }
-  // }
-  //
   void _showError(String message) {
     ScaffoldMessenger.of(context)
         .showSnackBar(SnackBar(content: Text(message)));
@@ -187,15 +131,7 @@ class CaseInfoPageState extends State<CaseInfoPage> {
                     // Key-Value Rows
                     ...section.value.map((entry) {
                       String displayValue;
-                      if (entry.value is DateTime) {
-                        displayValue =
-                            DateFormat('dd-MM-yyyy').format(entry.value);
-                      } else if (entry.value == null ||
-                          entry.value.toString().isEmpty) {
-                        displayValue = '-';
-                      } else {
-                        displayValue = entry.value.toString();
-                      }
+                      displayValue = entry.value?.toString() ?? '-';
 
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.center,
@@ -301,37 +237,7 @@ class CaseInfoPageState extends State<CaseInfoPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildDetailsCard(
-                          details: {
-                            'Case Year': _caseDetails['year'],
-                            'Case Type': _caseDetails['case_type'],
-                            'Current Stage': _caseDetails['stage_name'],
-                            'Next Stage': _caseDetails['next_stage'],
-                            'Company Name': _caseDetails['company_name'],
-                            'Plaintiff Name': _caseDetails['applicant'],
-                            'Opponent Name': _caseDetails['opp_name'],
-                            'Complainant Advocate':
-                                _caseDetails['complainant_advocate'],
-                            'Respondent Advocate':
-                                _caseDetails['respondent_advocate'],
-                            'Court': _caseDetails['court_name'],
-                            'City': _caseDetails['city_name'],
-                            'Summon Date': _caseDetails['sr_date'] is DateTime
-                                ? DateFormat('dd-MM-yyyy')
-                                    .format(_caseDetails['sr_date'])
-                                : _caseDetails['sr_date'],
-                            'Next Date': _caseDetails['next_date'] is DateTime
-                                ? DateFormat('dd-MM-yyyy')
-                                    .format(_caseDetails['next_date'])
-                                : _caseDetails['next_date'],
-                            'Date Of Filing':
-                                _caseDetails['date_of_filing'] is DateTime
-                                    ? DateFormat('dd-MM-yyyy')
-                                        .format(_caseDetails['date_of_filing'])
-                                    : _caseDetails['date_of_filing'],
-                            'Case Counter': _caseDetails['case_counter'],
-                          },
-                        ),
+                        _buildDetailsCard(details: _caseDetails),
                       ],
                     ),
                   ),

@@ -2,11 +2,13 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intern_side/screens/Case_History/case_info.dart';
-import 'package:intern_side/screens/Case_History/update_next_date.dart';
+import 'package:intern_side/screens/Case_History/proceed_case.dart';
 import 'package:intern_side/screens/Case_History/view_case_history.dart';
 import 'package:intern_side/screens/Case_History/view_docs.dart';
 import 'package:http/http.dart' as http;
+import 'package:intern_side/utils/constants.dart';
 import '../models/case_list.dart';
+import '../screens/Case_History/ProceedHistory.dart';
 import '../screens/Case_History/view_case_history.dart';
 import '../services/shared_pref.dart';
 
@@ -60,8 +62,7 @@ class _CaseCardState extends State<CaseCard> {
   }
 
   Future<void> fetchTasks() async {
-    const String url =
-        'https://pragmanxt.com/case_sync_pro/services/intern/v1/index.php/intern_task_list';
+    const String url = '$baseUrl/intern_task_list';
 
     try {
       var request = http.MultipartRequest('POST', Uri.parse(url));
@@ -107,88 +108,110 @@ class _CaseCardState extends State<CaseCard> {
     showModalBottomSheet(
       context: context,
       builder: (BuildContext context) {
-        return Wrap(
-          children: [
-            ListTile(
-              leading: const Icon(Icons.document_scanner),
-              title: const Text('View Docs'),
-              enabled: !isRealloted,
-              onTap: () async {
-                Navigator.pop(context); // Close dropdown first
-                final result = await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ViewDocs(
-                      caseId: caseListData.id,
-                      caseNo: caseListData.caseNo,
+        return Container(
+          color: Colors.white, // Set your desired background color here
+          child: Wrap(
+            children: [
+              ListTile(
+                leading: const Icon(Icons.document_scanner),
+                title: const Text('View Docs'),
+                enabled: !isRealloted,
+                onTap: () async {
+                  Navigator.pop(context); // Close dropdown first
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ViewDocs(
+                        caseId: caseListData.id,
+                        caseNo: caseListData.caseNo,
+                      ),
                     ),
-                  ),
-                );
-                if (result == true) {
-                  fetchTasks(); // Refresh the task list after returning
-                }
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.history),
-              title: const Text('View Case Tasks'),
-              enabled: !isRealloted,
-              onTap: () async {
-                Navigator.pop(context); // Close dropdown first
-                final result = await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ViewCaseHistoryScreen(
-                      caseId: caseListData.id,
-                      caseNo: caseListData.caseNo,
+                  );
+                  if (result == true) {
+                    fetchTasks(); // Refresh the task list after returning
+                  }
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.history),
+                title: const Text('View Case Tasks'),
+                enabled: !isRealloted,
+                onTap: () async {
+                  Navigator.pop(context);
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ViewCaseHistoryScreen(
+                        caseId: caseListData.id,
+                        caseNo: caseListData.caseNo,
+                      ),
                     ),
-                  ),
-                );
-                if (result == true) {
-                  fetchTasks(); // Refresh the task list after returning
-                }
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.visibility),
-              title: const Text('View Case Info'),
-              enabled: !isRealloted,
-              onTap: () async {
-                Navigator.pop(context); // Close dropdown first
-                final result = await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => CaseInfoPage(
-                      caseId: caseListData.id,
-                      caseNo: caseListData.caseNo,
+                  );
+                  if (result == true) {
+                    fetchTasks(); // Refresh the task list after returning
+                  }
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.visibility),
+                title: const Text('View Case Info'),
+                enabled: !isRealloted,
+                onTap: () async {
+                  Navigator.pop(context); // Close dropdown first
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => CaseInfoPage(
+                        caseId: caseListData.id,
+                        caseNo: caseListData.caseNo,
+                      ),
                     ),
-                  ),
-                );
-                if (result == true) {
-                  fetchTasks(); // Refresh the task list after returning
-                }
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.calendar_month),
-              title: const Text('Proceed Case'),
-              enabled: !isRealloted,
-              onTap: () async {
-                Navigator.pop(context); // Close dropdown first
-                final result = await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => UpdateNextDateForm(
-                      caseId: caseListData.id,
+                  );
+                  if (result == true) {
+                    fetchTasks(); // Refresh the task list after returning
+                  }
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.calendar_month),
+                title: const Text('Proceed Case'),
+                enabled: !isRealloted,
+                onTap: () async {
+                  Navigator.pop(context); // Close dropdown first
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ProceedCaseAdd(
+                        caseId: caseListData.id,
+                      ),
                     ),
-                  ),
-                );
-                if (result == true) {
-                  fetchTasks();
-                }
-              },
-            ),
-          ],
+                  );
+                  if (result == true) {
+                    fetchTasks();
+                  }
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.cases_sharp),
+                title: const Text('Proceed History'),
+                enabled: !isRealloted,
+                onTap: () async {
+                  Navigator.pop(context); // Close dropdown first
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ViewProceedCaseHistoryScreen(
+                        caseId: caseListData.id,
+                      ),
+                    ),
+                  );
+                  if (result == true) {
+                    fetchTasks();
+                  }
+                },
+              ),
+            ],
+          ),
         );
       },
     );

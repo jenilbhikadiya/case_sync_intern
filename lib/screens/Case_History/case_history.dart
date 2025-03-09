@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
 
 import '../../components/basicUIcomponent.dart';
@@ -7,7 +8,7 @@ import '../../components/case_card.dart';
 import '../../components/list_app_bar.dart';
 import '../../models/case_list.dart';
 import '../../services/case_services.dart';
-import '../constants/date_constants.dart';
+import '../../utils/constants.dart';
 
 class CaseHistoryScreen extends StatefulWidget {
   final String internId;
@@ -185,6 +186,7 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
     });
   }
 
+  // Navigate to next search result
   void _navigateToNextResult() {
     setState(() {
       if (_currentResultIndex < _filteredCases.length - 1) {
@@ -320,6 +322,7 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
                   height: 32,
                 ),
                 onPressed: () {
+                  HapticFeedback.mediumImpact();
                   Navigator.pop(context);
                 },
               ),
@@ -351,13 +354,13 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
             isSearching: _isSearching,
             onFilterPressed: null,
           ),
-          body: _buildBodyContent(),
+          body: buildBodyContent(),
         );
       },
     );
   }
 
-  Widget _buildBodyContent() {
+  Widget buildBodyContent() {
     var screenWidth = MediaQuery.sizeOf(context).width;
 
     // Check if monthsWithCases is empty and handle the scenario
@@ -398,19 +401,23 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
                 Row(
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.arrow_back),
-                      onPressed: _currentResultIndex > 0
-                          ? _navigateToPreviousResult
-                          : null,
-                    ),
+                        icon: const Icon(Icons.arrow_back),
+                        onPressed: () {
+                          HapticFeedback.mediumImpact();
+                          _currentResultIndex > 0
+                              ? _navigateToPreviousResult()
+                              : null;
+                        }),
                     Text(
                         '${_filteredCases.isEmpty ? 0 : _currentResultIndex + 1} / ${_filteredCases.length}'),
                     IconButton(
-                      icon: const Icon(Icons.arrow_forward),
-                      onPressed: _currentResultIndex < _filteredCases.length - 1
-                          ? _navigateToNextResult
-                          : null,
-                    ),
+                        icon: const Icon(Icons.arrow_forward),
+                        onPressed: () {
+                          HapticFeedback.mediumImpact();
+                          _currentResultIndex < _filteredCases.length - 1
+                              ? _navigateToNextResult()
+                              : null;
+                        }),
                   ],
                 ),
               ],
@@ -420,11 +427,11 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
           color: const Color(0xFFF3F3F3),
           padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.end,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
                 color: const Color(0xFFF3F3F3),
-                width: screenWidth * 0.7,
+                width: screenWidth * 0.68,
                 child: TabBar(
                   controller: _tabController,
                   isScrollable: true,
@@ -437,7 +444,6 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
                       monthsWithCases.map((month) => Tab(text: month)).toList(),
                 ),
               ),
-              SizedBox(width: screenWidth * 0.05),
               DropdownButton<String>(
                 value: selectedYear,
                 icon: const Icon(Icons.arrow_drop_down, color: Colors.black),
@@ -500,20 +506,17 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
                 margin:
                     const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
                 child: RefreshIndicator(
-                  color: AppTheme.getRefreshIndicatorColor(
-                      Theme.of(context).brightness),
-                  backgroundColor:
-                      AppTheme.getRefreshIndicatorBackgroundColor(),
+                  color: Colors.black,
                   onRefresh: () async {
-                    // print("Before refresh: ${caseData[selectedYear]}");
-                    await populateCaseData(widget.internId);
-                    // print("After refresh: ${caseData[selectedYear]}");
                     setState(() {
-                      monthsWithCases = _getMonthsForYear(selectedYear);
+                      populateCaseData(widget.internId);
+                      allCases = getCaseDataForMonth(selectedYear, month);
                     });
                   },
                   child: allCases.isEmpty
                       ? ListView(
+                          controller:
+                              _scrollController, // ✅ Attach the scroll controller here!
                           physics: const AlwaysScrollableScrollPhysics(),
                           children: const [
                             Padding(
@@ -528,37 +531,30 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
                             ),
                           ],
                         )
-                      : SingleChildScrollView(
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          child: ConstrainedBox(
-                            constraints: BoxConstraints(
-                              minHeight: MediaQuery.of(context).size.height -
-                                  (AppBar().preferredSize.height +
-                                      kToolbarHeight), // Adjust based on the layout
-                            ),
-                            child: ListView.builder(
-                              controller: _scrollController,
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              itemCount: allCases.length,
-                              itemBuilder: (context, index) {
-                                var caseItem = allCases[index];
+                      : ListView.builder(
+                          // ✅ Remove SingleChildScrollView
+                          controller:
+                              _scrollController, // ✅ Attach the scroll controller here!
+                          physics:
+                              const AlwaysScrollableScrollPhysics(), // ✅ Allow scrolling
+                          itemCount: allCases.length,
+                          itemBuilder: (context, index) {
+                            caseCardKeys[index] = GlobalKey();
+                            var caseItem = allCases[index];
 
-                                bool isHighlighted = _isSearching &&
-                                    _filteredCases.isNotEmpty &&
-                                    _resultTabs[_currentResultIndex]
-                                        .endsWith(month) &&
-                                    _filteredCases[_currentResultIndex]
-                                            .caseNo ==
-                                        caseItem.caseNo;
+                            bool isHighlighted = _isSearching &&
+                                _filteredCases.isNotEmpty &&
+                                _resultTabs[_currentResultIndex]
+                                    .endsWith(month) &&
+                                _filteredCases[_currentResultIndex].caseNo ==
+                                    caseItem.caseNo;
 
-                                return CaseCard(
-                                  caseItem: caseItem,
-                                  isHighlighted: isHighlighted,
-                                );
-                              },
-                            ),
-                          ),
+                            return CaseCard(
+                              key: caseCardKeys[index],
+                              caseItem: caseItem,
+                              isHighlighted: isHighlighted,
+                            );
+                          },
                         ),
                 ),
               );

@@ -7,7 +7,7 @@ import '../../components/case_card.dart';
 import '../../components/list_app_bar.dart';
 import '../../models/case_list.dart';
 import '../../services/case_services.dart';
-import '../constants/date_constants.dart';
+import '../../utils/constants.dart';
 
 class InternCaseHistoryScreen extends StatefulWidget {
   final String internId;
@@ -420,11 +420,11 @@ class InternCaseHistoryScreenState extends State<InternCaseHistoryScreen>
           color: const Color(0xFFF3F3F3),
           padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.end,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
                 color: const Color(0xFFF3F3F3),
-                width: screenWidth * 0.7,
+                width: screenWidth * 0.68,
                 child: TabBar(
                   controller: _tabController,
                   isScrollable: true,
@@ -437,7 +437,6 @@ class InternCaseHistoryScreenState extends State<InternCaseHistoryScreen>
                       monthsWithCases.map((month) => Tab(text: month)).toList(),
                 ),
               ),
-              SizedBox(width: screenWidth * 0.05),
               DropdownButton<String>(
                 value: selectedYear,
                 icon: const Icon(Icons.arrow_drop_down, color: Colors.black),
