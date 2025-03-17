@@ -57,6 +57,7 @@ dependencies:
 
   animated_text_kit: ^4.2.1
   haptic_feedback: ^0.5.1+1
+  liquid_pull_to_refresh: ^3.0.1
 
 
 flutter_launcher_icons:

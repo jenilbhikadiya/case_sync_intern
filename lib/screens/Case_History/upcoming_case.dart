@@ -1,283 +1,472 @@
-import 'package:flutter/material.dart';
 import 'dart:convert';
-import 'package:http/http.dart' as http;
-import 'package:intern_side/utils/constants.dart';
+import 'dart:developer';
 
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
+import 'package:liquid_pull_to_refresh/liquid_pull_to_refresh.dart';
+
+import '../../components/filter_modal.dart';
 import '../../components/list_app_bar.dart';
 import '../../components/todays_case_card.dart';
-import '../../models/case.dart';
+import '../../models/case_list.dart';
+import '../../utils/constants.dart';
 
-class CasesPage extends StatefulWidget {
+class UpcomingCases extends StatefulWidget {
+  const UpcomingCases({super.key});
+
   @override
-  _CasesPageState createState() => _CasesPageState();
+  State<UpcomingCases> createState() => UpcomingCasesState();
 }
 
-class _CasesPageState extends State<CasesPage>
-    with SingleTickerProviderStateMixin {
+class UpcomingCasesState extends State<UpcomingCases>
+    with TickerProviderStateMixin {
+  bool _isLoading = true;
+  Map<String, List<CaseListData>> _casesByDate = {};
+  String _errorMessage = '';
+  List<String> _dates = [];
   late TabController _tabController;
-  bool _isSearching = false; // For controlling the search box visibility
-  final TextEditingController _searchController = TextEditingController();
-  Map<String, dynamic> casesData = {};
-  bool isLoading = true;
-  String _searchQuery = '';
+  String _selectedTabDate = '';
+  DateTime _selectedDate = DateTime.now();
   String? _selectedCity;
   String? _selectedCourt;
-  final List<String> _cities = [];
-  final List<String> _courts = [];
-  List<Case> _caseList = [];
-  List<Case> _filteredCases = [];
-  List<Case> todayCases = [];
-  List<Case> tomorrowCases = [];
-  List<Case> dayAfterCases = [];
-  List<Case> filteredCases = [];
+  List<String> _cities = [];
+  List<String> _courts = [];
+  Map<String, List<CaseListData>> _originalCasesByDate = {};
+
+  bool _isSearching = false;
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+  final List<CaseListData> _filteredCases = [];
+  final List<String> _resultTabs = [];
+  int _currentResultIndex = 0;
+  Map<int, GlobalKey> caseCardKeys = {};
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
-    fetchCases();
-    _searchController.addListener(() {
-      setState(() {
-        _searchQuery = _searchController.text;
-        // Perform search logic if needed
-      });
-    });
+    _fetchCases(_selectedDate);
   }
 
-  @override
-  void dispose() {
-    _searchController.dispose();
-    _tabController.dispose();
-    super.dispose();
-  }
-
-  Future<void> fetchCases() async {
-    final url = Uri.parse('$baseUrl/upcoming_cases');
-
-    // Generate dates for today, tomorrow, and the day after
-    final today = DateTime.now();
-    final tomorrow = today.add(Duration(days: 1));
-    final dayAfter = today.add(Duration(days: 2));
-
-    final formattedToday =
-        '${today.year}/${today.month.toString().padLeft(2, '0')}/${today.day.toString().padLeft(2, '0')}';
-    final formattedTomorrow =
-        '${tomorrow.year}/${tomorrow.month.toString().padLeft(2, '0')}/${tomorrow.day.toString().padLeft(2, '0')}';
-    final formattedDayAfter =
-        '${dayAfter.year}/${dayAfter.month.toString().padLeft(2, '0')}/${dayAfter.day.toString().padLeft(2, '0')}';
-
-    // Prepare API body
-    print("Today's Cases: $todayCases");
-    print("Tomorrow's Cases: $tomorrowCases");
-    print("Day After Cases: $dayAfterCases");
-
-    final body = {'data': '{"date":"$formattedToday"}'};
-
-    try {
-      final response = await http.post(url, body: body);
-      if (response.statusCode == 200) {
-        final responseData = json.decode(response.body);
-        print("Fetched Data from API: $responseData");
-
-        setState(() {
-          // Safely handle null values
-          todayCases = (responseData[formattedToday] as List?)
-                  ?.map((item) => Case.fromJson(item))
-                  .toList() ??
-              []; // Use empty list if null
-          tomorrowCases = (responseData[formattedTomorrow] as List?)
-                  ?.map((item) => Case.fromJson(item))
-                  .toList() ??
-              [];
-          dayAfterCases = (responseData[formattedDayAfter] as List?)
-                  ?.map((item) => Case.fromJson(item))
-                  .toList() ??
-              [];
-
-          // Initialize filtered cases with today's cases
-          filteredCases = List.from(todayCases);
-
-          isLoading = false;
-        });
-      } else {
-        print('Error: ${response.statusCode}');
-      }
-    } catch (e) {
-      print('Error: $e');
-    }
-  }
-
-  Widget _buildSearchBar() {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: TextField(
-        controller: _searchController,
-        decoration: InputDecoration(
-          labelText: 'Search Cases',
-          hintText: 'Search by case number, applicant, court, or city',
-          prefixIcon: const Icon(Icons.search),
-          suffixIcon: _searchQuery.isNotEmpty
-              ? IconButton(
-                  icon: const Icon(Icons.clear),
-                  onPressed: () {
-                    setState(() {
-                      _searchController.clear();
-                    });
-                  },
-                )
-              : null,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8.0),
-          ),
+  void _applyFilters() {
+    setState(() {
+      _casesByDate = _originalCasesByDate.map<String, List<CaseListData>>(
+        (key, value) => MapEntry(
+          key,
+          value
+              .where((caseItem) =>
+                  (_selectedCity == null ||
+                      _selectedCity == "All" ||
+                      caseItem.cityName == _selectedCity) &&
+                  (_selectedCourt == null ||
+                      _selectedCourt == "All" ||
+                      caseItem.courtName == _selectedCourt))
+              .toList(),
         ),
-      ),
-    );
-  }
-
-  void _showFilterOptions() {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              DropdownButtonFormField<String>(
-                value: _selectedCity,
-                hint: const Text('Select City'),
-                items: ['All', ..._cities]
-                    .map((city) => DropdownMenuItem(
-                          value: city,
-                          child: Text(city),
-                        ))
-                    .toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _selectedCity = value;
-                    _updateFilteredCases();
-                  });
-                },
-              ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                value: _selectedCourt,
-                hint: const Text('Select Court'),
-                items: ['All', ..._courts]
-                    .map((court) => DropdownMenuItem(
-                          value: court,
-                          child: Text(court),
-                        ))
-                    .toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _selectedCourt = value;
-                    _updateFilteredCases();
-                  });
-                },
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.of(context).pop(); // Close the filter panel
-                  _updateFilteredCases();
-                },
-                child: const Text('Apply Filters'),
-              ),
-            ],
-          ),
-        );
-      },
-    );
+      );
+      _updateFilteredCases(); // Ensure search is applied after filtering
+    });
   }
 
   void _updateFilteredCases() {
     setState(() {
-      _filteredCases = _caseList.where((caseItem) {
-        final matchesSearchQuery = caseItem.caseNo
-                .toLowerCase()
-                .contains(_searchQuery.toLowerCase()) ||
-            caseItem.applicant
-                .toLowerCase()
-                .contains(_searchQuery.toLowerCase()) ||
-            caseItem.courtName
-                .toLowerCase()
-                .contains(_searchQuery.toLowerCase()) ||
-            caseItem.cityName
-                .toLowerCase()
-                .contains(_searchQuery.toLowerCase());
+      _filteredCases.clear();
+      _resultTabs.clear();
 
-        final matchesCity = _selectedCity == null ||
-            _selectedCity == 'All' ||
-            caseItem.cityName == _selectedCity;
-        final matchesCourt = _selectedCourt == null ||
-            _selectedCourt == 'All' ||
-            caseItem.courtName == _selectedCourt;
+      _casesByDate.forEach((date, cases) {
+        // Search within filtered cases
+        final results = _filterCases(cases);
+        if (results.isNotEmpty) {
+          _filteredCases.addAll(results);
+          _resultTabs.addAll(List.filled(results.length, date));
+        }
+      });
 
-        return matchesSearchQuery && matchesCity && matchesCourt;
-      }).toList();
+      if (_filteredCases.isNotEmpty) {
+        _currentResultIndex = 0;
+        _switchTabToResult();
+      }
     });
+  }
+
+  List<CaseListData> _filterCases(List<CaseListData> cases) {
+    return cases.where((caseItem) {
+      return caseItem.caseNo.toLowerCase().contains(_searchQuery) ||
+          caseItem.courtName.toLowerCase().contains(_searchQuery) ||
+          caseItem.cityName.toLowerCase().contains(_searchQuery) ||
+          caseItem.handleBy.toLowerCase().contains(_searchQuery) ||
+          caseItem.applicant.toLowerCase().contains(_searchQuery) ||
+          caseItem.opponent.toLowerCase().contains(_searchQuery);
+    }).toList();
+  }
+
+  void _navigateToPreviousResult() {
+    setState(() {
+      if (_currentResultIndex > 0) {
+        _currentResultIndex--;
+        _switchTabToResult();
+      }
+    });
+  }
+
+  void _navigateToNextResult() {
+    setState(() {
+      if (_currentResultIndex < _filteredCases.length - 1) {
+        _currentResultIndex++;
+        _switchTabToResult();
+      }
+    });
+  }
+
+  void _switchTabToResult() {
+    if (_filteredCases.isEmpty) return;
+
+    final targetDate = _resultTabs[_currentResultIndex];
+    final targetIndex = _dates.indexOf(targetDate);
+
+    if (targetIndex != -1) {
+      _tabController.animateTo(targetIndex);
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final allCases = _casesByDate[targetDate] ?? [];
+      final highlightedIndex = allCases.indexWhere(
+        (caseItem) =>
+            caseItem.caseNo == _filteredCases[_currentResultIndex].caseNo,
+      );
+
+      if (highlightedIndex >= 0 && caseCardKeys.containsKey(highlightedIndex)) {
+        final context = caseCardKeys[highlightedIndex]!.currentContext;
+        if (context == null) return;
+
+        final box = context.findRenderObject() as RenderBox?;
+        if (box == null) return;
+
+        double caseCardHeight = box.size.height;
+        double scrollOffset = (highlightedIndex * caseCardHeight);
+        double maxScrollExtent = _scrollController.position.maxScrollExtent;
+
+        if (scrollOffset > maxScrollExtent) scrollOffset = maxScrollExtent;
+        if (scrollOffset < 0) scrollOffset = 0;
+
+        Future.delayed(const Duration(milliseconds: 100), () {
+          _scrollController.animateTo(
+            scrollOffset,
+            duration: const Duration(milliseconds: 500),
+            curve: Curves.easeInOut,
+          );
+        });
+      }
+    });
+  }
+
+  Future<void> _fetchCases(DateTime date) async {
+    try {
+      _errorMessage = '';
+      String previousSelectedTabDate = _selectedTabDate;
+      var request = http.MultipartRequest(
+        'POST',
+        Uri.parse("$baseUrl/upcoming_cases"),
+      );
+      String strDate = DateFormat('yyyy-MM-dd').format(date);
+      request.fields['data'] = json.encode({'date': strDate});
+      var response = await request.send();
+
+      if (response.statusCode == 200) {
+        var responseData = await response.stream.bytesToString();
+        var data = json.decode(responseData) as Map<String, dynamic>;
+        setState(() {
+          _originalCasesByDate = data.map<String, List<CaseListData>>(
+            (key, value) => MapEntry(
+              key,
+              (value as List)
+                  .map((item) => CaseListData.fromJson(item))
+                  .toList(),
+            ),
+          );
+          _applyFilters();
+
+          _dates = _casesByDate.keys.toList();
+          if (_dates.isNotEmpty) {
+            if (_dates.contains(previousSelectedTabDate)) {
+              _selectedTabDate = previousSelectedTabDate;
+            } else {
+              _selectedTabDate = _dates.first;
+            }
+
+            _tabController = TabController(length: _dates.length, vsync: this);
+            _tabController.index = _dates.indexOf(_selectedTabDate);
+            _tabController.addListener(() {
+              setState(() {
+                _selectedTabDate = _dates[_tabController.index];
+              });
+            });
+          }
+
+          // Extract unique cities and courts from the case data
+          if (_cities.isEmpty) {
+            _cities = _casesByDate.values
+                .expand((cases) => cases.map((c) => c.cityName))
+                .toSet()
+                .toList();
+          }
+          if (_courts.isEmpty) {
+            _courts = _casesByDate.values
+                .expand((cases) => cases.map((c) => c.courtName))
+                .toSet()
+                .toList();
+          }
+
+          _isLoading = false;
+        });
+      } else {
+        throw Exception(
+            'Failed to load cases. Status Code: ${response.statusCode}');
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Error: $e';
+        _isLoading = false;
+      });
+      log('Error: $e');
+    }
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: ListAppBar(
-        title: "Today's Cases",
-        isSearching: _isSearching,
-        onSearchPressed: () {
-          setState(() {
-            _isSearching = !_isSearching;
-            if (!_isSearching) {
-              _searchController.clear();
-            }
-          });
-        },
-        onFilterPressed: _showFilterOptions, // Add this line
-      ),
-      body: Column(
-        children: [
-          // Show search bar if search is active
-          if (_isSearching) _buildSearchBar(),
-          TabBar(
-            controller: _tabController,
-            tabs: [
-              Tab(text: 'Today'),
-              Tab(text: 'Tomorrow'),
-              Tab(text: 'Day After'),
-            ],
-          ),
-          Expanded(
-            child: isLoading
-                ? Center(child: CircularProgressIndicator())
-                : TabBarView(
-                    controller: _tabController,
-                    children: [
-                      buildCaseList(
-                          filteredCases), // Today's cases with filters
-                      buildCaseList(tomorrowCases), // Tomorrow's cases
-                      buildCaseList(
-                          dayAfterCases), // Day After Tomorrow's cases
-                    ],
-                  ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget buildCaseList(List<Case> cases) {
-    if (cases.isEmpty) {
-      return Center(child: Text('No cases available'));
-    }
-
-    return ListView.builder(
-      padding: const EdgeInsets.all(16.0),
-      itemCount: cases.length,
-      itemBuilder: (context, index) {
-        final caseItem = cases[index];
-        return TodaysCaseCard(caseItem: caseItem);
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onTap: () {
+        FocusScope.of(context).unfocus();
       },
+      child: Scaffold(
+        appBar: ListAppBar(
+          title: "Upcoming Cases",
+          isSearching: _isSearching,
+          onSearchPressed: () {
+            setState(() {
+              _isSearching = !_isSearching;
+              if (!_isSearching) {
+                _searchController.clear();
+                _searchQuery = '';
+                _filteredCases.clear();
+                _resultTabs.clear();
+              }
+            });
+          },
+          onFilterPressed: () {
+            FilterModal.showFilterModal(
+              context,
+              selectedCity: _selectedCity,
+              selectedCourt: _selectedCourt,
+              selectedNextDate: _selectedDate,
+              cities: _cities,
+              courts: _courts,
+              onCitySelected: (value) {
+                setState(() {
+                  _selectedCity = value;
+                  _applyFilters();
+                });
+              },
+              onCourtSelected: (value) {
+                setState(() {
+                  _selectedCourt = value;
+                  _applyFilters();
+                });
+              },
+              onDateSelected: (value) {
+                if (value != null && value != _selectedDate) {
+                  setState(() {
+                    _selectedDate = value;
+                  });
+                  _fetchCases(_selectedDate);
+                }
+              },
+              onApply: () {
+                _fetchCases(_selectedDate);
+              },
+              onReset: () {
+                setState(() {
+                  _selectedCity = null;
+                  _selectedCourt = null;
+                  _selectedDate = DateTime.now();
+                });
+                _fetchCases(_selectedDate);
+              },
+            );
+          },
+        ),
+        backgroundColor: const Color(0xFFF3F3F3),
+        body: Column(
+          children: [
+            if (_isSearching)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _searchController,
+                        onChanged: (value) {
+                          if (_searchController.text.trim() != '') {
+                            setState(() {
+                              _searchQuery = value.toLowerCase();
+                              _updateFilteredCases();
+                            });
+                          } else {
+                            _searchQuery = '';
+                            _filteredCases.clear();
+                            _resultTabs.clear();
+                          }
+                        },
+                        decoration: InputDecoration(
+                          hintText: 'Search cases...',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(20.0),
+                          ),
+                          suffixIcon: _searchController.text.isNotEmpty
+                              ? IconButton(
+                                  icon: Icon(Icons.clear),
+                                  onPressed: () {
+                                    setState(() {
+                                      _searchController.clear();
+                                      _searchQuery = '';
+                                      _filteredCases.clear();
+                                      _resultTabs.clear();
+                                    });
+                                  },
+                                )
+                              : null, // Show clear button only when there's text
+                        ),
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        IconButton(
+                            icon: const Icon(Icons.arrow_back),
+                            onPressed: _currentResultIndex > 0
+                                ? _navigateToPreviousResult
+                                : null),
+                        GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _switchTabToResult();
+                            });
+                          },
+                          child: Text(
+                            '${_filteredCases.isEmpty ? 0 : _currentResultIndex + 1} / ${_filteredCases.length}',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                            icon: const Icon(Icons.arrow_forward),
+                            onPressed:
+                                _currentResultIndex < _filteredCases.length - 1
+                                    ? _navigateToNextResult
+                                    : null),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            if (_dates.isNotEmpty)
+              TabBar(
+                tabAlignment: TabAlignment.center,
+                indicatorAnimation: TabIndicatorAnimation.elastic,
+                controller: _tabController,
+                isScrollable: true,
+                labelColor: Colors.black,
+                unselectedLabelColor: Colors.black54,
+                indicatorColor: Colors.black,
+                indicatorSize: TabBarIndicatorSize.label,
+                tabs: _dates
+                    .map(
+                      (date) => Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                        child: Tab(
+                          text: date,
+                        ),
+                      ),
+                    )
+                    .toList(),
+              ),
+            Expanded(
+              child: LiquidPullToRefresh(
+                color: Colors.black,
+                onRefresh: () async {
+                  _fetchCases(_selectedDate);
+                },
+                child: SingleChildScrollView(
+                  physics: AlwaysScrollableScrollPhysics(),
+                  child: SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.8,
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.translucent,
+                      onHorizontalDragEnd: (details) {
+                        if (details.primaryVelocity! < 0) {
+                          if (_tabController.index < _dates.length - 1) {
+                            _tabController.animateTo(_tabController.index + 1);
+                          }
+                        } else if (details.primaryVelocity! > 0) {
+                          if (_tabController.index > 0) {
+                            _tabController.animateTo(_tabController.index - 1);
+                          }
+                        }
+                      },
+                      child: (_isLoading
+                          ? const Center(
+                              child: CircularProgressIndicator(
+                                  color: Colors.black))
+                          : _errorMessage.isNotEmpty
+                              ? Center(child: Text(_errorMessage))
+                              : (_casesByDate[_selectedTabDate]?.isEmpty ??
+                                      true)
+                                  ? const Center(
+                                      child: Text(
+                                          "No cases available for this date."))
+                                  : ListView.builder(
+                                      padding: const EdgeInsets.all(16.0),
+                                      itemCount: _casesByDate[_selectedTabDate]
+                                              ?.length ??
+                                          0,
+                                      itemBuilder: (context, index) {
+                                        final caseItem = _casesByDate[
+                                            _selectedTabDate]![index];
+                                        caseCardKeys[index] = GlobalKey();
+
+                                        bool isHighlighted = _isSearching &&
+                                            _filteredCases.isNotEmpty &&
+                                            _resultTabs[_currentResultIndex] ==
+                                                _selectedTabDate &&
+                                            _filteredCases[_currentResultIndex]
+                                                    .caseNo ==
+                                                caseItem.caseNo;
+
+                                        return Container(
+                                          key: caseCardKeys[index],
+                                          child: UpcomingCaseCard(
+                                              caseItem: caseItem,
+                                              isHighlighted: isHighlighted),
+                                        );
+                                      },
+                                    )),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

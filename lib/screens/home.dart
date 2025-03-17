@@ -284,7 +284,7 @@ class HomeScreenState extends State<HomeScreen> {
                                     iconPath: 'assets/icons/cases_today.svg',
                                     cardWidth: cardWidth,
                                     cardHeight: cardHeight,
-                                    destinationScreen: CasesPage(),
+                                    destinationScreen: const UpcomingCases(),
                                     counterNotifier: todays_case_count,
                                     shouldDisplayCounter: true,
                                   ),
