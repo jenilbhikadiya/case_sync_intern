@@ -69,7 +69,7 @@ class CaseCounterCard extends StatelessWidget {
               if (caseItem.caseCounter.isNotEmpty)
                 Container(
                   width: 10,
-                  height: 135,
+                  height: 185,
                   decoration: BoxDecoration(
                     color: getBadgeColor(int.parse(caseItem.caseCounter)),
                     borderRadius: BorderRadius.circular(5),

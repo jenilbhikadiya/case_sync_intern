@@ -17,6 +17,7 @@ import '../models/intern.dart';
 import '../services/shared_pref.dart';
 import 'Case_History/case_history.dart';
 import 'Case_History/intern_case_history.dart';
+import 'Case_History/upcoming_case.dart';
 import 'Tasks/task_page.dart';
 import 'appbar/notification_drawer.dart';
 import 'appbar/settings_drawer.dart';
@@ -283,7 +284,7 @@ class HomeScreenState extends State<HomeScreen> {
                                     iconPath: 'assets/icons/cases_today.svg',
                                     cardWidth: cardWidth,
                                     cardHeight: cardHeight,
-                                    destinationScreen: const CasesToday(),
+                                    destinationScreen: CasesPage(),
                                     counterNotifier: todays_case_count,
                                     shouldDisplayCounter: true,
                                   ),
