@@ -71,7 +71,7 @@ class _ViewProceedCaseHistoryScreenState
         }
       } else {
         setState(() {
-          _errorMessage = 'Failed to load proceeded case history.';
+          _errorMessage = 'No proceeded case history found.';
         });
       }
     } catch (e) {

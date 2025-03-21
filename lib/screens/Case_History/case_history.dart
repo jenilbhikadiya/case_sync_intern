@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
 
-import '../../components/basicUIcomponent.dart';
 import '../../components/case_card.dart';
 import '../../components/list_app_bar.dart';
 import '../../models/case_list.dart';

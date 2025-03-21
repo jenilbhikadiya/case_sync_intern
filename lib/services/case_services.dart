@@ -30,8 +30,8 @@ Future<void> populateCaseData(String internId) async {
     }
 
     for (var caseItem in cases) {
-      String year = caseItem.srDate.year.toString();
-      String month = DateFormat('MMMM').format(caseItem.srDate);
+      String year = caseItem.dateOfFiling.year.toString();
+      String month = DateFormat('MMMM').format(caseItem.dateOfFiling);
 
       if (!years.contains(year)) {
         years.add(year);

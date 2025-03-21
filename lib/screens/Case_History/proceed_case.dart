@@ -99,7 +99,9 @@ class _ProceedCaseAddState extends State<ProceedCaseAdd> {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error fetching next date and stage: $e')),
+        const SnackBar(
+            content:
+                Text('There is no next date and next stage for this case')),
       );
     }
   }
@@ -314,6 +316,8 @@ class _ProceedCaseAddState extends State<ProceedCaseAdd> {
       validator: (value) =>
           (value == null || value.isEmpty) ? 'Please enter a remark' : null,
       onChanged: (value) => _remark = value,
+      maxLines: null, // Allows multiple lines
+      keyboardType: TextInputType.multiline, // Enables multiline input
     );
   }
 }
