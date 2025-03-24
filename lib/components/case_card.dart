@@ -109,15 +109,27 @@ class _CaseCardState extends State<CaseCard> {
       context: context,
       builder: (BuildContext context) {
         return Container(
-          color: Colors.white, // Set your desired background color here
-          child: Wrap(
+          color: Colors.white,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
+              Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Text(
+                  'Case No: ${caseListData.caseNo}',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
+                ),
+              ),
+              const Divider(),
               ListTile(
                 leading: const Icon(Icons.document_scanner),
                 title: const Text('View Docs'),
                 enabled: !isRealloted,
                 onTap: () async {
-                  Navigator.pop(context); // Close dropdown first
+                  Navigator.pop(context);
                   final result = await Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -128,7 +140,7 @@ class _CaseCardState extends State<CaseCard> {
                     ),
                   );
                   if (result == true) {
-                    fetchTasks(); // Refresh the task list after returning
+                    fetchTasks();
                   }
                 },
               ),
@@ -148,7 +160,7 @@ class _CaseCardState extends State<CaseCard> {
                     ),
                   );
                   if (result == true) {
-                    fetchTasks(); // Refresh the task list after returning
+                    fetchTasks();
                   }
                 },
               ),
@@ -157,7 +169,7 @@ class _CaseCardState extends State<CaseCard> {
                 title: const Text('View Case Info'),
                 enabled: !isRealloted,
                 onTap: () async {
-                  Navigator.pop(context); // Close dropdown first
+                  Navigator.pop(context);
                   final result = await Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -168,7 +180,7 @@ class _CaseCardState extends State<CaseCard> {
                     ),
                   );
                   if (result == true) {
-                    fetchTasks(); // Refresh the task list after returning
+                    fetchTasks();
                   }
                 },
               ),
@@ -177,7 +189,7 @@ class _CaseCardState extends State<CaseCard> {
                 title: const Text('Proceed Case'),
                 enabled: !isRealloted,
                 onTap: () async {
-                  Navigator.pop(context); // Close dropdown first
+                  Navigator.pop(context);
                   final result = await Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -196,7 +208,7 @@ class _CaseCardState extends State<CaseCard> {
                 title: const Text('Proceed History'),
                 enabled: !isRealloted,
                 onTap: () async {
-                  Navigator.pop(context); // Close dropdown first
+                  Navigator.pop(context);
                   final result = await Navigator.push(
                     context,
                     MaterialPageRoute(

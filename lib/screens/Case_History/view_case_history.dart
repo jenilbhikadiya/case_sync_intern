@@ -15,8 +15,11 @@ class ViewCaseHistoryScreen extends StatefulWidget {
   final String caseId;
   final String caseNo;
 
-  const ViewCaseHistoryScreen(
-      {super.key, required this.caseId, required this.caseNo});
+  const ViewCaseHistoryScreen({
+    super.key,
+    required this.caseId,
+    required this.caseNo,
+  });
 
   @override
   State<ViewCaseHistoryScreen> createState() => _ViewCaseHistoryScreenState();
@@ -59,7 +62,8 @@ class _ViewCaseHistoryScreenState extends State<ViewCaseHistoryScreen> {
         setState(() {
           if (data['success'] == true && data['data'] != null) {
             _caseHistory = (data['data'] as List)
-                .map((taskData) => TaskItem.fromJson(taskData))
+                .map((taskData) =>
+                    TaskItem.fromJson(taskData as Map<String, dynamic>))
                 .toList();
           } else {
             _errorMessage = data['message'] ?? 'No data found.';
@@ -81,48 +85,6 @@ class _ViewCaseHistoryScreenState extends State<ViewCaseHistoryScreen> {
     }
   }
 
-  void _showDropdownMenu(BuildContext context, TaskItem taskItem) {
-    showModalBottomSheet(
-      context: context,
-      builder: (BuildContext context) {
-        return Wrap(
-          children: [
-            ListTile(
-              leading: const Icon(Icons.info),
-              title: const Text('View Task Info'),
-              onTap: () {
-                Navigator.pop(context); // Close dropdown first
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => TaskInfoScreen(
-                      taskItem: taskItem,
-                    ),
-                  ),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.visibility),
-              title: const Text('View Remark List'),
-              onTap: () {
-                Navigator.pop(context); // Close dropdown first
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ShowRemarkPage(
-                      taskItem: taskItem,
-                    ),
-                  ),
-                );
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
@@ -130,6 +92,7 @@ class _ViewCaseHistoryScreenState extends State<ViewCaseHistoryScreen> {
     return Scaffold(
       appBar: ListAppBar(
         onSearchPressed: () {},
+        showSearch: false,
         title: 'View Case History',
       ),
       body: RefreshIndicator(
@@ -156,12 +119,10 @@ class _ViewCaseHistoryScreenState extends State<ViewCaseHistoryScreen> {
                           )
                         : Column(
                             children: _caseHistory.asMap().entries.map((entry) {
-                              int index = entry.key + 1; // for serial number
+                              int index = entry.key + 1; // Serial number
                               TaskItem taskItem = entry.value;
                               return GestureDetector(
-                                onTap: () {
-                                  _showDropdownMenu(context, taskItem);
-                                },
+                                onTap: () {},
                                 child: Center(
                                   child: Card(
                                     margin: const EdgeInsets.symmetric(
@@ -176,6 +137,12 @@ class _ViewCaseHistoryScreenState extends State<ViewCaseHistoryScreen> {
                                     child: Container(
                                       width: screenWidth * 0.9,
                                       padding: const EdgeInsets.all(12.0),
+                                      decoration: BoxDecoration(
+                                        color: Colors
+                                            .grey[200], // Light grey background
+                                        borderRadius: BorderRadius.circular(
+                                            20), // Match card's border radius
+                                      ),
                                       child: Column(
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
@@ -185,41 +152,73 @@ class _ViewCaseHistoryScreenState extends State<ViewCaseHistoryScreen> {
                                                   fontWeight: FontWeight.bold,
                                                   fontSize: 18)),
                                           const SizedBox(height: 8),
-                                          Text('Case No: ${taskItem.caseNo}',
-                                              style: const TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 18)),
-                                          const SizedBox(height: 8),
-                                          Text(
-                                              'Instruction: ${taskItem.instruction}',
-                                              style: const TextStyle(
-                                                  fontSize: 16)),
-                                          const SizedBox(height: 8),
-                                          Row(children: [
-                                            const Text(
-                                              'Status: ',
-                                            ),
-                                            Container(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
+                                          Table(
+                                            border: TableBorder.all(
+                                                color: Colors.black),
+                                            columnWidths: const {
+                                              0: FlexColumnWidth(
+                                                  2), // Key column
+                                              1: FlexColumnWidth(
+                                                  3), // Value column
+                                            },
+                                            children: [
+                                              _buildTableRow(
+                                                  'Case No', taskItem.caseNo),
+                                              _buildTableRow('Instruction',
+                                                  taskItem.instruction),
+                                              _buildTableRow('Alloted To',
+                                                  taskItem.allotedTo),
+                                              _buildTableRow('Alloted By',
+                                                  taskItem.allotedBy),
+                                              _buildTableRow(
+                                                  'Alloted Date',
+                                                  taskItem
+                                                      .formattedAllotedDate),
+                                              _buildTableRow(
+                                                  'Expected End Date',
+                                                  taskItem
+                                                      .formattedExpectedEndDate),
+                                              _buildTableRow(
+                                                  'Stage', taskItem.stage),
+                                              TableRow(children: [
+                                                const Padding(
+                                                  padding: EdgeInsets.all(8.0),
+                                                  child: Text('Status:',
+                                                      style: TextStyle(
+                                                          fontSize: 16,
+                                                          fontWeight:
+                                                              FontWeight.bold)),
+                                                ),
+                                                Padding(
+                                                  padding:
+                                                      const EdgeInsets.all(8.0),
+                                                  child: Container(
+                                                    padding: const EdgeInsets
+                                                        .symmetric(
                                                         horizontal: 10,
                                                         vertical: 2),
-                                                decoration: BoxDecoration(
-                                                  color: getStatusColor(
-                                                      taskItem.status),
-                                                  borderRadius:
-                                                      BorderRadius.circular(10),
-                                                ),
-                                                child: Center(
-                                                  child: Text(
-                                                    taskItem.status,
-                                                    style: const TextStyle(
-                                                        color: Colors.white,
-                                                        fontWeight:
-                                                            FontWeight.bold),
+                                                    decoration: BoxDecoration(
+                                                      color: getStatusColor(
+                                                          taskItem.status),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              10),
+                                                    ),
+                                                    child: Center(
+                                                      child: Text(
+                                                        taskItem.status,
+                                                        style: const TextStyle(
+                                                            color: Colors.white,
+                                                            fontWeight:
+                                                                FontWeight
+                                                                    .bold),
+                                                      ),
+                                                    ),
                                                   ),
-                                                )),
-                                          ]),
+                                                ),
+                                              ]),
+                                            ],
+                                          ),
                                         ],
                                       ),
                                     ),
@@ -236,4 +235,20 @@ class _ViewCaseHistoryScreenState extends State<ViewCaseHistoryScreen> {
       ),
     );
   }
+}
+
+TableRow _buildTableRow(String key, String value) {
+  return TableRow(
+    children: [
+      Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Text(key,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+      ),
+      Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Text(value, style: const TextStyle(fontSize: 16)),
+      ),
+    ],
+  );
 }

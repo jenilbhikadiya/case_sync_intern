@@ -12,6 +12,7 @@ import 'package:intern_side/screens/Notice/todays_case_list.dart';
 import 'package:intern_side/services/case_services.dart';
 import 'package:intern_side/utils/constants.dart';
 
+import '../check_update.dart';
 import '../components/basicUIcomponent.dart';
 import '../models/intern.dart';
 import '../services/shared_pref.dart';
@@ -45,6 +46,9 @@ class HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      CheckUpdate.checkForUpdate(context);
+    });
     initialisation();
   }
 
@@ -314,7 +318,7 @@ class HomeScreenState extends State<HomeScreen> {
                                     counterNotifier: taskCount,
                                   ),
                                   _buildCard(
-                                    title: 'Intern Case History',
+                                    title: 'Case History',
                                     iconPath: 'assets/icons/case_history.svg',
                                     cardWidth: cardWidth,
                                     cardHeight: cardHeight,
@@ -325,34 +329,6 @@ class HomeScreenState extends State<HomeScreen> {
                                 ],
                               ),
                               const SizedBox(height: 20),
-                              const Text(
-                                'CaseSync Case History',
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black,
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-                              GridView.count(
-                                crossAxisCount: 2,
-                                crossAxisSpacing: 2,
-                                mainAxisSpacing: 2,
-                                childAspectRatio: cardWidth / cardHeight,
-                                shrinkWrap: true,
-                                physics: const NeverScrollableScrollPhysics(),
-                                children: [
-                                  _buildCard(
-                                    title: 'Case History',
-                                    iconPath: 'assets/icons/case_history.svg',
-                                    cardWidth: cardWidth,
-                                    cardHeight: cardHeight,
-                                    destinationScreen:
-                                        CaseHistoryScreen(internId: user.id),
-                                    counterNotifier: caseCount,
-                                  ),
-                                ],
-                              ),
                             ],
                           );
                         },

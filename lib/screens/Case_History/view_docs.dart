@@ -12,6 +12,8 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../components/basicUIcomponent.dart';
 import '../../utils/constants.dart';
+import '../../utils/dismissible_card.dart';
+import '../../utils/file_already_exists.dart';
 
 class ViewDocs extends StatefulWidget {
   final String caseNo;
@@ -166,6 +168,72 @@ class DocumentCardState extends State<DocumentCard> {
       }
 
       final filePath = '${directory.path}/$fileName';
+      final file = File(filePath);
+
+      if (file.existsSync()) {
+        if (isPersistent) {
+          final result = await showCupertinoDialog<bool>(
+            context: context,
+            builder: (context) => FileAlreadyExistsDialog(
+              title: 'File Already Exists',
+              message:
+                  'The file "$fileName" already exists. Do you want to open it or download again?',
+              cancelButtonText: 'Open',
+              confirmButtonText: 'Rewrite',
+              onConfirm: () async {
+                Navigator.of(context).pop(true);
+              },
+            ),
+          );
+
+          if (result == true) {
+            // User chose to rewrite (download again)
+            final response = await HttpClient()
+                .getUrl(Uri.parse(url))
+                .then((req) => req.close());
+            final totalBytes = response.contentLength;
+            int bytesDownloaded = 0;
+
+            final sink = file.openWrite();
+            await for (var chunk in response) {
+              bytesDownloaded += chunk.length;
+              sink.add(chunk);
+              setState(() {
+                _progress = bytesDownloaded / totalBytes;
+              });
+            }
+            await sink.close();
+          } else {
+            // User chose to open the existing file
+            if (!isSharing) {
+              await OpenFile.open(filePath);
+            }
+            return filePath;
+          }
+        } else {
+          if (!isSharing) {
+            await OpenFile.open(filePath);
+          }
+          return filePath;
+        }
+      } else {
+        // File does not exist, proceed with download
+        final response = await HttpClient()
+            .getUrl(Uri.parse(url))
+            .then((req) => req.close());
+        final totalBytes = response.contentLength;
+        int bytesDownloaded = 0;
+
+        final sink = file.openWrite();
+        await for (var chunk in response) {
+          bytesDownloaded += chunk.length;
+          sink.add(chunk);
+          setState(() {
+            _progress = bytesDownloaded / totalBytes;
+          });
+        }
+        await sink.close();
+      }
 
       setState(() {
         _progress = 1.0;
@@ -201,16 +269,16 @@ class DocumentCardState extends State<DocumentCard> {
               leading: const Icon(Icons.open_in_new),
               title: const Text('Open With'),
               onTap: () async {
+                HapticFeedback.mediumImpact();
                 Navigator.pop(context);
-                final filePath =
-                    await _downloadFile(url, tempDir, fileName, false);
-                if (filePath != null) await OpenFile.open(filePath);
+                await _downloadFile(url, tempDir, fileName, false);
               },
             ),
             ListTile(
               leading: const Icon(Icons.save_alt),
               title: const Text('Save Document'),
               onTap: () async {
+                HapticFeedback.mediumImpact();
                 Navigator.pop(context);
                 final manageStorageStatus =
                     await Permission.manageExternalStorage.request();
@@ -230,6 +298,7 @@ class DocumentCardState extends State<DocumentCard> {
               leading: const Icon(Icons.share),
               title: const Text('Share'),
               onTap: () async {
+                HapticFeedback.mediumImpact();
                 Navigator.pop(context);
                 final filePath =
                     await _downloadFile(url, tempDir, fileName, true);
@@ -243,6 +312,7 @@ class DocumentCardState extends State<DocumentCard> {
               leading: const Icon(Icons.copy),
               title: const Text('Copy Link'),
               onTap: () async {
+                HapticFeedback.mediumImpact();
                 final scaffoldMessenger = ScaffoldMessenger.of(context);
                 Navigator.pop(context);
                 await Clipboard.setData(ClipboardData(text: url));
@@ -264,63 +334,71 @@ class DocumentCardState extends State<DocumentCard> {
     final extension = fileName.split('.').last.toLowerCase();
 
     return GestureDetector(
-      onTap: () => _showOptions(docUrl),
+      onTap: () {
+        HapticFeedback.mediumImpact();
+        _showOptions(docUrl);
+      },
       child: Card(
         elevation: 4.0,
         margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 8.0),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12.0),
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(12.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildFileThumbnail(docUrl, extension),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          fileName,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16.0,
+        child: DismissibleCard(
+          name: '',
+          onEdit: () => {},
+          onDelete: () => {},
+          child: Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildFileThumbnail(docUrl, extension),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            fileName,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16.0,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          'Added By: ${widget.doc['handled_by']}',
-                          style: const TextStyle(fontSize: 14.0),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Date: ${widget.doc['date_time']}',
-                          style: const TextStyle(fontSize: 14.0),
-                        ),
-                      ],
+                          const SizedBox(height: 6),
+                          Text(
+                            'Added By: ${widget.doc['handled_by']}',
+                            style: const TextStyle(fontSize: 14.0),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Date: ${widget.doc['date_time']}',
+                            style: const TextStyle(fontSize: 14.0),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                if (_progress > 0.0 &&
+                    _progress < 1.0) // ✅ Show only if downloading
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: LinearProgressIndicator(
+                      value: _progress,
+                      backgroundColor: Colors.grey[300],
+                      color: Colors.black,
+                      minHeight: 4.0,
                     ),
                   ),
-                ],
-              ),
-              if (_progress > 0.0 &&
-                  _progress < 1.0) // ✅ Show only if downloading
-                Padding(
-                  padding: const EdgeInsets.only(top: 8.0),
-                  child: LinearProgressIndicator(
-                    value: _progress,
-                    backgroundColor: Colors.grey[300],
-                    color: Colors.black,
-                    minHeight: 4.0,
-                  ),
-                ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

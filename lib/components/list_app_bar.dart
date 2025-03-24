@@ -3,15 +3,17 @@ import 'package:flutter_svg/svg.dart';
 
 class ListAppBar extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback? onSearchPressed;
-  final VoidCallback? onFilterPressed; // Allow nullable
+  final VoidCallback? onFilterPressed; // Optional filter button
   final bool isSearching;
+  final bool showSearch; // New parameter to show/hide search
   final String title;
 
   const ListAppBar({
     super.key,
-    required this.onSearchPressed,
-    this.onFilterPressed, // Make it optional
+    this.onSearchPressed,
+    this.onFilterPressed, // Optional
     this.isSearching = false,
+    this.showSearch = true, // Default to true
     required this.title,
   });
 
@@ -31,7 +33,7 @@ class ListAppBar extends StatelessWidget implements PreferredSizeWidget {
           Navigator.pop(context);
         },
       ),
-      leadingWidth: 56 + 10,
+      leadingWidth: 66,
       titleSpacing: -10,
       toolbarHeight: 70,
       title: Text(
@@ -49,15 +51,17 @@ class ListAppBar extends StatelessWidget implements PreferredSizeWidget {
                 size: 32, color: Colors.black),
             onPressed: onFilterPressed,
           ),
-        IconButton(
-          padding: const EdgeInsets.only(left: 10.0, right: 20.0),
-          icon: Icon(
-            isSearching ? Icons.close : Icons.search_rounded,
-            size: 32,
-            color: Colors.black,
+        if (showSearch &&
+            onSearchPressed != null) // Show search only if enabled
+          IconButton(
+            padding: const EdgeInsets.only(left: 10.0, right: 20.0),
+            icon: Icon(
+              isSearching ? Icons.close : Icons.search_rounded,
+              size: 32,
+              color: Colors.black,
+            ),
+            onPressed: onSearchPressed,
           ),
-          onPressed: onSearchPressed,
-        ),
       ],
     );
   }

@@ -316,6 +316,13 @@ class _ViewProceedCaseHistoryScreenState
     String remarks,
     int index,
   ) async {
+    if (_proceedCaseHistory.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("No Proceed History Present")),
+      );
+      return;
+    }
+
     final url = Uri.parse('$baseUrl/proceed_case_edit');
     Intern? user = await SharedPrefService.getUser();
     String insertedBy = user?.id.toString() ?? 'intern not found';
@@ -352,7 +359,7 @@ class _ViewProceedCaseHistoryScreenState
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(data['message'] ?? "Failed to update case.")),
+          SnackBar(content: Text("No Proceed History Present")),
         );
       }
     } catch (e) {
@@ -369,6 +376,7 @@ class _ViewProceedCaseHistoryScreenState
     return Scaffold(
       appBar: ListAppBar(
         onSearchPressed: () {},
+        showSearch: false,
         title: 'Proceed Case History',
       ),
       body: RefreshIndicator(

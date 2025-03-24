@@ -84,6 +84,8 @@ class AddRemarkPageState extends State<AddRemarkPage> {
 
         request.fields['data'] = jsonData;
 
+        print("$request");
+
         // Upload documents if available
         if (_documentPath.isNotEmpty) {
           List<String> documentPaths = _documentPath.split(', ');
@@ -107,6 +109,7 @@ class AddRemarkPageState extends State<AddRemarkPage> {
         // Send the request
         var response = await request.send();
         var responseBody = await response.stream.bytesToString();
+        print("$responseBody");
 
         if (response.statusCode == 200) {
           ScaffoldMessenger.of(context).showSnackBar(

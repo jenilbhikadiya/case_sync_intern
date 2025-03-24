@@ -1,12 +1,13 @@
+import 'package:intl/intl.dart';
+
 class TaskItem {
   final String intern_id;
   final String caseNo;
   final String instruction;
   final String allotedTo;
   final String allotedBy;
-  final DateTime? allotedDate; // Nullable to handle missing or invalid dates
-  final DateTime?
-      expectedEndDate; // Nullable to handle missing or invalid dates
+  final DateTime? allotedDate;
+  final DateTime? expectedEndDate;
   final String status;
   final String task_id;
   final String stage;
@@ -65,4 +66,13 @@ class TaskItem {
       'stage_id': stage_id,
     };
   }
+
+  /// Get formatted date in `dd/MM/yy` format
+  String get formattedAllotedDate => allotedDate != null
+      ? DateFormat('dd/MM/yyyy').format(allotedDate!)
+      : 'N/A';
+
+  String get formattedExpectedEndDate => expectedEndDate != null
+      ? DateFormat('dd/MM/yyyy').format(expectedEndDate!)
+      : 'N/A';
 }

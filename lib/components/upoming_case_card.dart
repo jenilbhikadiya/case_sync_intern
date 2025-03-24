@@ -66,12 +66,18 @@ class UpcomingCaseCardState extends State<UpcomingCaseCard> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'Case No: ${widget.caseItem.caseNo}',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 20,
-                      color: widget.isHighlighted ? Colors.white : Colors.black,
+                  Flexible(
+                    // ✅ Use Flexible instead of Expanded
+                    child: Text(
+                      'Case No: ${widget.caseItem.caseNo.isNotEmpty ? widget.caseItem.caseNo : "N/A"}',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 20,
+                        color:
+                            widget.isHighlighted ? Colors.white : Colors.black,
+                      ),
+                      overflow: TextOverflow
+                          .ellipsis, // ✅ Prevents text from disappearing
                     ),
                   ),
                   (DateFormat("dd-MM-yyyy").format(widget.caseItem.nextDate) ==
@@ -107,7 +113,7 @@ class UpcomingCaseCardState extends State<UpcomingCaseCard> {
                                 ),
                               ),
                             )
-                      : SizedBox.shrink()
+                      : SizedBox.shrink(),
                 ],
               ),
               Divider(

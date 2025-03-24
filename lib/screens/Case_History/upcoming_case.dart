@@ -8,7 +8,7 @@ import 'package:liquid_pull_to_refresh/liquid_pull_to_refresh.dart';
 
 import '../../components/filter_modal.dart';
 import '../../components/list_app_bar.dart';
-import '../../components/todays_case_card.dart';
+import '../../components/upoming_case_card.dart';
 import '../../models/case_list.dart';
 import '../../utils/constants.dart';
 
