@@ -10,9 +10,7 @@ import '../../services/case_services.dart';
 import '../../utils/constants.dart';
 
 class InternCaseHistoryScreen extends StatefulWidget {
-  final String internId;
-
-  const InternCaseHistoryScreen({super.key, required this.internId});
+  const InternCaseHistoryScreen({super.key});
 
   @override
   InternCaseHistoryScreenState createState() => InternCaseHistoryScreenState();
@@ -505,7 +503,7 @@ class InternCaseHistoryScreenState extends State<InternCaseHistoryScreen>
                       AppTheme.getRefreshIndicatorBackgroundColor(),
                   onRefresh: () async {
                     // print("Before refresh: ${caseData[selectedYear]}");
-                    await populateCaseData(widget.internId);
+                    await populateCaseData();
                     // print("After refresh: ${caseData[selectedYear]}");
                     setState(() {
                       monthsWithCases = _getMonthsForYear(selectedYear);

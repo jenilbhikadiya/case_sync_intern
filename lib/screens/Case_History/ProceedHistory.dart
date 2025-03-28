@@ -196,7 +196,6 @@ class _ViewProceedCaseHistoryScreenState
                     const Divider(),
                     const SizedBox(height: 10),
 
-                    // Next Date Picker
                     Text("Next Date",
                         style: TextStyle(fontWeight: FontWeight.bold)),
                     TextField(
@@ -352,6 +351,7 @@ class _ViewProceedCaseHistoryScreenState
             nextStage: nextStage,
             insertedBy: insertedBy,
             dateOfCreation: '',
+            inserted_by_name: '',
           );
         });
         ScaffoldMessenger.of(context).showSnackBar(
@@ -410,55 +410,101 @@ class _ViewProceedCaseHistoryScreenState
                               ProceedCase proceedCase = entry.value;
 
                               return DismissibleCard(
-                                name: "Case #$index",
-                                onEdit: () {
-                                  _editProceedCase(proceedCase, entry.key);
-                                },
-                                onDelete: () {
-                                  _deleteProceedCase(proceedCase.id, entry.key);
-                                },
-                                child: Card(
-                                  margin:
-                                      const EdgeInsets.symmetric(vertical: 8.0),
-                                  elevation: 3,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(20),
-                                    side: const BorderSide(
-                                        color: Colors.black,
-                                        style: BorderStyle.solid),
-                                  ),
-                                  child: Container(
-                                    width: screenWidth * 0.9,
-                                    padding: const EdgeInsets.all(12.0),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text('Sr No: $index',
-                                            style: const TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 18)),
-                                        Text('Stage: ${proceedCase.stage}',
-                                            style: const TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 18)),
-                                        Divider(
-                                            color: widget.isHighlighted
-                                                ? Colors.white
-                                                : Colors.black),
-                                        const SizedBox(height: 5),
-                                        Text(
-                                            'Next Date: ${proceedCase.nextDate}',
-                                            style:
-                                                const TextStyle(fontSize: 16)),
-                                        Text('Remarks: ${proceedCase.remarks}',
-                                            style:
-                                                const TextStyle(fontSize: 16)),
-                                      ],
+                                  name: "Case #$index",
+                                  onEdit: () {
+                                    _editProceedCase(proceedCase, entry.key);
+                                  },
+                                  onDelete: () {
+                                    _deleteProceedCase(
+                                        proceedCase.id, entry.key);
+                                  },
+                                  child: Card(
+                                    margin: const EdgeInsets.symmetric(
+                                        vertical: 8.0),
+                                    elevation: 4,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(20),
+                                      side: const BorderSide(
+                                          color: Colors.black,
+                                          style: BorderStyle.solid),
                                     ),
-                                  ),
-                                ),
-                              );
+                                    child: Container(
+                                      width: screenWidth * 0.9,
+                                      padding: const EdgeInsets.all(16.0),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Table(
+                                            columnWidths: const {
+                                              0: FlexColumnWidth(1),
+                                              1: FlexColumnWidth(2),
+                                            },
+                                            children: [
+                                              TableRow(children: [
+                                                const Text('Sr No:',
+                                                    style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold)),
+                                                Text('$index',
+                                                    style: const TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold)),
+                                              ]),
+                                              const TableRow(children: [
+                                                SizedBox(
+                                                    height: 12), // Adds spacing
+                                                SizedBox(height: 12),
+                                              ]),
+                                              TableRow(children: [
+                                                const Text('Stage:',
+                                                    style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold)),
+                                                Text(
+                                                  proceedCase.stage,
+                                                ),
+                                              ]),
+                                              const TableRow(children: [
+                                                SizedBox(height: 12),
+                                                SizedBox(height: 12),
+                                              ]),
+                                              TableRow(children: [
+                                                const Text('Next Date:',
+                                                    style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold)),
+                                                Text(proceedCase.nextDate),
+                                              ]),
+                                              const TableRow(children: [
+                                                SizedBox(height: 12),
+                                                SizedBox(height: 12),
+                                              ]),
+                                              TableRow(children: [
+                                                const Text('Remarks:',
+                                                    style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold)),
+                                                Text(proceedCase.remarks),
+                                              ]),
+                                              const TableRow(children: [
+                                                SizedBox(height: 12),
+                                                SizedBox(height: 12),
+                                              ]),
+                                              TableRow(children: [
+                                                const Text('Inserted By:',
+                                                    style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold)),
+                                                Text(proceedCase
+                                                    .inserted_by_name),
+                                              ]),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ));
                             }).toList(),
                           ),
                 const SizedBox(height: 20),

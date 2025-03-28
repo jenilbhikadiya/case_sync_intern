@@ -211,76 +211,42 @@ class TaskPageState extends State<TaskPage> {
                             _showDropdownMenu(context, taskItem);
                           },
                           child: Card(
-                            margin: const EdgeInsets.symmetric(
-                                vertical: 8.0, horizontal: 10.0),
-                            color: Colors.white,
-                            elevation: 3,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
-                              side: const BorderSide(
-                                  color: Colors.black,
-                                  style: BorderStyle.solid),
+                              borderRadius: BorderRadius.circular(12.0),
                             ),
+                            elevation: 5,
+                            margin: const EdgeInsets.symmetric(vertical: 8.0),
                             child: Padding(
-                              padding: const EdgeInsets.all(12.0),
+                              padding: const EdgeInsets.all(16.0),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
-                                    'Instruction: ${taskItem.instruction}',
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16,
-                                        color: Colors.black),
-                                  ),
-                                  const SizedBox(height: 5),
-                                  Text('Case No: ${taskItem.caseNo}',
-                                      style: const TextStyle(
-                                          fontSize: 14, color: Colors.black)),
-                                  const SizedBox(height: 5),
-                                  Text('Alloted By: ${taskItem.allotedBy}',
-                                      style: const TextStyle(
-                                          fontSize: 14, color: Colors.black)),
-                                  const SizedBox(height: 5),
-                                  Text(
-                                      'Alloted Date: ${taskItem.allotedDate?.toLocal().toString().split(' ')[0]}',
-                                      style: const TextStyle(
-                                          fontSize: 14, color: Colors.black)),
-                                  const SizedBox(height: 5),
-                                  Text(
-                                      'End Date: ${taskItem.expectedEndDate?.toLocal().toString().split(' ')[0]}',
-                                      style: const TextStyle(
-                                          fontSize: 14, color: Colors.black)),
-                                  const SizedBox(height: 5),
-                                  Row(
-                                    children: [
-                                      const Text('Status: ',
-                                          style: TextStyle(
-                                              fontSize: 14,
-                                              color: Colors.black)),
-                                      const SizedBox(width: 5),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 10, vertical: 2),
-                                        decoration: BoxDecoration(
-                                          color:
-                                              getStatusColor(taskItem.status),
-                                          borderRadius:
-                                              BorderRadius.circular(10),
-                                        ),
-                                        child: Text(
-                                          taskItem.status,
-                                          style: const TextStyle(
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.bold),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 5),
-                                  Text('Current Stage: ${taskItem.stage}',
-                                      style: const TextStyle(
-                                          fontSize: 14, color: Colors.black)),
+                                  _buildField(
+                                      'Instruction', taskItem.instruction),
+                                  const SizedBox(height: 16),
+                                  _buildField('Case No', taskItem.caseNo),
+                                  const SizedBox(height: 16),
+                                  _buildField('Alloted By', taskItem.allotedBy),
+                                  const SizedBox(height: 16),
+                                  _buildField(
+                                      'Alloted Date',
+                                      taskItem.allotedDate
+                                              ?.toLocal()
+                                              .toString()
+                                              .split(' ')[0] ??
+                                          'N/A'),
+                                  const SizedBox(height: 16),
+                                  _buildField(
+                                      'End Date',
+                                      taskItem.expectedEndDate
+                                              ?.toLocal()
+                                              .toString()
+                                              .split(' ')[0] ??
+                                          'N/A'),
+                                  const SizedBox(height: 16),
+                                  _buildStatusField('Status', taskItem.status),
+                                  const SizedBox(height: 16),
+                                  _buildField('Current Stage', taskItem.stage),
                                 ],
                               ),
                             ),
@@ -300,4 +266,68 @@ class TaskPageState extends State<TaskPage> {
             ),
     );
   }
+}
+
+Widget _buildField(String label, String value) {
+  return Row(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Expanded(
+        flex: 2,
+        child: Text(
+          label,
+          style: const TextStyle(
+            fontSize: 16.0,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+      Expanded(
+        flex: 3,
+        child: Text(
+          value,
+          style: const TextStyle(
+            fontSize: 16.0,
+          ),
+        ),
+      ),
+    ],
+  );
+}
+
+Widget _buildStatusField(String label, String status) {
+  return Row(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Expanded(
+        flex: 2,
+        child: Text(
+          label,
+          style: const TextStyle(
+            fontSize: 16.0,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+      Expanded(
+        flex: 3,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+          decoration: BoxDecoration(
+            color: getStatusColor(status),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Center(
+            child: Text(
+              status,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ),
+      ),
+    ],
+  );
 }

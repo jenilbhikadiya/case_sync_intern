@@ -16,7 +16,6 @@ import '../check_update.dart';
 import '../components/basicUIcomponent.dart';
 import '../models/intern.dart';
 import '../services/shared_pref.dart';
-import 'Case_History/case_history.dart';
 import 'Case_History/intern_case_history.dart';
 import 'Case_History/upcoming_case.dart';
 import 'Tasks/task_page.dart';
@@ -65,7 +64,7 @@ class HomeScreenState extends State<HomeScreen> {
       print("Fetching");
       taskList.value = await fetchCaseAndTaskCounters(user!.id);
       print("Fetched: ${taskList.value}");
-      populateCaseData(user!.id);
+      populateCaseData();
 
       return taskList.value;
     }
@@ -322,8 +321,8 @@ class HomeScreenState extends State<HomeScreen> {
                                     iconPath: 'assets/icons/case_history.svg',
                                     cardWidth: cardWidth,
                                     cardHeight: cardHeight,
-                                    destinationScreen: InternCaseHistoryScreen(
-                                        internId: user.id),
+                                    destinationScreen:
+                                        InternCaseHistoryScreen(),
                                     counterNotifier: caseCount,
                                   ),
                                 ],

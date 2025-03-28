@@ -8,6 +8,7 @@ class ProceedCase {
   final String insertedBy;
   final String dateOfCreation;
   final String stage;
+  final String inserted_by_name;
 
   ProceedCase({
     required this.id,
@@ -18,6 +19,7 @@ class ProceedCase {
     required this.insertedBy,
     required this.dateOfCreation,
     required this.stage,
+    required this.inserted_by_name,
   });
 
   factory ProceedCase.fromJson(Map<String, dynamic> json) {
@@ -30,6 +32,7 @@ class ProceedCase {
       insertedBy: json['inserted_by'] ?? '',
       dateOfCreation: json['date_of_creation'] ?? '',
       stage: json['stage'] ?? '',
+      inserted_by_name: json['inserted_by_name'] ?? '',
     );
   }
 }
