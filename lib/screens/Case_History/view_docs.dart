@@ -12,7 +12,6 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../components/basicUIcomponent.dart';
 import '../../utils/constants.dart';
-import '../../utils/dismissible_card.dart';
 import '../../utils/file_already_exists.dart';
 
 class ViewDocs extends StatefulWidget {
@@ -344,61 +343,48 @@ class DocumentCardState extends State<DocumentCard> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12.0),
         ),
-        child: DismissibleCard(
-          name: '',
-          onEdit: () => {},
-          onDelete: () => {},
-          child: Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+        child: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Row(
+            children: [
+              _buildFileThumbnail(docUrl, extension),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildFileThumbnail(docUrl, extension),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            fileName,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16.0,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            'Added By: ${widget.doc['handled_by']}',
-                            style: const TextStyle(fontSize: 14.0),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Date: ${widget.doc['date_time']}',
-                            style: const TextStyle(fontSize: 14.0),
-                          ),
-                        ],
+                    Text(
+                      fileName,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16.0,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Added By: ${widget.doc['handled_by']}',
+                      style: const TextStyle(fontSize: 14.0),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Date: ${widget.doc['date_time']}',
+                      style: const TextStyle(fontSize: 14.0),
+                    ),
+                    if (_progress > 0.0 && _progress < 1.0)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: LinearProgressIndicator(
+                          value: _progress,
+                          backgroundColor: Colors.grey.shade300,
+                          color: Colors.blue,
+                        ),
+                      ),
                   ],
                 ),
-                if (_progress > 0.0 &&
-                    _progress < 1.0) // ✅ Show only if downloading
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8.0),
-                    child: LinearProgressIndicator(
-                      value: _progress,
-                      backgroundColor: Colors.grey[300],
-                      color: Colors.black,
-                      minHeight: 4.0,
-                    ),
-                  ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),

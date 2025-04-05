@@ -283,7 +283,7 @@ class HomeScreenState extends State<HomeScreen> {
                                     shouldDisplayCounter: true,
                                   ),
                                   _buildCard(
-                                    title: 'Today\'s Cases',
+                                    title: 'Upcoming Cases',
                                     iconPath: 'assets/icons/cases_today.svg',
                                     cardWidth: cardWidth,
                                     cardHeight: cardHeight,
