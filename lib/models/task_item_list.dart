@@ -5,8 +5,10 @@ class TaskItem {
   final String caseNo;
   final String instruction;
   final String allotedTo;
+  final String alloted_to_id;
   final String allotedBy;
   final DateTime? allotedDate;
+  final String added_by;
   final DateTime? expectedEndDate;
   final String status;
   final String task_id;
@@ -19,7 +21,9 @@ class TaskItem {
     required this.caseNo,
     required this.instruction,
     required this.allotedTo,
+    required this.alloted_to_id,
     required this.allotedBy,
+    required this.added_by,
     this.allotedDate,
     this.expectedEndDate,
     required this.status,
@@ -35,7 +39,9 @@ class TaskItem {
       caseNo: json['case_no'] ?? '',
       instruction: (json['instruction'] ?? '').trim(),
       allotedTo: json['alloted_to'] ?? '',
+      alloted_to_id: json['alloted_to_id'] ?? '',
       allotedBy: json['alloted_by'] ?? '',
+      added_by: json['added_by'] ?? '',
       allotedDate: json['alloted_date'] != null
           ? DateTime.tryParse(json['alloted_date'])
           : null,
@@ -56,7 +62,9 @@ class TaskItem {
       'caseNo': caseNo,
       'instruction': instruction,
       'allotedTo': allotedTo,
+      'alloted_to_id': alloted_to_id,
       'allotedBy': allotedBy,
+      'added_by': added_by,
       'allotedDate': allotedDate?.toIso8601String(),
       'expectedEndDate': expectedEndDate?.toIso8601String(),
       'status': status,

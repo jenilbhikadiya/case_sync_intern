@@ -321,8 +321,7 @@ class HomeScreenState extends State<HomeScreen> {
                                     iconPath: 'assets/icons/case_history.svg',
                                     cardWidth: cardWidth,
                                     cardHeight: cardHeight,
-                                    destinationScreen:
-                                        InternCaseHistoryScreen(),
+                                    destinationScreen: CaseHistoryScreen(),
                                     counterNotifier: caseCount,
                                   ),
                                 ],
@@ -375,14 +374,17 @@ class HomeScreenState extends State<HomeScreen> {
           borderRadius: BorderRadius.circular(20),
           onTap: () async {
             HapticFeedback.mediumImpact();
-            var result = await Navigator.push(
+            // Push the new screen and wait for it to return
+            final result = await Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => destinationScreen),
             );
 
-            if (result == false) {
-              fetchCaseAndTaskCounters(user!.id);
-            }
+            // When the screen is popped (back button is pressed),
+            // the Future completes. You can then check the 'result'
+            // if you need to perform actions based on the popped screen's outcome.
+            // For simply refreshing the data, we don't necessarily need to check 'result'.
+            _refreshCounters(); // Call your refresh function here
           },
           child: Stack(
             children: [

@@ -20,12 +20,30 @@ class IOSAlertDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CupertinoAlertDialog(
-      insetAnimationDuration: const Duration(milliseconds: 100),
+      insetAnimationDuration: const Duration(milliseconds: 150),
       insetAnimationCurve: Curves.easeInOut,
-      title: Text(title),
+      title: Padding(
+        padding: const EdgeInsets.only(bottom: 8.0),
+        child: Text(
+          title,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: CupertinoColors.label,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ),
       content: Padding(
-        padding: const EdgeInsets.only(top: 8.0),
-        child: Text(message),
+        padding: const EdgeInsets.only(top: 8.0, bottom: 16.0),
+        child: Text(
+          message,
+          style: const TextStyle(
+            fontSize: 15,
+            color: CupertinoColors.secondaryLabel,
+          ),
+          textAlign: TextAlign.center,
+        ),
       ),
       actions: [
         CupertinoDialogAction(
@@ -35,10 +53,14 @@ class IOSAlertDialog extends StatelessWidget {
           },
           child: Text(
             cancelButtonText,
-            style: const TextStyle(color: CupertinoColors.black),
+            style: const TextStyle(
+              color: CupertinoColors.black,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ),
         CupertinoDialogAction(
+          isDestructiveAction: true, // Marks the confirm button visually
           onPressed: () {
             HapticFeedback.mediumImpact();
             Navigator.of(context).pop(true);
@@ -46,7 +68,10 @@ class IOSAlertDialog extends StatelessWidget {
           },
           child: Text(
             confirmButtonText,
-            style: const TextStyle(color: CupertinoColors.destructiveRed),
+            style: const TextStyle(
+              color: CupertinoColors.destructiveRed,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
       ],

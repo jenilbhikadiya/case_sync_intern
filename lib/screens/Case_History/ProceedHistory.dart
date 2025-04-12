@@ -12,11 +12,13 @@ import '../../utils/dismissible_card.dart';
 
 class ViewProceedCaseHistoryScreen extends StatefulWidget {
   final String caseId;
+  final String caseNo;
 
   const ViewProceedCaseHistoryScreen({
     super.key,
     this.isHighlighted = false,
     required this.caseId,
+    required this.caseNo,
   });
 
   final bool isHighlighted;

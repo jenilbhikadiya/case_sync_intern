@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class AppTheme {
   static ButtonStyle elevatedButtonStyle = ElevatedButton.styleFrom(
@@ -79,3 +80,82 @@ class AppTheme {
     ),
   );
 }
+
+class AnimatedListTile extends StatefulWidget {
+  final Widget? leading;
+  final Widget? title;
+  final bool enabled;
+  final VoidCallback? onTap;
+
+  const AnimatedListTile({
+    super.key,
+    this.leading,
+    this.title,
+    this.enabled = true,
+    this.onTap,
+  });
+
+  @override
+  State<AnimatedListTile> createState() => _AnimatedListTileState();
+}
+
+class _AnimatedListTileState extends State<AnimatedListTile>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 100),
+      vsync: this,
+    );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  void _animateTap() {
+    _animationController.forward().then((_) => _animationController.reverse());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: widget.enabled
+          ? () {
+              HapticFeedback.mediumImpact(); // Add haptic feedback
+              _animateTap();
+              if (widget.onTap != null) {
+                widget.onTap!();
+              }
+            }
+          : null,
+      child: ScaleTransition(
+        scale: _scaleAnimation,
+        child: ListTile(
+          leading: widget.leading,
+          title: widget.title,
+          enabled: widget.enabled,
+        ),
+      ),
+    );
+  }
+}
+
+// Assuming TaskItem, AddRemarkPage, ShowRemarkPage, and _navigateToReAssignTask are defined elsewhere in your code.
+// Also assuming fetchTasks is a function in your TaskPageState to refresh the list.
+
+// For the TaskPage widget, you would use _showDropdownMenu like this:
+// ...
+// onTap: () {
+//   _showDropdownMenu(context, taskItem, fetchTasks, _navigateToReAssignTask);
+// },
+// ...

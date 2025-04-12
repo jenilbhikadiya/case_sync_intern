@@ -9,7 +9,6 @@ import 'package:http/http.dart' as http;
 import 'package:intern_side/utils/constants.dart';
 import '../models/case_list.dart';
 import '../screens/Case_History/ProceedHistory.dart';
-import '../screens/Case_History/view_case_history.dart';
 import '../services/shared_pref.dart';
 
 class CaseCard extends StatefulWidget {
@@ -195,6 +194,7 @@ class _CaseCardState extends State<CaseCard> {
                     MaterialPageRoute(
                       builder: (context) => ProceedCaseAdd(
                         caseId: caseListData.id,
+                        caseNo: caseListData.caseNo,
                       ),
                     ),
                   );
@@ -214,6 +214,7 @@ class _CaseCardState extends State<CaseCard> {
                     MaterialPageRoute(
                       builder: (context) => ViewProceedCaseHistoryScreen(
                         caseId: caseListData.id,
+                        caseNo: caseListData.caseNo,
                       ),
                     ),
                   );

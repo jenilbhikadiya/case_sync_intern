@@ -170,6 +170,7 @@ class CounterCasesState extends State<CounterCases> {
       appBar: ListAppBar(
         title: "Case Counters",
         isSearching: _isSearching,
+        showSearch: false,
         onSearchPressed: () {
           setState(() {
             _isSearching = !_isSearching;

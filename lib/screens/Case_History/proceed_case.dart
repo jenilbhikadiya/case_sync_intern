@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:intern_side/components/list_app_bar.dart';
 import 'package:intern_side/utils/constants.dart';
 import '../../components/basicUIcomponent.dart';
 import '../../models/intern.dart';
@@ -9,7 +10,10 @@ import '../../services/shared_pref.dart';
 class ProceedCaseAdd extends StatefulWidget {
   final String caseId;
 
-  const ProceedCaseAdd({Key? key, required this.caseId}) : super(key: key);
+  final String caseNo;
+
+  const ProceedCaseAdd({Key? key, required this.caseId, required this.caseNo})
+      : super(key: key);
 
   @override
   _ProceedCaseAddState createState() => _ProceedCaseAddState();
@@ -203,12 +207,8 @@ class _ProceedCaseAddState extends State<ProceedCaseAdd> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: const Color(0xFFF3F3F3),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
+      appBar: ListAppBar(
+        title: 'Case No. : ${widget.caseNo}',
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),

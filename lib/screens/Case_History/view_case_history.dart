@@ -1,8 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:intern_side/screens/Case_History/task_info_screen.dart';
-import 'package:intern_side/screens/Tasks/show_remark_page.dart';
+import 'package:intl/intl.dart';
 
 import '../../components/basicUIcomponent.dart';
 import '../../components/list_app_bar.dart';
@@ -85,15 +84,64 @@ class _ViewCaseHistoryScreenState extends State<ViewCaseHistoryScreen> {
     }
   }
 
+  Color _getStatusColor(String status) {
+    if (status.toLowerCase() == 'completed') {
+      return Colors.green.shade400;
+    } else if (status.toLowerCase() == 'pending') {
+      return Colors.orange.shade400;
+    } else if (status.toLowerCase() == 'in progress') {
+      return Colors.blue.shade400;
+    } else {
+      return Colors.grey;
+    }
+  }
+
+  TableRow _buildTableRow(IconData icon, String label, Widget valueWidget,
+      {bool isTitle = false}) {
+    return TableRow(
+      decoration: const BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: Colors.grey, width: 0.2),
+        ),
+      ),
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 8.0),
+          child: Row(
+            children: [
+              Icon(icon, size: 20, color: Colors.black54),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: TextStyle(
+                    fontWeight: isTitle ? FontWeight.bold : FontWeight.w500,
+                    color: Colors.black87,
+                    fontSize: 15),
+              ),
+            ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 8.0),
+          child: DefaultTextStyle(
+            style: TextStyle(
+                color: Colors.black87,
+                fontSize: 15,
+                fontWeight: isTitle ? FontWeight.bold : FontWeight.normal),
+            child: valueWidget,
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    double screenWidth = MediaQuery.of(context).size.width;
-
     return Scaffold(
       appBar: ListAppBar(
         onSearchPressed: () {},
         showSearch: false,
-        title: 'View Case History',
+        title: 'Case History',
       ),
       body: RefreshIndicator(
         onRefresh: _fetchInternTaskList,
@@ -101,154 +149,115 @@ class _ViewCaseHistoryScreenState extends State<ViewCaseHistoryScreen> {
         backgroundColor: AppTheme.getRefreshIndicatorBackgroundColor(),
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Column(
-              children: [
-                _isLoading
-                    ? const Center(
-                        child: CircularProgressIndicator(color: Colors.black))
-                    : _errorMessage.isNotEmpty
-                        ? Column(
-                            children: [
-                              SizedBox(
-                                  height:
-                                      MediaQuery.of(context).size.height * 0.4),
-                              Center(child: Text(_errorMessage)),
+          padding: const EdgeInsets.all(16.0),
+          child: _isLoading
+              ? const Center(
+                  child: CircularProgressIndicator(color: Colors.black))
+              : _errorMessage.isNotEmpty
+                  ? Center(child: Text(_errorMessage))
+                  : Column(
+                      children: _caseHistory.asMap().entries.map((entry) {
+                        int index = entry.key + 1;
+                        TaskItem taskItem = entry.value;
+                        return Container(
+                          margin: const EdgeInsets.symmetric(vertical: 5.0),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: Colors.black.withOpacity(0.5),
+                              width: 0.5,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.05),
+                                spreadRadius: 1,
+                                blurRadius: 5,
+                                offset: const Offset(0, 2),
+                              ),
                             ],
-                          )
-                        : Column(
-                            children: _caseHistory.asMap().entries.map((entry) {
-                              int index = entry.key + 1; // Serial number
-                              TaskItem taskItem = entry.value;
-                              return GestureDetector(
-                                onTap: () {},
-                                child: Center(
-                                  child: Card(
-                                    margin: const EdgeInsets.symmetric(
-                                        vertical: 8.0),
-                                    elevation: 3,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(20),
-                                      side: const BorderSide(
-                                          color: Colors.black,
-                                          style: BorderStyle.solid),
-                                    ),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: Table(
+                              columnWidths: const {
+                                0: IntrinsicColumnWidth(),
+                                1: FlexColumnWidth(),
+                              },
+                              border: TableBorder.all(
+                                color: Colors.grey.shade200,
+                                width: 0.3,
+                              ),
+                              children: [
+                                _buildTableRow(
+                                  Icons.format_list_numbered,
+                                  'SR. No.',
+                                  Text(index.toString(),
+                                      style: const TextStyle(fontSize: 16)),
+                                  isTitle: true,
+                                ),
+                                _buildTableRow(
+                                  Icons.text_snippet_outlined,
+                                  'Instruction',
+                                  Text(taskItem.instruction),
+                                ),
+                                _buildTableRow(
+                                  Icons.person_outline,
+                                  'Alloted To',
+                                  Text(taskItem.allotedTo),
+                                ),
+                                _buildTableRow(
+                                  Icons.person_outline,
+                                  'Alloted By',
+                                  Text(taskItem.allotedBy),
+                                ),
+                                _buildTableRow(
+                                  Icons.calendar_today_outlined,
+                                  'Alloted Date',
+                                  Text(taskItem.formattedAllotedDate),
+                                ),
+                                _buildTableRow(
+                                  Icons.event_available_outlined,
+                                  'End Date',
+                                  Text(taskItem.formattedExpectedEndDate),
+                                ),
+                                _buildTableRow(
+                                  Icons.label_outline,
+                                  'Stage',
+                                  Text(taskItem.stage),
+                                ),
+                                _buildTableRow(
+                                  Icons.info_outline,
+                                  'Status',
+                                  Align(
+                                    alignment: Alignment.centerLeft,
                                     child: Container(
-                                      width: screenWidth * 0.9,
-                                      padding: const EdgeInsets.all(12.0),
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 18, vertical: 5),
                                       decoration: BoxDecoration(
-                                        color: Colors
-                                            .grey[200], // Light grey background
-                                        borderRadius: BorderRadius.circular(
-                                            20), // Match card's border radius
+                                        color: _getStatusColor(taskItem.status)
+                                            .withOpacity(0.8),
+                                        borderRadius: BorderRadius.circular(6),
                                       ),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text('Sr No: $index',
-                                              style: const TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 18)),
-                                          const SizedBox(height: 8),
-                                          Table(
-                                            border: TableBorder.all(
-                                                color: Colors.black),
-                                            columnWidths: const {
-                                              0: FlexColumnWidth(
-                                                  2), // Key column
-                                              1: FlexColumnWidth(
-                                                  3), // Value column
-                                            },
-                                            children: [
-                                              _buildTableRow(
-                                                  'Case No', taskItem.caseNo),
-                                              _buildTableRow('Instruction',
-                                                  taskItem.instruction),
-                                              _buildTableRow('Alloted To',
-                                                  taskItem.allotedTo),
-                                              _buildTableRow('Alloted By',
-                                                  taskItem.allotedBy),
-                                              _buildTableRow(
-                                                  'Alloted Date',
-                                                  taskItem
-                                                      .formattedAllotedDate),
-                                              _buildTableRow(
-                                                  'Expected End Date',
-                                                  taskItem
-                                                      .formattedExpectedEndDate),
-                                              _buildTableRow(
-                                                  'Stage', taskItem.stage),
-                                              TableRow(children: [
-                                                const Padding(
-                                                  padding: EdgeInsets.all(8.0),
-                                                  child: Text('Status:',
-                                                      style: TextStyle(
-                                                          fontSize: 16,
-                                                          fontWeight:
-                                                              FontWeight.bold)),
-                                                ),
-                                                Padding(
-                                                  padding:
-                                                      const EdgeInsets.all(8.0),
-                                                  child: Container(
-                                                    padding: const EdgeInsets
-                                                        .symmetric(
-                                                        horizontal: 10,
-                                                        vertical: 2),
-                                                    decoration: BoxDecoration(
-                                                      color: getStatusColor(
-                                                          taskItem.status),
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              10),
-                                                    ),
-                                                    child: Center(
-                                                      child: Text(
-                                                        taskItem.status,
-                                                        style: const TextStyle(
-                                                            color: Colors.white,
-                                                            fontWeight:
-                                                                FontWeight
-                                                                    .bold),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                              ]),
-                                            ],
-                                          ),
-                                        ],
+                                      child: Text(
+                                        taskItem.status.toUpperCase(),
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 10,
+                                        ),
                                       ),
                                     ),
                                   ),
                                 ),
-                              );
-                            }).toList(),
+                              ],
+                            ),
                           ),
-                const SizedBox(height: 20),
-              ],
-            ),
-          ),
+                        );
+                      }).toList(),
+                    ),
         ),
       ),
     );
   }
-}
-
-TableRow _buildTableRow(String key, String value) {
-  return TableRow(
-    children: [
-      Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Text(key,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-      ),
-      Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Text(value, style: const TextStyle(fontSize: 16)),
-      ),
-    ],
-  );
 }

@@ -9,14 +9,14 @@ import '../../models/case_list.dart';
 import '../../services/case_services.dart';
 import '../../utils/constants.dart';
 
-class InternCaseHistoryScreen extends StatefulWidget {
-  const InternCaseHistoryScreen({super.key});
+class CaseHistoryScreen extends StatefulWidget {
+  const CaseHistoryScreen({super.key});
 
   @override
-  InternCaseHistoryScreenState createState() => InternCaseHistoryScreenState();
+  CaseHistoryScreenState createState() => CaseHistoryScreenState();
 }
 
-class InternCaseHistoryScreenState extends State<InternCaseHistoryScreen>
+class CaseHistoryScreenState extends State<CaseHistoryScreen>
     with TickerProviderStateMixin {
   late TabController _tabController;
   late String selectedYear;

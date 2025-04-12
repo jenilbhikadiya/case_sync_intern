@@ -7,6 +7,7 @@ class ListAppBar extends StatelessWidget implements PreferredSizeWidget {
   final bool isSearching;
   final bool showSearch; // New parameter to show/hide search
   final String title;
+  final double? titleSize;
 
   const ListAppBar({
     super.key,
@@ -15,6 +16,7 @@ class ListAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.isSearching = false,
     this.showSearch = true, // Default to true
     required this.title,
+    this.titleSize = 30,
   });
 
   @override
@@ -38,9 +40,9 @@ class ListAppBar extends StatelessWidget implements PreferredSizeWidget {
       toolbarHeight: 70,
       title: Text(
         title,
-        style: const TextStyle(
+        style: TextStyle(
           color: Colors.black,
-          fontSize: 30,
+          fontSize: titleSize,
           fontWeight: FontWeight.bold,
         ),
       ),

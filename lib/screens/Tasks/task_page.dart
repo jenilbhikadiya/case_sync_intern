@@ -2,10 +2,13 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
+
 import 'package:intern_side/screens/Tasks/reassign_task_page.dart';
 import 'package:intern_side/services/shared_pref.dart';
 import 'package:intern_side/utils/constants.dart';
 import '../../components/basicUIcomponent.dart';
+import '../../components/task_card.dart';
 import '../../models/intern.dart';
 import '../../models/task_item_list.dart';
 import '../Tasks/add_remark_page.dart';
@@ -31,6 +34,10 @@ class TaskPageState extends State<TaskPage> {
   }
 
   Future<void> fetchUserData() async {
+    setState(() {
+      isLoading = true;
+      errorMessage = '';
+    });
     try {
       _userData = await SharedPrefService.getUser();
       if (_userData == null || _userData!.id.isEmpty) {
@@ -39,18 +46,38 @@ class TaskPageState extends State<TaskPage> {
           errorMessage = 'Intern data not found.';
         });
       } else {
-        fetchTasks();
+        await fetchTasks();
       }
     } catch (e) {
-      setState(() {
-        isLoading = false;
-        errorMessage = 'Error fetching user data: $e';
-      });
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+          errorMessage = 'Error fetching user data: $e';
+        });
+      }
     }
   }
 
   Future<void> fetchTasks() async {
+    if (_userData == null || _userData!.id.isEmpty) {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+          errorMessage = 'Cannot fetch tasks without intern data.';
+        });
+      }
+      return;
+    }
+
+    if (!isLoading && mounted) {
+      setState(() {
+        isLoading = true;
+        errorMessage = '';
+      });
+    }
+
     const String url = '$baseUrl/intern_task_list';
+    print('Fetching tasks for intern ID: ${_userData!.id}');
 
     try {
       var request = http.MultipartRequest('POST', Uri.parse(url));
@@ -58,38 +85,72 @@ class TaskPageState extends State<TaskPage> {
 
       var response = await request.send();
       var responseBody = await response.stream.bytesToString();
+      print('Task list response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final parsedResponse = jsonDecode(responseBody);
         if (parsedResponse['success'] == true &&
-            parsedResponse['data'] != null) {
-          setState(() {
-            taskList = (parsedResponse['data'] as List)
-                .map((task) => TaskItem.fromJson(task))
-                .toList();
-            isLoading = false;
-          });
+            parsedResponse['data'] != null &&
+            parsedResponse['data'] is List) {
+          if (mounted) {
+            setState(() {
+              taskList = (parsedResponse['data'] as List)
+                  .map((taskJson) {
+                    try {
+                      return TaskItem.fromJson(
+                          taskJson as Map<String, dynamic>);
+                    } catch (e) {
+                      print("Error parsing task item: $taskJson, Error: $e");
+                      return null;
+                    }
+                  })
+                  .whereType<TaskItem>()
+                  .toList();
+              isLoading = false;
+              errorMessage = taskList.isEmpty ? 'No tasks available.' : '';
+            });
+          }
         } else {
-          setState(() {
-            isLoading = false;
-            errorMessage = parsedResponse['message'] ?? 'No tasks available.';
-          });
+          if (mounted) {
+            setState(() {
+              taskList = [];
+              isLoading = false;
+
+              errorMessage = parsedResponse['message'] as String? ??
+                  'Failed to load tasks or no tasks available.';
+            });
+          }
         }
       } else {
-        setState(() {
-          isLoading = false;
-          errorMessage = 'Failed to fetch tasks.';
-        });
+        if (mounted) {
+          setState(() {
+            taskList = [];
+            isLoading = false;
+            errorMessage =
+                'Failed to fetch tasks (Status Code: ${response.statusCode}).';
+          });
+        }
       }
     } catch (e) {
-      setState(() {
-        isLoading = false;
-        errorMessage = 'Error fetching tasks: $e';
-      });
+      print('Error fetching tasks: $e');
+      if (mounted) {
+        setState(() {
+          taskList = [];
+          isLoading = false;
+          errorMessage = 'An error occurred while fetching tasks: $e';
+        });
+      }
     }
   }
 
   void _navigateToReAssignTask(TaskItem taskItem) async {
+    if (_userData == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('User data not available.')));
+      }
+      return;
+    }
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
@@ -100,47 +161,70 @@ class TaskPageState extends State<TaskPage> {
       ),
     );
 
-    if (result == true) {
-      fetchTasks(); // Refresh the task list
+    if (result == true && mounted) {
+      fetchTasks();
     }
   }
 
   void _showDropdownMenu(BuildContext context, TaskItem taskItem) {
-    bool isRealloted = (taskItem.status.toLowerCase() == 're_alloted' ||
-        taskItem.status.toLowerCase() == 'completed');
+    if (_userData == null) {
+      print("Error: _userData is null in _showDropdownMenu");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text("Cannot perform actions: User data missing.")),
+        );
+      }
+      return;
+    }
+
+    bool canModifyTask = (taskItem.alloted_to_id == _userData!.id) &&
+        (taskItem.status.toLowerCase() != 'completed');
 
     showModalBottomSheet(
       context: context,
-      builder: (BuildContext context) {
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(15.0)),
+      ),
+      builder: (BuildContext bottomSheetContext) {
         return Wrap(
           children: [
-            ListTile(
-              leading: const Icon(Icons.edit),
-              title: const Text('Add Remark'),
-              enabled: !isRealloted,
-              onTap: () async {
-                Navigator.pop(context); // Close dropdown first
-                final result = await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => AddRemarkPage(
-                      taskItem: taskItem,
-                      task_id: taskItem.task_id,
-                      case_id: taskItem.case_id,
-                      stage_id: taskItem.stage_id,
-                    ),
-                  ),
-                );
-                if (result == true) {
-                  fetchTasks(); // Refresh the task list after returning
-                }
-              },
+            AnimatedListTile(
+              leading: Icon(Icons.edit_note_outlined,
+                  color: canModifyTask
+                      ? Theme.of(context).iconTheme.color
+                      : Colors.grey),
+              title: Text('Add Remark',
+                  style: TextStyle(
+                      color: canModifyTask ? Colors.black : Colors.grey)),
+              enabled: canModifyTask,
+              onTap: !canModifyTask
+                  ? null
+                  : () async {
+                      Navigator.pop(bottomSheetContext);
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => AddRemarkPage(
+                            taskItem: taskItem,
+                            task_id: taskItem.task_id,
+                            case_id: taskItem.case_id,
+                            stage_id: taskItem.stage_id,
+                          ),
+                        ),
+                      );
+                      if (result == true && mounted) {
+                        fetchTasks();
+                      }
+                    },
             ),
-            ListTile(
-              leading: const Icon(Icons.visibility),
+            AnimatedListTile(
+              leading: const Icon(Icons.chat_bubble_outline),
               title: const Text('Show Remark'),
+              enabled: true,
               onTap: () {
-                Navigator.pop(context); // Close dropdown first
+                Navigator.pop(bottomSheetContext);
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -149,14 +233,21 @@ class TaskPageState extends State<TaskPage> {
                 );
               },
             ),
-            ListTile(
-              leading: const Icon(Icons.assignment_returned),
-              title: const Text('Reassign Task'),
-              enabled: !isRealloted,
-              onTap: () {
-                Navigator.pop(context); // Close dropdown first
-                _navigateToReAssignTask(taskItem);
-              },
+            AnimatedListTile(
+              leading: Icon(Icons.assignment_return_outlined,
+                  color: canModifyTask
+                      ? Theme.of(context).iconTheme.color
+                      : Colors.grey),
+              title: Text('Reassign Task',
+                  style: TextStyle(
+                      color: canModifyTask ? Colors.black : Colors.grey)),
+              enabled: canModifyTask,
+              onTap: !canModifyTask
+                  ? null
+                  : () {
+                      Navigator.pop(bottomSheetContext);
+                      _navigateToReAssignTask(taskItem);
+                    },
             ),
           ],
         );
@@ -178,7 +269,9 @@ class TaskPageState extends State<TaskPage> {
             height: 32,
           ),
           onPressed: () {
-            Navigator.pop(context);
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            }
           },
         ),
         title: const Text(
@@ -204,63 +297,29 @@ class TaskPageState extends State<TaskPage> {
               child: taskList.isNotEmpty
                   ? ListView.builder(
                       itemCount: taskList.length,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16.0, vertical: 8.0),
                       itemBuilder: (context, index) {
-                        final taskItem = taskList.toList()[index];
-                        return GestureDetector(
-                          onTap: () {
-                            _showDropdownMenu(context, taskItem);
-                          },
-                          child: Card(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12.0),
-                            ),
-                            elevation: 5,
-                            margin: const EdgeInsets.symmetric(vertical: 8.0),
-                            child: Padding(
-                              padding: const EdgeInsets.all(16.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  _buildField(
-                                      'Instruction', taskItem.instruction),
-                                  const SizedBox(height: 16),
-                                  _buildField('Case No', taskItem.caseNo),
-                                  const SizedBox(height: 16),
-                                  _buildField('Alloted By', taskItem.allotedBy),
-                                  const SizedBox(height: 16),
-                                  _buildField(
-                                      'Alloted Date',
-                                      taskItem.allotedDate
-                                              ?.toLocal()
-                                              .toString()
-                                              .split(' ')[0] ??
-                                          'N/A'),
-                                  const SizedBox(height: 16),
-                                  _buildField(
-                                      'End Date',
-                                      taskItem.expectedEndDate
-                                              ?.toLocal()
-                                              .toString()
-                                              .split(' ')[0] ??
-                                          'N/A'),
-                                  const SizedBox(height: 16),
-                                  _buildStatusField('Status', taskItem.status),
-                                  const SizedBox(height: 16),
-                                  _buildField('Current Stage', taskItem.stage),
-                                ],
-                              ),
-                            ),
-                          ),
+                        final taskItem = taskList[index];
+
+                        return TaskCard(
+                          key: ValueKey(taskItem.task_id),
+                          taskItem: taskItem,
+                          onTap: () => _showDropdownMenu(context, taskItem),
                         );
                       },
                     )
                   : Center(
-                      child: Text(
-                        errorMessage.isNotEmpty
-                            ? errorMessage
-                            : 'No tasks available.',
-                        style:
-                            const TextStyle(fontSize: 16, color: Colors.black),
+                      child: Padding(
+                        padding: const EdgeInsets.all(20.0),
+                        child: Text(
+                          errorMessage.isNotEmpty
+                              ? errorMessage
+                              : 'No tasks assigned.',
+                          textAlign: TextAlign.center,
+                          style:
+                              const TextStyle(fontSize: 16, color: Colors.grey),
+                        ),
                       ),
                     ),
             ),
@@ -268,66 +327,37 @@ class TaskPageState extends State<TaskPage> {
   }
 }
 
-Widget _buildField(String label, String value) {
-  return Row(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Expanded(
-        flex: 2,
-        child: Text(
-          label,
-          style: const TextStyle(
-            fontSize: 16.0,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
-      Expanded(
-        flex: 3,
-        child: Text(
-          value,
-          style: const TextStyle(
-            fontSize: 16.0,
-          ),
-        ),
-      ),
-    ],
-  );
-}
+class AnimatedListTile extends StatelessWidget {
+  final Widget leading;
+  final Widget title;
+  final bool enabled;
+  final VoidCallback? onTap;
 
-Widget _buildStatusField(String label, String status) {
-  return Row(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Expanded(
-        flex: 2,
-        child: Text(
-          label,
-          style: const TextStyle(
-            fontSize: 16.0,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+  const AnimatedListTile({
+    Key? key,
+    required this.leading,
+    required this.title,
+    this.enabled = true,
+    this.onTap,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final effectiveColor = enabled ? null : Theme.of(context).disabledColor;
+    final effectiveTextStyle =
+        enabled ? null : TextStyle(color: effectiveColor);
+
+    return ListTile(
+      leading: IconTheme.merge(
+        data: IconThemeData(color: effectiveColor),
+        child: leading,
       ),
-      Expanded(
-        flex: 3,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-          decoration: BoxDecoration(
-            color: getStatusColor(status),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Center(
-            child: Text(
-              status,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ),
+      title: DefaultTextStyle.merge(
+        style: effectiveTextStyle,
+        child: title,
       ),
-    ],
-  );
+      enabled: enabled,
+      onTap: onTap,
+    );
+  }
 }

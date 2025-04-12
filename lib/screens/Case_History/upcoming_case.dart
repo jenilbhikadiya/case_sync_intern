@@ -92,12 +92,16 @@ class UpcomingCasesState extends State<UpcomingCases>
 
   List<CaseListData> _filterCases(List<CaseListData> cases) {
     return cases.where((caseItem) {
-      return caseItem.caseNo.toLowerCase().contains(_searchQuery) ||
-          caseItem.courtName.toLowerCase().contains(_searchQuery) ||
-          caseItem.cityName.toLowerCase().contains(_searchQuery) ||
-          caseItem.handleBy.toLowerCase().contains(_searchQuery) ||
-          caseItem.applicant.toLowerCase().contains(_searchQuery) ||
-          caseItem.opponent.toLowerCase().contains(_searchQuery);
+      if (_searchQuery.isNotEmpty) {
+        return caseItem.caseNo.toLowerCase().contains(_searchQuery) ||
+            caseItem.courtName.toLowerCase().contains(_searchQuery) ||
+            caseItem.cityName.toLowerCase().contains(_searchQuery) ||
+            caseItem.handleBy.toLowerCase().contains(_searchQuery) ||
+            caseItem.applicant.toLowerCase().contains(_searchQuery) ||
+            caseItem.opponent.toLowerCase().contains(_searchQuery);
+      } else {
+        return false;
+      }
     }).toList();
   }
 
@@ -321,9 +325,11 @@ class UpcomingCasesState extends State<UpcomingCases>
                               _updateFilteredCases();
                             });
                           } else {
-                            _searchQuery = '';
-                            _filteredCases.clear();
-                            _resultTabs.clear();
+                            setState(() {
+                              _searchQuery = '';
+                              _filteredCases.clear();
+                              _resultTabs.clear();
+                            });
                           }
                         },
                         decoration: InputDecoration(
@@ -401,7 +407,9 @@ class UpcomingCasesState extends State<UpcomingCases>
               ),
             Expanded(
               child: LiquidPullToRefresh(
-                color: Colors.black,
+                backgroundColor: Colors.black,
+                color: Colors.transparent,
+                showChildOpacityTransition: false,
                 onRefresh: () async {
                   _fetchCases(_selectedDate);
                 },
@@ -454,8 +462,10 @@ class UpcomingCasesState extends State<UpcomingCases>
                                         return Container(
                                           key: caseCardKeys[index],
                                           child: UpcomingCaseCard(
-                                              caseItem: caseItem,
-                                              isHighlighted: isHighlighted),
+                                            caseItem: caseItem,
+                                            isHighlighted: isHighlighted,
+                                            updateCases: _fetchCases,
+                                          ),
                                         );
                                       },
                                     )),

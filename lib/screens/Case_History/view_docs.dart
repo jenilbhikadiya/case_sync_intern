@@ -5,6 +5,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
+import 'package:intern_side/components/list_app_bar.dart';
 import 'package:open_file_plus/open_file_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -90,20 +91,7 @@ class ViewDocsState extends State<ViewDocs> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text('Documents for ${widget.caseNo}',
-            style: TextStyle(color: Colors.black)),
-        actions: [
-          IconButton(
-              icon: const Icon(Icons.refresh), onPressed: _fetchDocuments),
-        ],
-      ),
+      appBar: ListAppBar(title: 'case: ${widget.caseNo}'),
       body: Stack(
         children: [
           if (_isLoading)
@@ -338,53 +326,73 @@ class DocumentCardState extends State<DocumentCard> {
         _showOptions(docUrl);
       },
       child: Card(
-        elevation: 4.0,
         margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 8.0),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12.0),
+          side: const BorderSide(color: Colors.black, width: 1),
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(12.0),
-          child: Row(
-            children: [
-              _buildFileThumbnail(docUrl, extension),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      fileName,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16.0,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      'Added By: ${widget.doc['handled_by']}',
-                      style: const TextStyle(fontSize: 14.0),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Date: ${widget.doc['date_time']}',
-                      style: const TextStyle(fontSize: 14.0),
-                    ),
-                    if (_progress > 0.0 && _progress < 1.0)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                        child: LinearProgressIndicator(
-                          value: _progress,
-                          backgroundColor: Colors.grey.shade300,
-                          color: Colors.blue,
+        child: InkWell(
+          // Use InkWell for tap effect
+          onTap: () {
+            HapticFeedback.mediumImpact();
+            _showOptions(
+                docUrl); // Assuming _showOptions is defined in the state
+          },
+          onLongPress: () {
+            HapticFeedback.lightImpact();
+            // You can add a different action on long press if desired
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Long Pressed')),
+            );
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Row(
+              children: [
+                _buildFileThumbnail(docUrl, extension),
+                const SizedBox(
+                    width: 12), // Increased spacing for better visual
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        fileName,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600, // Slightly bolder
+                          fontSize: 16.0,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                  ],
+                      const SizedBox(height: 8), // Increased spacing
+                      Text(
+                        'Added By: ${widget.doc['handled_by']}',
+                        style: TextStyle(
+                            fontSize: 14.0,
+                            color: Colors.grey[700]), // More subtle color
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Date: ${widget.doc['date_time']}',
+                        style:
+                            TextStyle(fontSize: 14.0, color: Colors.grey[700]),
+                      ),
+                      if (_progress > 0.0 && _progress < 1.0)
+                        Padding(
+                          padding: const EdgeInsets.only(
+                              top: 8.0), // Added top padding
+                          child: LinearProgressIndicator(
+                            value: _progress,
+                            backgroundColor: Colors.grey.shade300,
+                            color: Colors.black,
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

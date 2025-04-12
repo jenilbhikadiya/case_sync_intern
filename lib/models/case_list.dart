@@ -4,6 +4,7 @@ class CaseListData {
   final String handleBy;
   final String applicant;
   final String opponent;
+  String? priorityId;
   final String courtName;
   final DateTime srDate;
   final String cityName;
@@ -15,6 +16,7 @@ class CaseListData {
   final String respondentAdvocate;
   final DateTime dateOfFiling;
   final DateTime nextDate;
+  final String? priorityRemark;
   int? priorityNumber;
 
   CaseListData({
@@ -23,6 +25,7 @@ class CaseListData {
     required this.handleBy,
     required this.applicant,
     required this.opponent,
+    required this.priorityId,
     required this.courtName,
     required this.srDate,
     required this.status,
@@ -34,6 +37,7 @@ class CaseListData {
     required this.dateOfFiling,
     required this.nextDate,
     required this.caseCounter,
+    this.priorityRemark,
     this.priorityNumber,
   });
 
@@ -44,6 +48,7 @@ class CaseListData {
       handleBy: json['handle_by'] ?? '',
       applicant: json['applicant'] ?? '',
       opponent: json['opp_name'] ?? '',
+      priorityId: json['sequence_id'] ?? '',
       status: json['status'] ?? '',
       courtName: json['court_name'] ?? '',
       srDate: (json['sr_date'] == null ||
@@ -67,7 +72,8 @@ class CaseListData {
           ? DateTime.parse('0001-01-01')
           : DateTime.parse(json['next_date']),
       caseCounter: json['case_counter'].toString(),
-      priorityNumber: json['priority_number'],
+      priorityNumber: json['sequence'],
+      priorityRemark: json['remark']?.toString(),
     );
   }
 }

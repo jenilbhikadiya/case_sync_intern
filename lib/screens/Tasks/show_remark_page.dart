@@ -32,6 +32,7 @@ class RemarkPageState extends State<ShowRemarkPage> {
     setState(() {
       _isLoading = true;
       _errorMessage = '';
+      print("fetchRemarkData called for task ID: ${widget.taskItem.task_id}");
     });
 
     try {
@@ -39,23 +40,32 @@ class RemarkPageState extends State<ShowRemarkPage> {
         setState(() {
           _errorMessage = 'Task ID is missing or invalid.';
           _isLoading = false;
+          print("Error: Task ID is empty.");
         });
         return;
       }
 
       final uri = Uri.parse('$baseUrl/task_remark_list');
       final request = http.MultipartRequest('POST', uri);
+      print("Task ID being sent in request: ${widget.taskItem.task_id}");
       request.fields['task_id'] = widget.taskItem.task_id;
+      print("Full HTTP Request: $request");
 
       final streamedResponse = await request.send();
+      print("Streamed Response: $streamedResponse");
       final response = await http.Response.fromStream(streamedResponse);
+      print("HTTP Response Status Code: ${response.statusCode}");
+      print("HTTP Response Body: ${response.body}");
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
+        print("Decoded JSON Data: $data");
+        print("Task ID after decoding response: ${widget.taskItem.task_id}");
         if (data['success'] == true &&
             data['data'] != null &&
             data['data'].isNotEmpty) {
           final remarks = List<Map<String, dynamic>>.from(data['data']);
+          print("Fetched Remarks Data: $remarks");
           setState(() {
             _remarks.clear();
             _isLoading = false;
@@ -65,11 +75,14 @@ class RemarkPageState extends State<ShowRemarkPage> {
                 _listKey.currentState!.insertItem(i);
               }
             });
+            print("Remarks added to _remarks list. Count: ${_remarks.length}");
           });
         } else {
           setState(() {
             _errorMessage = data['message'] ?? 'No remarks found.';
             _isLoading = false;
+            print(
+                "Error: No remarks found or API returned failure. Message: $_errorMessage");
           });
         }
       } else {
@@ -77,14 +90,18 @@ class RemarkPageState extends State<ShowRemarkPage> {
           _errorMessage =
               'Failed to fetch remarks. Status code: ${response.statusCode}';
           _isLoading = false;
+          print(
+              "Error: Failed to fetch remarks. Status code: ${response.statusCode}");
         });
       }
     } catch (e) {
       setState(() {
         _errorMessage = 'An error occurred: $e';
         _isLoading = false;
+        print("Error during API call: $e");
       });
     }
+    print("Task ID at the end of fetchRemarkData: ${widget.taskItem.task_id}");
   }
 
   Widget buildItem(
