@@ -15,6 +15,7 @@ class TaskItem {
   final String stage;
   final String case_id;
   final String stage_id;
+  final String case_type;
 
   TaskItem({
     required this.intern_id,
@@ -31,6 +32,7 @@ class TaskItem {
     required this.stage,
     required this.case_id,
     required this.stage_id,
+    required this.case_type,
   });
 
   factory TaskItem.fromJson(Map<String, dynamic> json) {
@@ -53,6 +55,7 @@ class TaskItem {
       stage: json['stage'] ?? '',
       case_id: json['case_id'] ?? '',
       stage_id: json['stage_id'] ?? '',
+      case_type: json['case_type'] ?? '',
     );
   }
 
@@ -72,6 +75,7 @@ class TaskItem {
       'stage': stage,
       'case_id': case_id,
       'stage_id': stage_id,
+      'case_type': case_type,
     };
   }
 

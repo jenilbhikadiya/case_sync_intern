@@ -41,7 +41,8 @@ class NotificationCard extends StatelessWidget {
                     case_id: '',
                     stage_id: '',
                     added_by: '',
-                    alloted_to_id: '')),
+                    alloted_to_id: '',
+                    case_type: '')),
           ),
         );
       },

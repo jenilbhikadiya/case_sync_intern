@@ -9,6 +9,7 @@ import 'package:http/http.dart' as http;
 import 'package:intern_side/models/notification_item.dart';
 import 'package:intern_side/screens/Notice/case_counter_list.dart';
 import 'package:intern_side/screens/Notice/todays_case_list.dart';
+import 'package:intern_side/screens/add_task/CaseHistoryTask.dart';
 import 'package:intern_side/services/case_services.dart';
 import 'package:intern_side/utils/constants.dart';
 
@@ -16,7 +17,7 @@ import '../check_update.dart';
 import '../components/basicUIcomponent.dart';
 import '../models/intern.dart';
 import '../services/shared_pref.dart';
-import 'Case_History/intern_case_history.dart';
+import 'Case_History/case_history.dart';
 import 'Case_History/upcoming_case.dart';
 import 'Tasks/task_page.dart';
 import 'appbar/notification_drawer.dart';
@@ -294,7 +295,7 @@ class HomeScreenState extends State<HomeScreen> {
                                 ],
                               ),
                               const SizedBox(height: 20),
-                              const Text('Cases',
+                              const Text('Tasks',
                                   style: TextStyle(
                                       fontSize: 20,
                                       fontWeight: FontWeight.bold,
@@ -309,24 +310,38 @@ class HomeScreenState extends State<HomeScreen> {
                                 physics: const NeverScrollableScrollPhysics(),
                                 children: [
                                   _buildCard(
+                                    title: 'Add Task',
+                                    iconPath: 'assets/icons/tasks.svg',
+                                    cardWidth: cardWidth,
+                                    cardHeight: cardHeight,
+                                    destinationScreen: CaseHistoryScreenTask(),
+                                    counterNotifier: taskCount,
+                                  ),
+                                  _buildCard(
                                     title: 'Tasks',
                                     iconPath: 'assets/icons/tasks.svg',
                                     cardWidth: cardWidth,
                                     cardHeight: cardHeight,
-                                    destinationScreen: const TaskPage(),
+                                    destinationScreen: TaskPage(),
                                     counterNotifier: taskCount,
-                                  ),
-                                  _buildCard(
-                                    title: 'Case History',
-                                    iconPath: 'assets/icons/case_history.svg',
-                                    cardWidth: cardWidth,
-                                    cardHeight: cardHeight,
-                                    destinationScreen: CaseHistoryScreen(),
-                                    counterNotifier: caseCount,
                                   ),
                                 ],
                               ),
                               const SizedBox(height: 20),
+                              const Text('Case History',
+                                  style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black)),
+                              const SizedBox(height: 10),
+                              _buildCard(
+                                title: 'Case History',
+                                iconPath: 'assets/icons/case_history.svg',
+                                cardWidth: 2.3 * cardWidth,
+                                cardHeight: cardHeight,
+                                destinationScreen: CaseHistoryScreen(),
+                                counterNotifier: caseCount,
+                              ),
                             ],
                           );
                         },

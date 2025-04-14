@@ -14,19 +14,12 @@ import '../../models/intern.dart';
 import '../../models/task_item_list.dart';
 import '../Tasks/add_remark_page.dart';
 
-import 'add_task_screen.dart';
+import '../add_task/add_task_screen.dart';
 import 'show_remark_page.dart';
 
 class TaskPage extends StatefulWidget {
-  final String? caseType;
-  final String? caseNo;
-  final String? caseId;
-
   const TaskPage({
     super.key,
-    this.caseType,
-    this.caseNo,
-    this.caseId,
   });
 
   @override
@@ -334,40 +327,6 @@ class TaskPageState extends State<TaskPage> {
                       ),
                     ),
             ),
-      floatingActionButton: ElevatedButton(
-        style: AppTheme.elevatedButtonStyle, // Use the style from AppTheme
-        onPressed: () async {
-          HapticFeedback.mediumImpact();
-          final result = await Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => AddTaskScreen(
-                caseNumber: '', caseType: '', caseId: '',
-                // caseType: widget.caseType,
-                // caseNumber: widget.caseNo,
-                // caseId: widget.caseId,
-              ),
-            ),
-          );
-
-          // Refresh the task list if a new task was added
-          if (result == true) {
-            fetchTasks();
-          }
-        },
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.add, color: Colors.white),
-            const SizedBox(width: 8),
-            Text(
-              "Add Task",
-              style: AppTheme
-                  .buttonTextStyle, // Use the button text style from AppTheme
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

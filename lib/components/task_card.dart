@@ -1,23 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart'; // Make sure intl is imported if using formatted dates directly here
+import 'package:intl/intl.dart';
 
-// Assuming TaskItem model and getStatusColor are accessible
-// If getStatusColor is not accessible globally, define it here or import it
 import '../models/task_item_list.dart';
 import '../utils/constants.dart';
-// import '../utils/constants.dart'; // Keep if needed for other constants
 
 class TaskCard extends StatefulWidget {
   final TaskItem taskItem;
   final VoidCallback onTap;
-  final bool
-      isHighlighted; // You might not need highlighting with a strong border
+  final bool isHighlighted;
 
   const TaskCard({
     super.key,
     required this.taskItem,
     required this.onTap,
-    this.isHighlighted = false, // Default to false, maybe remove if unused
+    this.isHighlighted = false,
   });
 
   @override
@@ -37,9 +33,7 @@ class _TaskCardState extends State<TaskCard>
       vsync: this,
     );
     _scaleAnimation = Tween<double>(begin: 1.0, end: 0.96).animate(
-      // Slightly more pronounced pop
-      CurvedAnimation(
-          parent: _animationController, curve: Curves.easeOut), // Use easeOut
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
     );
   }
 
@@ -53,30 +47,24 @@ class _TaskCardState extends State<TaskCard>
     _animationController.forward().then((_) => _animationController.reverse());
   }
 
-  // Helper widget for building info rows consistently
   Widget _buildInfoRow({
     required IconData icon,
     required String label,
-    required Widget
-        valueWidget, // Allow passing custom widgets like the status chip
-    BuildContext? context, // Pass context if needed for theme access
+    required Widget valueWidget,
+    BuildContext? context,
   }) {
-    final Color labelColor = widget.isHighlighted
-        ? Colors.white70
-        : Colors.grey.shade600; // Softer label color
+    final Color labelColor =
+        widget.isHighlighted ? Colors.white70 : Colors.grey.shade600;
     final Color iconColor =
         widget.isHighlighted ? Colors.white70 : Colors.grey.shade500;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(
-          vertical: 5.0), // Vertical spacing between rows
+      padding: const EdgeInsets.symmetric(vertical: 5.0),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment
-            .start, // Align icon/label with top of value if value wraps
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Left side: Icon and Label
           Row(
-            mainAxisSize: MainAxisSize.min, // Prevent taking too much space
+            mainAxisSize: MainAxisSize.min,
             children: [
               Icon(icon, size: 18, color: iconColor),
               const SizedBox(width: 8),
@@ -90,8 +78,7 @@ class _TaskCardState extends State<TaskCard>
               ),
             ],
           ),
-          const SizedBox(width: 10), // Space between label and value
-          // Right side: Value (takes remaining space)
+          const SizedBox(width: 10),
           Expanded(
             child: Align(
               alignment: Alignment.centerRight,
@@ -99,10 +86,9 @@ class _TaskCardState extends State<TaskCard>
                 style: TextStyle(
                   fontSize: 14,
                   color: widget.isHighlighted ? Colors.white : Colors.black87,
-                  fontWeight:
-                      FontWeight.w500, // Values slightly bolder than labels
+                  fontWeight: FontWeight.w500,
                 ),
-                textAlign: TextAlign.right, // Align text value to the right
+                textAlign: TextAlign.right,
                 child: valueWidget,
               ),
             ),
@@ -116,32 +102,25 @@ class _TaskCardState extends State<TaskCard>
   Widget build(BuildContext context) {
     final TaskItem taskItem = widget.taskItem;
 
-    // Prepare the Status Chip Widget beforehand
     final statusChip = Container(
-      padding: const EdgeInsets.symmetric(
-          horizontal: 9, vertical: 3.5), // Adjusted padding
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3.5),
       decoration: BoxDecoration(
-        color: getStatusColor(taskItem.status), // Solid status color background
-        // Optionally add a subtle border if needed, e.g., for light status colors on white background
-        // border: Border.all(color: Colors.black.withOpacity(0.1), width: 0.5),
-        borderRadius: BorderRadius.circular(6), // Less rounded, more badge-like
+        color: getStatusColor(taskItem.status),
+        borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
-        taskItem.status
-            .toUpperCase()
-            .replaceAll('_', ' '), // Replace underscore with space
+        taskItem.status.toUpperCase().replaceAll('_', ' '),
         style: const TextStyle(
-          color: Colors.white, // White text for contrast
-          fontWeight:
-              FontWeight.w600, // Slightly less bold than FontWeight.bold
-          fontSize: 11, // Slightly smaller font
-          letterSpacing: 0.3, // Add slight letter spacing
+          color: Colors.white,
+          fontWeight: FontWeight.w600,
+          fontSize: 11,
+          letterSpacing: 0.3,
         ),
         maxLines: 1,
-        overflow: TextOverflow.ellipsis, // Handle long status names
+        overflow: TextOverflow.ellipsis,
       ),
     );
-    // --
+
     return GestureDetector(
       onTap: () {
         _animateTap();
@@ -150,45 +129,36 @@ class _TaskCardState extends State<TaskCard>
       child: ScaleTransition(
         scale: _scaleAnimation,
         child: Container(
-          margin: const EdgeInsets.symmetric(
-              vertical: 8.0), // Increased vertical margin
+          margin: const EdgeInsets.symmetric(vertical: 8.0),
           decoration: BoxDecoration(
             color: widget.isHighlighted
-                ? Theme.of(context)
-                    .colorScheme
-                    .primary
-                    .withOpacity(0.9) // Slightly transparent highlight
+                ? Theme.of(context).colorScheme.primary.withOpacity(0.9)
                 : Colors.white,
-            borderRadius: BorderRadius.circular(12), // Slightly larger radius
-            // --- The Black Border ---
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: Colors.black,
-              width: 1.0, // Adjust width as needed (1.0 is usually good)
+              width: 1.0,
             ),
-            // --- Subtle Shadow (Optional - can remove if border is enough) ---
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.08), // Softer shadow
+                color: Colors.black.withOpacity(0.08),
                 spreadRadius: 0,
-                blurRadius: 8, // Slightly more blur
-                offset: const Offset(0, 3), // Slightly more offset
+                blurRadius: 8,
+                offset: const Offset(0, 3),
               ),
             ],
           ),
           child: Padding(
-            padding: const EdgeInsets.symmetric(
-                horizontal: 16.0, vertical: 14.0), // Adjusted padding
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
             child: Column(
-              crossAxisAlignment:
-                  CrossAxisAlignment.start, // Align content left
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // --- Instruction (More Prominent) ---
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Padding(
-                      padding: const EdgeInsets.only(
-                          top: 2.0), // Align icon better with text
+                      padding: const EdgeInsets.only(top: 2.0),
                       child: Icon(
                         Icons.notes_rounded,
                         size: 20,
@@ -204,41 +174,35 @@ class _TaskCardState extends State<TaskCard>
                             ? 'No Instruction Provided'
                             : taskItem.instruction,
                         style: TextStyle(
-                          fontWeight: FontWeight.bold, // Bold instruction
-                          fontSize: 16, // Larger font size
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
                           color: widget.isHighlighted
                               ? Colors.white
                               : Colors.black,
-                          height:
-                              1.3, // Line height for readability if it wraps
+                          height: 1.3,
                         ),
                       ),
                     ),
                   ],
                 ),
-
-                const Divider(height: 24, thickness: 0.5), // Visual separator
-
-                // --- Detail Rows using the helper ---
+                const Divider(height: 24, thickness: 0.5),
                 _buildInfoRow(
                   icon: Icons.folder_copy_outlined,
                   label: 'Case No',
                   valueWidget: Text(taskItem.caseNo),
                 ),
                 _buildInfoRow(
-                  icon: Icons.person_outline, // Simpler icon
+                  icon: Icons.person_outline,
                   label: 'Alloted By',
                   valueWidget: Text(taskItem.allotedBy),
                 ),
                 _buildInfoRow(
-                  icon:
-                      Icons.assignment_ind_outlined, // Different icon for 'To'
+                  icon: Icons.assignment_ind_outlined,
                   label: 'Alloted To',
-                  valueWidget: Text(taskItem
-                      .allotedTo), // Displaying the name/id from the model
+                  valueWidget: Text(taskItem.allotedTo),
                 ),
                 _buildInfoRow(
-                  icon: Icons.calendar_today_outlined, // Simpler icon
+                  icon: Icons.calendar_today_outlined,
                   label: 'Alloted Date',
                   valueWidget: Text(taskItem.formattedAllotedDate),
                 ),
@@ -255,7 +219,7 @@ class _TaskCardState extends State<TaskCard>
                 _buildInfoRow(
                   icon: Icons.playlist_add_check_circle_outlined,
                   label: 'Status',
-                  valueWidget: statusChip, // Pass the pre-built chip
+                  valueWidget: statusChip,
                 ),
               ],
             ),
