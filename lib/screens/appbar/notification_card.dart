@@ -1,30 +1,27 @@
-import 'dart:convert'; // For jsonDecode if checking response body
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:http/http.dart' as http; // Import HTTP package
+import 'package:http/http.dart' as http;
 import 'package:intern_side/models/notification_item.dart';
 import 'package:intern_side/screens/Case_History/ProceedHistory.dart';
 import 'package:intern_side/screens/Tasks/show_remark_page.dart';
-import 'package:intern_side/screens/Tasks/task_page.dart'; // Make sure this path is correct
+import 'package:intern_side/screens/Tasks/task_page.dart';
 import 'package:intern_side/services/shared_pref.dart';
 import 'package:intl/intl.dart';
 
-// Adjust these imports based on your actual project structure
-// import '../../models/task_item_list.dart'; // TaskItem is used only for ShowRemarkPage logic which seems commented out/replaced
-// import '../Tasks/show_remark_page.dart'; // ShowRemarkPage seems unused now
 import '../../models/task_item_list.dart';
-import '../../utils/constants.dart'; // Assuming baseUrl is defined here
+import '../../utils/constants.dart';
 
 class NotificationCard extends StatefulWidget {
-  final NotificationItem taskItem; // Variable holds a NotificationItem instance
+  final NotificationItem taskItem;
   final bool isHighlighted;
-  final Function(NotificationItem) onDismiss; // Callback when dismissed
+  final Function(NotificationItem) onDismiss;
 
   const NotificationCard({
     super.key,
     required this.taskItem,
-    required this.onDismiss, // Required function for dismissal
+    required this.onDismiss,
     this.isHighlighted = false,
   });
 
@@ -33,7 +30,6 @@ class NotificationCard extends StatefulWidget {
 }
 
 class _NotificationCardState extends State<NotificationCard> {
-  // --- Function to call the read_notification API ---
   Future<void> _markNotificationAsRead(String notificationId) async {
     if (notificationId.isEmpty) {
       print(
@@ -82,12 +78,8 @@ class _NotificationCardState extends State<NotificationCard> {
     }
   }
 
-  // ---------------------------------------------------
   @override
   Widget build(BuildContext context) {
-    // This dummyTaskForRemark seems unnecessary if you navigate to TaskPage
-    // which likely needs the actual taskId from the notification.
-    // Keep it if ShowRemarkPage is still relevant somehow, otherwise remove.
     final dummyTaskForRemark = TaskItem(
       intern_id: '',
       caseNo: widget.taskItem.caseNo ?? 'N/A',
@@ -99,39 +91,32 @@ class _NotificationCardState extends State<NotificationCard> {
       allotedDate: null,
       expectedEndDate: null,
       status: '',
-      task_id:
-          widget.taskItem.typeId ?? '', // Use task_id from NotificationItem
+      task_id: widget.taskItem.typeId ?? '',
       stage: '',
       stage_id: '',
-      case_type: widget.taskItem.caseType ?? '', case_id: '',
+      case_type: widget.taskItem.caseType ?? '',
+      case_id: '',
     );
 
-    // *** Print the taskItem (NotificationItem) object when the widget builds ***
-    print(
-        "Building NotificationCard for: ${widget.taskItem}"); // Optional: print during build
+    print("Building NotificationCard for: ${widget.taskItem}");
 
     return GestureDetector(
       onTap: () async {
-        // *** ADDED PRINT STATEMENT HERE ***
         print("--- NotificationCard Tapped ---");
-        // Using toString() implicitly. Add .toJson() if you have it for better formatting.
+
         print("NotificationItem Data: ${widget.taskItem}");
         print("-----------------------------");
 
-        // Check if there's a valid task_id to navigate to the TaskPage
-        // Ensure taskItem has a 'taskId' field
         final String? taskId = widget.taskItem.typeId;
-        final String? type =
-            widget.taskItem.type; // Assuming NotificationItem has taskId
+        final String? type = widget.taskItem.type;
 
         if (type == "task_assigned" || type == "task_reassigned") {
           HapticFeedback.mediumImpact();
           Navigator.push(
             context,
             MaterialPageRoute(
-              // Navigate to TaskPage using the taskId from the NotificationItem
               builder: (context) => TaskPage(
-                highlightedTaskId: taskId, // Pass the actual task ID
+                highlightedTaskId: taskId,
               ),
             ),
           );
@@ -141,10 +126,9 @@ class _NotificationCardState extends State<NotificationCard> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              // Navigate to TaskPage using the taskId from the NotificationItem
               builder: (context) => ShowRemarkPage(
                 highlightedTaskId: taskId,
-                taskItem: dummyTaskForRemark, // Pass the actual task ID
+                taskItem: dummyTaskForRemark,
               ),
             ),
           );
@@ -154,7 +138,6 @@ class _NotificationCardState extends State<NotificationCard> {
           await Navigator.push(
             context,
             MaterialPageRoute(
-              // Navigate to TaskPage using the taskId from the NotificationItem
               builder: (context) => ViewProceedCaseHistoryScreen(
                 highlightedTaskId: taskId,
                 caseId: widget.taskItem.typeId,
@@ -166,7 +149,7 @@ class _NotificationCardState extends State<NotificationCard> {
         } else {
           print(
               "No valid taskId found in notification (taskId: $taskId), cannot navigate to TaskPage.");
-          // Optionally show a snackbar message
+
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
                 content: Text(
@@ -184,9 +167,7 @@ class _NotificationCardState extends State<NotificationCard> {
         ),
         clipBehavior: Clip.antiAlias,
         child: Dismissible(
-          // *** IMPORTANT: Use the correct notification ID here ***
-          key: Key(widget
-              .taskItem.id), // Use the unique NOTIFICATION ID (taskItem.id)
+          key: Key(widget.taskItem.id),
           direction: DismissDirection.endToStart,
           background: Container(
               padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -207,7 +188,7 @@ class _NotificationCardState extends State<NotificationCard> {
               )),
           onDismissed: (direction) {
             HapticFeedback.lightImpact();
-            _markNotificationAsRead(widget.taskItem.id); // Mark as read via API
+            _markNotificationAsRead(widget.taskItem.id);
           },
           child: Padding(
             padding: const EdgeInsets.all(14.0),

@@ -2,21 +2,45 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 
 class ListAppBar extends StatelessWidget implements PreferredSizeWidget {
-  final VoidCallback? onSearchPressed;
-  final VoidCallback? onFilterPressed; // Optional filter button
-  final bool isSearching;
-  final bool showSearch; // New parameter to show/hide search
+  // Existing Parameters
+  final VoidCallback? onSearchPressed; // Callback to toggle search state
+  final VoidCallback? onFilterPressed; // Optional filter button callback
+  final bool isSearching; // Flag indicating if search mode is active
+  final bool showSearch; // Flag to allow showing the search icon
   final String title;
   final double? titleSize;
+
+  // --- NEW PARAMETERS FOR SEARCH FUNCTIONALITY ---
+  final TextEditingController?
+      searchController; // Controller for the search field
+  final FocusNode? searchFocusNode; // Focus node for the search field
+  final ValueChanged<String>?
+      onSearchChanged; // Callback when search text changes
+  final int resultCount; // Total number of search results found
+  final int
+      currentResultIndex; // 0-based index of the currently highlighted result
+  final VoidCallback? onNavigatePrevious; // Callback for previous result button
+  final VoidCallback? onNavigateNext; // Callback for next result button
+  // ---------------------------------------------
 
   const ListAppBar({
     super.key,
     this.onSearchPressed,
-    this.onFilterPressed, // Optional
+    this.onFilterPressed,
     this.isSearching = false,
-    this.showSearch = true, // Default to true
+    this.showSearch = true,
     required this.title,
-    this.titleSize = 30,
+    this.titleSize = 30, // Default title size kept
+
+    // --- ADD NEW PARAMETERS TO CONSTRUCTOR ---
+    this.searchController,
+    this.searchFocusNode,
+    this.onSearchChanged,
+    this.resultCount = 0, // Default count
+    this.currentResultIndex = -1, // Default index (no selection)
+    this.onNavigatePrevious,
+    this.onNavigateNext,
+    // ---------------------------------------
   });
 
   @override
@@ -28,46 +52,113 @@ class ListAppBar extends StatelessWidget implements PreferredSizeWidget {
       leading: IconButton(
         icon: SvgPicture.asset(
           'assets/icons/back_arrow.svg',
-          width: 32,
-          height: 32,
+          width: 28, // Slightly smaller consistent size?
+          height: 28,
+          colorFilter: const ColorFilter.mode(
+              Colors.black, BlendMode.srcIn), // Added color filter
         ),
+        tooltip: 'Back', // Added tooltip
         onPressed: () {
-          Navigator.pop(context);
+          // If searching, maybe just close search? Or always pop?
+          if (isSearching && onSearchPressed != null) {
+            onSearchPressed!(); // Call the toggle callback to close search
+          } else {
+            Navigator.maybePop(context); // Default back action
+          }
         },
       ),
-      leadingWidth: 66,
-      titleSpacing: -10,
-      toolbarHeight: 70,
-      title: Text(
-        title,
-        style: TextStyle(
-          color: Colors.black,
-          fontSize: titleSize,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
+      leadingWidth: 56, // Adjusted width if needed
+      // --- Conditional Title/Search Field ---
+      title: isSearching
+          ? TextField(
+              // Show TextField when searching is active
+              controller: searchController,
+              focusNode: searchFocusNode,
+              onChanged: onSearchChanged,
+              autofocus: true, // Focus when it appears
+              style: const TextStyle(
+                  color: Colors.black87, fontSize: 17), // Search text style
+              decoration: InputDecoration(
+                hintText: 'Search $title...', // Dynamic hint text
+                hintStyle: TextStyle(color: Colors.grey[600], fontSize: 16),
+                border: InputBorder.none, // Clean look
+                isDense: true, // Reduce vertical padding
+              ),
+            )
+          : Text(
+              // Show Title Text when not searching
+              title,
+              style: TextStyle(
+                color: Colors.black,
+                fontSize: titleSize, // Use the provided title size
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+      titleSpacing: 0, // Adjust if needed with leading width change
+      toolbarHeight: 70, // Keep existing height
       actions: [
-        if (onFilterPressed != null)
+        // --- Filter Button (Show only if provided AND not searching) ---
+        if (onFilterPressed != null && !isSearching)
           IconButton(
+            tooltip: 'Filter', // Added tooltip
             icon: const Icon(Icons.filter_list_alt,
-                size: 32, color: Colors.black),
+                size: 28, color: Colors.black), // Adjusted size
             onPressed: onFilterPressed,
           ),
-        if (showSearch &&
-            onSearchPressed != null) // Show search only if enabled
+
+        // --- Search Result Navigation (Show only if searching AND results exist) ---
+        if (isSearching && resultCount > 0) ...[
           IconButton(
-            padding: const EdgeInsets.only(left: 10.0, right: 20.0),
+            icon: const Icon(Icons.arrow_upward_rounded, color: Colors.black54),
+            tooltip: 'Previous Result',
+            // Disable if it's the first result or no results
+            onPressed:
+                onNavigatePrevious, // Directly use the callback (null disables)
+          ),
+          Padding(
+            // Display index + 1 because index is 0-based
+            padding:
+                const EdgeInsets.symmetric(horizontal: 2.0), // Minimal padding
+            child: Text(
+              // Handle case where currentResultIndex might still be -1 initially
+              '${currentResultIndex >= 0 ? currentResultIndex + 1 : '-'}/$resultCount',
+              style: const TextStyle(
+                  color: Colors.black87,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500),
+            ),
+          ),
+          IconButton(
+            icon:
+                const Icon(Icons.arrow_downward_rounded, color: Colors.black54),
+            tooltip: 'Next Result',
+            // Disable if it's the last result or no results
+            onPressed:
+                onNavigateNext, // Directly use the callback (null disables)
+          ),
+          const SizedBox(width: 4), // Small spacer before search/close icon
+        ],
+
+        // --- Search Toggle / Close Button ---
+        if (showSearch && onSearchPressed != null) // Show only if enabled
+          IconButton(
+            tooltip: isSearching ? 'Close Search' : 'Search', // Dynamic tooltip
+            padding: const EdgeInsets.only(right: 16.0), // Adjusted padding
             icon: Icon(
-              isSearching ? Icons.close : Icons.search_rounded,
-              size: 32,
+              isSearching
+                  ? Icons.close_rounded
+                  : Icons.search_rounded, // Change icon based on state
+              size: 28, // Adjusted size
               color: Colors.black,
             ),
-            onPressed: onSearchPressed,
+            onPressed:
+                onSearchPressed, // Use the provided callback to toggle state
           ),
       ],
     );
   }
 
   @override
-  Size get preferredSize => const Size.fromHeight(70);
+  Size get preferredSize =>
+      const Size.fromHeight(70); // Keep existing preferred size
 }

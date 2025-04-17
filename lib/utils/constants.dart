@@ -17,46 +17,29 @@ const List<String> months = [
   'December'
 ];
 
-/// Returns a distinct color based on the task status.
 Color getStatusColor(String status) {
-  // Normalize the status string for reliable comparison
   String normalizedStatus = status.toLowerCase().trim();
 
   switch (normalizedStatus) {
     case 'completed':
-      // A clear, positive green
       return Colors.green.shade600;
 
-    case 'allotted': // Handle both spellings if necessary
+    case 'allotted':
     case 'alloted':
-      // A standard, active blue - indicates assigned/in progress
-      return Colors.blue.shade600; // Changed from blueAccent
+      return Colors.blue.shade600;
 
     case 'pending':
-      // A warm orange - indicates waiting or needs action
-      return Colors
-          .orange.shade600; // Changed from shade400 for better visibility
+      return Colors.orange.shade600;
 
     case 'reassign':
-      // A distinct purple - indicates a specific action/request state
-      // Differentiates it from standard 'allotted' blue
-      return Colors.purple.shade500; // Changed from blue
+      return Colors.purple.shade500;
 
-    case 're_alloted': // Handles 're_alloted' specifically
-    case 're-alloted': // Also handle hyphen variation if possible
-      // A teal/cyan color - distinct from initial blue and purple,
-      // might indicate it's been processed/returned/assigned again
-      return Colors.teal.shade500; // Changed from red
-
-    // Add other specific statuses if you have them:
-    // case 'overdue':
-    //   return Colors.red.shade700; // Use red for critical states
-    // case 'in-progress': // If different from 'allotted'
-    //    return Colors.lightBlue.shade600;
+    case 're_alloted':
+    case 're-alloted':
+      return Colors.teal.shade500;
 
     default:
-      // A neutral grey for unknown or less important statuses
-      return Colors.grey.shade600; // Slightly darker grey
+      return Colors.grey.shade600;
   }
 }
 

@@ -15,6 +15,7 @@ import 'package:intern_side/utils/constants.dart';
 
 import '../check_update.dart';
 import '../components/basicUIcomponent.dart';
+import '../models/case.dart';
 import '../models/intern.dart';
 import '../services/shared_pref.dart';
 import 'Case_History/case_history.dart';
@@ -35,6 +36,7 @@ class HomeScreenState extends State<HomeScreen> {
   bool isInternetConnected = true;
   ValueNotifier<int> caseCount = ValueNotifier<int>(-1);
   ValueNotifier<int> taskCount = ValueNotifier<int>(-1);
+  ValueNotifier<int> addTaskCount = ValueNotifier<int>(-1);
   ValueNotifier<int> todays_case_count = ValueNotifier<int>(-1);
   ValueNotifier<int> counters_count = ValueNotifier<int>(-1);
 
@@ -93,6 +95,8 @@ class HomeScreenState extends State<HomeScreen> {
               int.parse(responseData['counters'][2]['todays_case_count']);
           counters_count.value =
               int.parse(responseData['counters'][3]['counters_count']);
+          addTaskCount.value =
+              int.parse(responseData['counters'][4]['todays_task_count']);
 
           return taskList.value;
         } else {
@@ -109,8 +113,9 @@ class HomeScreenState extends State<HomeScreen> {
 
   Future<void> _refreshCounters() async {
     if (user != null) {
+      // Fetch the counters - this will update the ValueNotifiers internally
       await fetchCaseAndTaskCounters(user!.id);
-      setState(() {}); // Ensures UI updates with new counter values
+      // setState(() {}); // <--- REMOVE THIS LINE
     }
   }
 
@@ -315,7 +320,7 @@ class HomeScreenState extends State<HomeScreen> {
                                     cardWidth: cardWidth,
                                     cardHeight: cardHeight,
                                     destinationScreen: CaseHistoryScreenTask(),
-                                    counterNotifier: taskCount,
+                                    counterNotifier: addTaskCount,
                                   ),
                                   _buildCard(
                                     title: 'Tasks',

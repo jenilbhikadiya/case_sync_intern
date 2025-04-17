@@ -1,16 +1,13 @@
 import 'package:flutter/material.dart';
-// import 'package:intl/intl.dart'; // Not strictly needed if formatted dates are in TaskItem
 
 import '../models/task_item_list.dart';
-import '../utils/constants.dart'; // Assuming getStatusColor is here or defined below
-
-// Define or import getStatusColor if it's not in constants.dart
+import '../utils/constants.dart';
 
 class TaskCard extends StatefulWidget {
   final TaskItem taskItem;
   final VoidCallback onTap;
   final bool isHighlighted;
-  final bool showNewTaskTag; // Control for the "NEW" tag
+  final bool showNewTaskTag;
 
   const TaskCard({
     super.key,
@@ -51,12 +48,11 @@ class _TaskCardState extends State<TaskCard>
     _animationController.forward().then((_) => _animationController.reverse());
   }
 
-  // Helper for building rows with Label (left) and Value (right)
   Widget _buildInfoRow({
     required IconData icon,
     required String label,
     required Widget valueWidget,
-    BuildContext? context, // Context isn't really used here anymore
+    BuildContext? context,
   }) {
     final Color labelColor =
         widget.isHighlighted ? Colors.white70 : Colors.grey.shade700;
@@ -69,9 +65,8 @@ class _TaskCardState extends State<TaskCard>
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Fixed width label section
           SizedBox(
-            width: 110, // Adjust as needed
+            width: 110,
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -89,7 +84,6 @@ class _TaskCardState extends State<TaskCard>
             ),
           ),
           const SizedBox(width: 10),
-          // Value section takes remaining space
           Expanded(
             child: Align(
               alignment: Alignment.centerRight,
@@ -109,33 +103,29 @@ class _TaskCardState extends State<TaskCard>
     );
   }
 
-  // --- WIDGET FOR THE "NEW TASK" TAG (Unchanged) ---
   Widget _buildNewTaskTag() {
     return Container(
-      padding: const EdgeInsets.symmetric(
-          horizontal: 6, vertical: 2), // Slightly smaller padding
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
         color: Colors.green.shade600,
-        borderRadius: BorderRadius.circular(4.0), // Simple rounded corners
+        borderRadius: BorderRadius.circular(4.0),
       ),
       child: const Text(
-        'NEW TASK', // Simpler text might fit better inline
+        'NEW TASK',
         style: TextStyle(
           color: Colors.white,
           fontWeight: FontWeight.bold,
-          fontSize: 9, // Smaller font size for inline tag
+          fontSize: 9,
           letterSpacing: 0.4,
         ),
       ),
     );
   }
-  // -----------------------------------
 
   @override
   Widget build(BuildContext context) {
     final TaskItem taskItem = widget.taskItem;
 
-    // Status Chip definition
     final statusChip = Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3.5),
       decoration: BoxDecoration(
@@ -155,16 +145,13 @@ class _TaskCardState extends State<TaskCard>
       ),
     );
 
-    // Define colors based on highlight state
     final Color cardColor = widget.isHighlighted
         ? Theme.of(context).colorScheme.primary.withOpacity(0.9)
         : Colors.white;
-    final Color borderColor = widget.isHighlighted
-        ? Theme.of(context).colorScheme.primary
-        : Colors.grey.shade300;
+
     final Color instructionColor =
         widget.isHighlighted ? Colors.white : Colors.black;
-    final Color leadingIconColor = // Renamed for clarity
+    final Color leadingIconColor =
         widget.isHighlighted ? Colors.white : Colors.black54;
 
     return GestureDetector(
@@ -176,13 +163,12 @@ class _TaskCardState extends State<TaskCard>
         scale: _scaleAnimation,
         child: Container(
           margin: const EdgeInsets.symmetric(vertical: 8.0),
-          // Removed clipBehavior as it's not needed without absolute positioning
           decoration: BoxDecoration(
             color: cardColor,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: borderColor,
-              width: widget.isHighlighted ? 1.5 : 1.0,
+              color: Colors.black,
+              width: 1.0,
             ),
             boxShadow: [
               BoxShadow(
@@ -194,22 +180,17 @@ class _TaskCardState extends State<TaskCard>
               ),
             ],
           ),
-          // --- NO STACK NEEDED HERE ANYMORE ---
           child: Padding(
-            // Direct Padding for content
             padding:
                 const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // --- MODIFIED INSTRUCTION ROW ---
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Leading Icon
                     Padding(
-                      padding: const EdgeInsets.only(
-                          top: 2.0), // Align icon better with text
+                      padding: const EdgeInsets.only(top: 2.0),
                       child: Icon(
                         Icons.notes_rounded,
                         size: 20,
@@ -217,7 +198,6 @@ class _TaskCardState extends State<TaskCard>
                       ),
                     ),
                     const SizedBox(width: 8),
-                    // Instruction Text (takes available space)
                     Expanded(
                       child: Text(
                         taskItem.instruction.isEmpty
@@ -227,23 +207,17 @@ class _TaskCardState extends State<TaskCard>
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
                           color: instructionColor,
-                          height: 1.3, // Adjust line height for readability
+                          height: 1.3,
                         ),
                       ),
                     ),
-                    // Conditionally add the "NEW" tag *after* the text
                     if (widget.showNewTaskTag) ...[
-                      const SizedBox(width: 8), // Space between text and tag
-                      _buildNewTaskTag(), // The green tag widget
+                      const SizedBox(width: 8),
+                      _buildNewTaskTag(),
                     ],
                   ],
                 ),
-                // --------------------------------
-
-                // Divider
-                const Divider(height: 24, thickness: 0.5), // Standard height
-
-                // Info Rows (Unchanged)
+                const Divider(height: 24, thickness: 0.5),
                 _buildInfoRow(
                   icon: Icons.folder_copy_outlined,
                   label: 'Case No',
@@ -267,7 +241,6 @@ class _TaskCardState extends State<TaskCard>
                 _buildInfoRow(
                   icon: Icons.calendar_today_outlined,
                   label: 'Alloted Date',
-                  // Ensure TaskItem has these formatted strings or format here
                   valueWidget: Text(taskItem.formattedAllotedDate ?? 'N/A'),
                 ),
                 _buildInfoRow(
