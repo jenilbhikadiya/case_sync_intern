@@ -29,7 +29,7 @@ class _NotificationDrawerState extends State<NotificationDrawer> {
     void removeTaskItem(NotificationItem task) {
       setState(() {
         print("Removed: ${task.caseNo}");
-        taskItem.removeWhere((c) => c.task_id == task.task_id);
+        taskItem.removeWhere((c) => c.taskId == task.taskId);
       });
     }
 
