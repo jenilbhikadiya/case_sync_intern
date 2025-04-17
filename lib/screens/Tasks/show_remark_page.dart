@@ -10,7 +10,9 @@ import '../../models/task_item_list.dart';
 class ShowRemarkPage extends StatefulWidget {
   final TaskItem taskItem;
 
-  const ShowRemarkPage({Key? key, required this.taskItem}) : super(key: key);
+  const ShowRemarkPage(
+      {Key? key, required this.taskItem, String? highlightedTaskId})
+      : super(key: key);
 
   @override
   RemarkPageState createState() => RemarkPageState();

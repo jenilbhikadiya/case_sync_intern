@@ -19,6 +19,7 @@ class ViewProceedCaseHistoryScreen extends StatefulWidget {
     this.isHighlighted = false,
     required this.caseId,
     required this.caseNo,
+    String? highlightedTaskId,
   });
 
   final bool isHighlighted;
