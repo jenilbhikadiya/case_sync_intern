@@ -254,6 +254,7 @@ class UpcomingCasesState extends State<UpcomingCases>
         appBar: ListAppBar(
           title: "Upcoming Cases",
           isSearching: _isSearching,
+          showSearchField: false,
           onSearchPressed: () {
             setState(() {
               _isSearching = !_isSearching;

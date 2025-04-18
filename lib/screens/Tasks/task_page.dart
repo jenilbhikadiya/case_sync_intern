@@ -265,7 +265,9 @@ class TaskPageState extends State<TaskPage>
 
     bool isAssignedToMe = taskItem.alloted_to_id == _userData!.id;
     bool isNotCompleted = taskItem.status.toLowerCase() != 'completed';
-    bool canModifyAssignedTask = isAssignedToMe && isNotCompleted;
+    bool isAllotted = taskItem.status.toLowerCase() == 'allotted';
+    bool canModifyAssignedTask =
+        (isAssignedToMe && isNotCompleted) || isAllotted;
 
     print("\n--- [DEBUG] Task Action Check ---");
     print("Task ID: ${taskItem.task_id}, Status: ${taskItem.status}");

@@ -169,7 +169,7 @@ class CounterCasesState extends State<CounterCases> {
     return Scaffold(
       appBar: ListAppBar(
         title: "Case Counters",
-        isSearching: _isSearching,
+        isSearching: false,
         showSearch: false,
         onSearchPressed: () {
           setState(() {

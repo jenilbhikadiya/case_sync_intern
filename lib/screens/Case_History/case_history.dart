@@ -2,13 +2,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 
-// Assuming these imports are correct
 import '../../components/basicUIcomponent.dart';
 import '../../components/case_card.dart';
 import '../../components/list_app_bar.dart';
 import '../../models/case_list.dart';
-import '../../services/case_services.dart'; // Contains populateCaseData, caseData, years
-import '../../utils/constants.dart'; // Contains months list
+import '../../services/case_services.dart';
+import '../../utils/constants.dart';
 
 class CaseHistoryScreen extends StatefulWidget {
   const CaseHistoryScreen({super.key});
@@ -19,70 +18,58 @@ class CaseHistoryScreen extends StatefulWidget {
 
 class CaseHistoryScreenState extends State<CaseHistoryScreen>
     with TickerProviderStateMixin {
-  // Use nullable TabController initially
   TabController? _tabController;
-  String? selectedYear; // Make nullable initially
+  String? selectedYear;
   bool _isSearching = false;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   List<CaseListData> _filteredCases = [];
   int _currentResultIndex = 0;
   List<String> _resultTabs = [];
-  List<String> monthsWithCases = []; // Initialize as empty
-  // Future to track the initialization process
-  late Future<bool> _caseDataInitializationFuture; // Changed type to bool
+  List<String> monthsWithCases = [];
+
+  late Future<bool> _caseDataInitializationFuture;
   final ScrollController _scrollController = ScrollController();
-  final Map<int, GlobalKey> caseCardKeys =
-      {}; // Consider if this is still needed with simpler scrolling
+  final Map<int, GlobalKey> caseCardKeys = {};
 
   FocusNode fn = FocusNode();
 
-  // Flag to track if data was successfully loaded
   bool _hasCaseData = false;
 
   @override
   void initState() {
     super.initState();
-    // Start the initialization process
+
     _caseDataInitializationFuture = _initializeCaseData();
   }
 
-  // --- Modified Initialization ---
   Future<bool> _initializeCaseData() async {
     try {
-      // 1. Explicitly call populateCaseData and wait for it
-      await populateCaseData(); // Assuming this populates global 'caseData' and 'years'
+      await populateCaseData();
 
-      // 2. Check if caseData is populated AFTER the fetch
       if (caseData.isEmpty) {
         if (kDebugMode) {
           print("Initialization complete: No case data found.");
         }
         _hasCaseData = false;
-        // No need to set up tabs if there's no data at all
-        return false; // Indicate no data was loaded
+
+        return false;
       }
 
-      // 3. Proceed with setup ONLY if data exists
       _hasCaseData = true;
       if (kDebugMode) {
         print("Initialization complete: Case data found.");
       }
 
       if (years.isNotEmpty) {
-        // Use 'mounted' check before calling setState
         if (mounted) {
           setState(() {
-            // Set initial selected year
             selectedYear = years.last;
-            monthsWithCases = _getMonthsForYear(
-                selectedYear!); // Use ! because years is not empty
+            monthsWithCases = _getMonthsForYear(selectedYear!);
 
             if (monthsWithCases.isNotEmpty) {
               _setupTabController();
             } else {
-              // Handle case where the latest year has no months with data
-              // Try finding the most recent year *with* data
               String? yearWithData;
               for (int i = years.length - 1; i >= 0; i--) {
                 monthsWithCases = _getMonthsForYear(years[i]);
@@ -95,26 +82,22 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
                 selectedYear = yearWithData;
                 _setupTabController();
               } else {
-                // Should not happen if caseData wasn't empty, but as fallback:
-                _hasCaseData = false; // Mark as no displayable data
+                _hasCaseData = false;
                 if (kDebugMode)
                   print("Data exists, but no months found for any year.");
               }
             }
           });
         } else {
-          // If not mounted during async gap, handle appropriately
-          // This scenario is less likely here but good practice
-          return _hasCaseData; // Return current known state
+          return _hasCaseData;
         }
       } else {
-        // caseData is not empty, but years list is somehow empty - data inconsistency
         _hasCaseData = false;
         if (kDebugMode)
           print(
               "Data inconsistency: caseData populated but years list is empty.");
       }
-      return _hasCaseData; // Return true if setup was successful
+      return _hasCaseData;
     } catch (e) {
       print("Error during case data initialization: $e");
       _hasCaseData = false;
@@ -123,12 +106,11 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
           SnackBar(content: Text('Error loading case history: $e')),
         );
       }
-      return false; // Indicate failure
+      return false;
     }
   }
 
   void _setupTabController() {
-    // Dispose existing controller if any (relevant for year changes)
     _tabController?.dispose();
 
     _tabController = TabController(
@@ -136,30 +118,25 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
       vsync: this,
     );
 
-    // Try setting initial index to current month if available
     final currentMonthIndex = DateTime.now().month - 1;
     final availableMonthsIndexes =
         monthsWithCases.map((month) => months.indexOf(month)).toList();
 
-    int initialTabIndex = 0; // Default to first available month
+    int initialTabIndex = 0;
     if (selectedYear == DateTime.now().year.toString() &&
         availableMonthsIndexes.contains(currentMonthIndex)) {
       initialTabIndex = availableMonthsIndexes.indexOf(currentMonthIndex);
     }
 
-    // Ensure initialTabIndex is valid for the current monthsWithCases
     if (initialTabIndex >= monthsWithCases.length) {
       initialTabIndex = 0;
     }
 
-    _tabController!.index = initialTabIndex; // Set initial index directly
+    _tabController!.index = initialTabIndex;
 
-    // Add listener *after* setting initial index
     _tabController!.addListener(() {
-      // Use mounted check inside listener
       if (mounted && !_tabController!.indexIsChanging) {
-        setState(
-            () {}); // Rebuild to update UI based on tab change if necessary
+        setState(() {});
       }
     });
   }
@@ -167,18 +144,15 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
   List<String> _getMonthsForYear(String year) {
     if (!caseData.containsKey(year)) return [];
 
-    // Use the constant list from utils/constants.dart
-    List<String> monthOrder = months; // Assuming 'months' is your constant list
+    List<String> monthOrder = months;
 
     List<String> availableMonths = caseData[year]
             ?.entries
-            // Ensure value (list of cases) is not null AND not empty
             .where((entry) => entry.value.isNotEmpty)
             .map((entry) => entry.key)
             .toList() ??
         [];
 
-    // Sort based on the predefined month order
     availableMonths
         .sort((a, b) => monthOrder.indexOf(a).compareTo(monthOrder.indexOf(b)));
 
@@ -187,31 +161,28 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
 
   @override
   void dispose() {
-    _tabController?.dispose(); // Safely dispose nullable controller
+    _tabController?.dispose();
     _searchController.dispose();
     _scrollController.dispose();
-    fn.dispose(); // Dispose focus node
+    fn.dispose();
     super.dispose();
   }
 
-  // --- Search and Filter Logic (Mostly Unchanged, added safety checks) ---
-
   void _updateFilteredCases() {
-    if (!mounted) return; // Safety check
+    if (!mounted) return;
     setState(() {
       _filteredCases.clear();
       _resultTabs.clear();
-      _currentResultIndex = 0; // Reset index on new search
+      _currentResultIndex = 0;
 
-      if (_searchQuery.isEmpty) return; // Don't filter if query is empty
+      if (_searchQuery.isEmpty) return;
 
-      // Iterate through all years and months in the cached data
       caseData.forEach((year, monthlyCases) {
         monthlyCases.forEach((month, cases) {
           final results = _filterCases(cases);
           if (results.isNotEmpty) {
             _filteredCases.addAll(results);
-            // Store unique identifier for the result's origin
+
             _resultTabs.addAll(List.filled(results.length, '$year-$month'));
           }
         });
@@ -219,14 +190,11 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
 
       if (kDebugMode) {
         print('Filtered Cases Count: ${_filteredCases.length}');
-        // print('Result Tabs: $_resultTabs');
       }
 
-      // If results are found, switch to the first one
       if (_filteredCases.isNotEmpty) {
-        _switchTabToResult(); // Navigate to the first result
+        _switchTabToResult();
       } else {
-        // Optional: Show feedback if search yields no results
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
             content: Text('No cases found matching search criteria.')));
       }
@@ -234,11 +202,10 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
   }
 
   List<CaseListData> _filterCases(List<CaseListData> cases) {
-    if (_searchQuery.isEmpty) return []; // Return empty if no query
-    // Ensure search query is lowercase for case-insensitive search
+    if (_searchQuery.isEmpty) return [];
+
     final query = _searchQuery.toLowerCase();
     return cases.where((caseItem) {
-      // Check each field, ensuring null safety and converting to lowercase
       return (caseItem.caseNo.toLowerCase().contains(query)) ||
           (caseItem.courtName.toLowerCase().contains(query)) ||
           (caseItem.cityName.toLowerCase().contains(query)) ||
@@ -286,55 +253,49 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
     final targetMonth = yearMonth[1];
 
     bool yearChanged = false;
-    // --- Handle Year Change ---
+
     if (selectedYear != targetYear) {
       if (!years.contains(targetYear)) {
         if (kDebugMode)
           print(
               "🚨 Target year $targetYear not found in available years list.");
-        return; // Cannot switch to a year that doesn't exist in dropdown
+        return;
       }
-      // Use mounted check before setState
+
       if (!mounted) return;
       setState(() {
         selectedYear = targetYear;
-        monthsWithCases =
-            _getMonthsForYear(selectedYear!); // Update months for the new year
-        yearChanged = true; // Flag that year changed
+        monthsWithCases = _getMonthsForYear(selectedYear!);
+        yearChanged = true;
       });
-      // If year changed, we need to potentially recreate or reset the TabController
-      // Wait for the state to update before setting up the controller again
+
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted && monthsWithCases.isNotEmpty) {
-          _setupTabController(); // Recreate controller for the new set of months
-          // Now find the month index *after* controller is set up
+          _setupTabController();
+
           _findAndAnimateToMonth(targetMonth);
         } else if (mounted) {
-          // Handle case where the target year has no months (should be rare if filter found a case)
           if (kDebugMode)
             print(
                 "🚨 Target year $targetYear has no months with data after switching.");
         }
       });
     } else {
-      // Year did not change, just find the month and animate
       _findAndAnimateToMonth(targetMonth);
     }
   }
 
   void _findAndAnimateToMonth(String targetMonth) {
-    if (!mounted || _tabController == null) return; // Ensure controller exists
+    if (!mounted || _tabController == null) return;
 
     final monthIndex = monthsWithCases.indexOf(targetMonth);
     if (monthIndex != -1) {
       if (_tabController!.length > monthIndex) {
-        // Check index validity
         _tabController!.animateTo(monthIndex);
-        // Scroll to the specific case *after* tab animation likely started/finished
+
         WidgetsBinding.instance.addPostFrameCallback((_) {
           _scrollToCaseCard(
-              targetYear: selectedYear!,
-              targetMonth: targetMonth); // Pass current selectedYear
+              targetYear: selectedYear!, targetMonth: targetMonth);
         });
       } else {
         if (kDebugMode)
@@ -360,7 +321,6 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
       return;
     }
 
-    // Get the cases for the currently visible tab
     final allCasesInCurrentTab = getCaseDataForMonth(targetYear, targetMonth);
     if (allCasesInCurrentTab.isEmpty) {
       if (kDebugMode)
@@ -369,22 +329,15 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
       return;
     }
 
-    // Find the index of the highlighted case *within the list currently displayed in the tab*
     final caseToHighlight = _filteredCases[_currentResultIndex];
     final indexInCurrentTab = allCasesInCurrentTab.indexWhere(
-      (caseItem) =>
-          caseItem.caseNo ==
-          caseToHighlight.caseNo, // Assuming caseNo is a unique identifier
+      (caseItem) => caseItem.caseNo == caseToHighlight.caseNo,
     );
 
     if (indexInCurrentTab >= 0) {
-      // Estimate height - THIS IS A MAJOR SOURCE OF INACCURACY
-      // A better way is using ScrollablePositionedList or measuring the item.
-      const double estimatedCardHeight =
-          200.0; // Adjust this based on your CaseCard's typical height
+      const double estimatedCardHeight = 200.0;
       double scrollOffset = indexInCurrentTab * estimatedCardHeight;
 
-      // Clamp the offset to prevent scrolling beyond bounds
       scrollOffset =
           scrollOffset.clamp(0.0, _scrollController.position.maxScrollExtent);
 
@@ -407,27 +360,23 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
     }
   }
 
-  // --- Build Method ---
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<bool>(
-      // Use the boolean future
       future: _caseDataInitializationFuture,
       builder: (context, snapshot) {
-        // --- 1. Handle Loading State ---
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Scaffold(
             appBar: AppBar(
                 title: const Text("Case History"),
                 elevation: 0,
-                backgroundColor: const Color(0xFFF3F3F3)), // Basic AppBar
+                backgroundColor: const Color(0xFFF3F3F3)),
             body: const Center(
               child: CircularProgressIndicator(color: Colors.black),
             ),
           );
         }
 
-        // --- 2. Handle Error State ---
         if (snapshot.hasError) {
           return Scaffold(
             appBar: AppBar(
@@ -442,8 +391,6 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
           );
         }
 
-        // --- 3. Handle No Data State (after Future completes) ---
-        // Check the _hasCaseData flag set during initialization
         if (!_hasCaseData) {
           return Scaffold(
             appBar: AppBar(
@@ -453,7 +400,7 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
               leading: IconButton(
                 icon: SvgPicture.asset(
                   'assets/icons/back_arrow.svg',
-                  width: 24, // Adjusted size
+                  width: 24,
                   height: 24,
                   colorFilter:
                       const ColorFilter.mode(Colors.black, BlendMode.srcIn),
@@ -468,7 +415,7 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
               child: Padding(
                 padding: const EdgeInsets.all(20.0),
                 child: Text(
-                  "No case history found.", // Clear message
+                  "No case history found.",
                   style: TextStyle(fontSize: 18, color: Colors.grey[600]),
                   textAlign: TextAlign.center,
                 ),
@@ -477,15 +424,10 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
           );
         }
 
-        // --- 4. Build Main UI (if data exists) ---
-        // At this point, snapshot has completed successfully and _hasCaseData is true.
-        // selectedYear and potentially _tabController should be initialized.
-
-        // Function to handle search disposal
         void disposalFunc() {
           if (!mounted) return;
           _searchController.clear();
-          fn.unfocus(); // Remove focus
+          fn.unfocus();
           setState(() {
             _searchQuery = '';
             _filteredCases = [];
@@ -496,7 +438,6 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
 
         return Scaffold(
           backgroundColor: const Color(0xFFF3F3F3),
-          // Use the ListAppBar component
           appBar: ListAppBar(
             title: "Case History",
             isSearching: _isSearching,
@@ -505,24 +446,22 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
               setState(() {
                 _isSearching = !_isSearching;
                 if (_isSearching) {
-                  fn.requestFocus(); // Request focus when starting search
+                  fn.requestFocus();
                 } else {
-                  disposalFunc(); // Clear search when stopping
+                  disposalFunc();
                 }
               });
             },
-            onFilterPressed: null, // No filter action defined here
-            searchController: _searchController, // Pass controller
-            searchFocusNode: fn, // Pass focus node
+            onFilterPressed: null,
+            searchController: _searchController,
+            searchFocusNode: fn,
             onSearchChanged: (value) {
-              // Handle text changes
               if (!mounted) return;
               setState(() {
                 _searchQuery = value.toLowerCase();
                 _updateFilteredCases();
               });
             },
-            // Pass search result navigation callbacks
             resultCount: _filteredCases.length,
             currentResultIndex: _currentResultIndex,
             onNavigatePrevious:
@@ -534,7 +473,6 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
                 ? _navigateToNextResult
                 : null,
           ),
-          // Build the main body content (Tabs and List)
           body: _buildBodyContent(),
         );
       },
@@ -542,10 +480,7 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
   }
 
   Widget _buildBodyContent() {
-    // Ensure selectedYear and _tabController are initialized before building this part
     if (selectedYear == null || _tabController == null) {
-      // This should ideally not be reached if _hasCaseData is true,
-      // but acts as a fallback during initial builds or state inconsistencies.
       return const Center(
         child: Text(
           "Loading year/month data...",
@@ -554,12 +489,10 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
       );
     }
 
-    // Handle case where a year is selected, but it has no months with data
     if (monthsWithCases.isEmpty) {
       return Column(
-        // Wrap in column to allow year dropdown to show
         children: [
-          _buildTabBarAndDropdown(), // Show dropdown even if no months
+          _buildTabBarAndDropdown(),
           const Expanded(
             child: Center(
               child: Padding(
@@ -576,35 +509,26 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
       );
     }
 
-    // --- Main Content: Tabs and List View ---
     return Column(
       children: [
-        // Extracted TabBar and Dropdown widget
         _buildTabBarAndDropdown(),
-
-        // Expanded TabBarView to fill remaining space
         Expanded(
           child: TabBarView(
-            controller: _tabController!, // Use ! as we checked for null
+            controller: _tabController!,
             children: monthsWithCases.map((month) {
-              // Get cases for the current tab's month and year
               final allCases = getCaseDataForMonth(selectedYear!, month);
 
-              // Build the list view for the current tab
               return Container(
-                // Removed margin here, apply padding inside ListView if needed
                 child: RefreshIndicator(
                   color: AppTheme.getRefreshIndicatorColor(
                       Theme.of(context).brightness),
                   backgroundColor:
                       AppTheme.getRefreshIndicatorBackgroundColor(),
                   onRefresh: () async {
-                    await _initializeCaseData(); // Re-run initialization on refresh
+                    await _initializeCaseData();
                   },
                   child: allCases.isEmpty
-                      // Display message if a specific month has no cases (should be rare if month is in list)
                       ? LayoutBuilder(
-                          // Ensure it's scrollable for RefreshIndicator
                           builder: (context, constraints) =>
                               SingleChildScrollView(
                             physics: const AlwaysScrollableScrollPhysics(),
@@ -621,33 +545,26 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
                                 ))),
                           ),
                         )
-                      // Display the list of cases for the month
                       : ListView.builder(
-                          controller:
-                              _scrollController, // Attach scroll controller
-                          // Add padding around the list itself
+                          controller: _scrollController,
                           padding: const EdgeInsets.symmetric(
                               vertical: 8.0, horizontal: 16.0),
-                          // Use physics that allows RefreshIndicator to work
                           physics: const AlwaysScrollableScrollPhysics(),
                           itemCount: allCases.length,
                           itemBuilder: (context, index) {
                             final caseItem = allCases[index];
-                            // Determine if the current card should be highlighted based on search
+
                             final bool isHighlighted = _isSearching &&
                                 _filteredCases.isNotEmpty &&
-                                _currentResultIndex <
-                                    _resultTabs.length && // Bounds check
+                                _currentResultIndex < _resultTabs.length &&
                                 _resultTabs[_currentResultIndex] ==
                                     '$selectedYear-$month' &&
                                 _filteredCases[_currentResultIndex].caseNo ==
                                     caseItem.caseNo;
 
                             return Padding(
-                              padding: const EdgeInsets.only(
-                                  bottom: 12.0), // Spacing between cards
+                              padding: const EdgeInsets.only(bottom: 12.0),
                               child: CaseCard(
-                                // Consider using caseItem.id if available and unique
                                 key: ValueKey(
                                     '${caseItem.caseNo}-${caseItem.courtName}'),
                                 caseItem: caseItem,
@@ -665,19 +582,16 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
     );
   }
 
-  // Helper widget for TabBar and Year Dropdown
   Widget _buildTabBarAndDropdown() {
     var screenWidth = MediaQuery.of(context).size.width;
-    // Ensure controller exists before building TabBar
+
     if (_tabController == null || monthsWithCases.isEmpty) {
-      // Build only the dropdown if tabs aren't ready or needed
       return Container(
         color: const Color(0xFFF3F3F3),
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
         child: Row(
-          mainAxisAlignment:
-              MainAxisAlignment.end, // Align dropdown to the right
-          children: [_buildYearDropdown()], // Call the dropdown builder
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [_buildYearDropdown()],
         ),
       );
     }
@@ -687,74 +601,61 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: CrossAxisAlignment.center, // Align items vertically
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // TabBar container with flexible width
           Expanded(
-            // Allow TabBar to take available space
             child: Container(
-              // color: Colors.red, // Debug color
-              alignment: Alignment.centerLeft, // Align tabs to the left
+              alignment: Alignment.centerLeft,
               child: TabBar(
-                controller:
-                    _tabController!, // Use '!' since we checked for null
-                isScrollable: true, // Allow scrolling if many months
+                controller: _tabController!,
+                isScrollable: true,
                 labelColor: Colors.black,
                 unselectedLabelColor: Colors.grey[600],
                 indicatorColor: Colors.black,
                 indicatorWeight: 2.5,
-                labelPadding: const EdgeInsets.symmetric(
-                    horizontal: 18.0), // Adjust padding
-                // labelStyle: TextStyle(fontSize: 15, fontWeight: FontWeight.w500), // Optional: Customize label style
-                // unselectedLabelStyle: TextStyle(fontSize: 15), // Optional: Customize unselected style
+                labelPadding: const EdgeInsets.symmetric(horizontal: 18.0),
                 tabs: monthsWithCases.map((month) => Tab(text: month)).toList(),
               ),
             ),
           ),
-          // Year Dropdown (fixed position on the right)
-          _buildYearDropdown(), // Call the dropdown builder
+          _buildYearDropdown(),
         ],
       ),
     );
   }
 
-  // Helper widget specifically for the Year DropdownButton
   Widget _buildYearDropdown() {
     return DropdownButton<String>(
-      value: selectedYear, // Current selected year
+      value: selectedYear,
       icon: const Icon(Icons.arrow_drop_down_rounded,
           color: Colors.black, size: 28),
-      elevation: 2, // Add slight elevation to dropdown
+      elevation: 2,
       style: const TextStyle(
-          color: Colors.black,
-          fontSize: 16,
-          fontWeight: FontWeight.w500), // Style for selected item
-      underline: const SizedBox.shrink(), // Remove the default underline
+          color: Colors.black, fontSize: 16, fontWeight: FontWeight.w500),
+      underline: const SizedBox.shrink(),
       onChanged: (String? newValue) {
         if (newValue != null && newValue != selectedYear) {
-          // Use mounted check before setState
           if (!mounted) return;
           setState(() {
             selectedYear = newValue;
-            monthsWithCases =
-                _getMonthsForYear(selectedYear!); // Get months for new year
-            // Important: Re-setup or reset TabController for the new months
+            monthsWithCases = _getMonthsForYear(selectedYear!);
+
             if (monthsWithCases.isNotEmpty) {
-              _setupTabController(); // Dispose old, create new
-              // Clear search results when year changes
+              _setupTabController();
+
               _searchQuery = '';
               _searchController.clear();
               _filteredCases = [];
               _resultTabs = [];
               _currentResultIndex = 0;
             } else {
-              _tabController?.dispose(); // Dispose if no months
+              _tabController?.dispose();
               _tabController = null;
             }
           });
         }
       },
-      dropdownColor: Colors.white, // Background color of the dropdown menu
+      dropdownColor: Colors.white,
       items: years.map<DropdownMenuItem<String>>((String value) {
         return DropdownMenuItem<String>(
           value: value,

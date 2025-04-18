@@ -1,5 +1,6 @@
 class Case {
   final String id;
+  final String year;
   final String caseNo;
   final String handleBy;
   final String applicant;
@@ -13,10 +14,10 @@ class Case {
   final String respondentAdvocate;
   final DateTime dateOfFiling;
   final DateTime nextDate;
-  final String oppName;
 
   Case({
     required this.id,
+    required this.year,
     required this.caseNo,
     required this.handleBy,
     required this.applicant,
@@ -30,17 +31,16 @@ class Case {
     required this.dateOfFiling,
     required this.nextDate,
     required this.caseCounter,
-    required this.oppName,
   });
 
   factory Case.fromJson(Map<String, dynamic> json) {
     return Case(
-      id: json['case_id'] ?? '',
+      id: json['id'] ?? '',
+      year: json['year'] ?? '',
       caseNo: json['case_no'] ?? '',
       handleBy: json['handle_by'] ?? '',
       applicant: json['applicant'] ?? '',
       opponent: json['opp_name'] ?? '',
-      oppName: json['opp_name'] ?? '',
       courtName: json['court_name'] ?? '',
       srDate: json['sr_date'] != '' && json['sr_date'] != null
           ? DateTime.parse(json['sr_date'])
