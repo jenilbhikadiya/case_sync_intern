@@ -6,12 +6,12 @@ import 'package:http/http.dart' as http;
 import 'package:intern_side/screens/Tasks/reassign_task_page.dart';
 import 'package:intern_side/services/shared_pref.dart';
 import 'package:intern_side/utils/constants.dart';
-import '../../components/basicUIcomponent.dart';
-import '../../components/task_card.dart';
-import '../../models/intern.dart';
-import '../../models/task_item_list.dart';
-import '../Tasks/add_remark_page.dart';
-import 'show_remark_page.dart';
+import 'package:intern_side/components/basicUIcomponent.dart';
+import 'package:intern_side/components/task_card.dart';
+import 'package:intern_side/models/intern.dart';
+import 'package:intern_side/models/task_item_list.dart';
+import 'package:intern_side/screens/Tasks/add_remark_page.dart';
+import 'package:intern_side/screens/Tasks/show_remark_page.dart';
 
 class TaskPage extends StatefulWidget {
   final String? highlightedTaskId;
@@ -69,7 +69,6 @@ class TaskPageState extends State<TaskPage>
       await _fetchTasks();
     } catch (e) {
       print("Error during initial data fetch: $e");
-
       if (mounted) {
         setState(() {
           _isLoadingTasks = false;
@@ -95,7 +94,6 @@ class TaskPageState extends State<TaskPage>
     if (!_isLoadingTasks && mounted) {
       setState(() => _isLoadingTasks = true);
     }
-
     if (mounted) {
       setState(() => _errorTasks = '');
     }
@@ -107,13 +105,17 @@ class TaskPageState extends State<TaskPage>
     try {
       var request = http.MultipartRequest('POST', Uri.parse(url));
       request.fields['intern_id'] = _userData!.id;
+
       var response = await request.send();
       var responseBody = await response.stream.bytesToString();
+
       print('[FetchTasks] Response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final parsedResponse = jsonDecode(responseBody);
-        if (parsedResponse['success'] == true &&
+
+        if (parsedResponse is Map &&
+            parsedResponse['success'] == true &&
             parsedResponse['data'] is List) {
           final List<TaskItem> fetchedList = (parsedResponse['data'] as List)
               .map((taskJson) => _parseTaskItem(taskJson, 'FetchTasks'))
@@ -129,19 +131,24 @@ class TaskPageState extends State<TaskPage>
             _attemptScrollToHighlight();
           }
         } else {
-          throw Exception(parsedResponse['message'] ?? 'Failed to load tasks.');
+          throw Exception(parsedResponse is Map
+              ? parsedResponse['message'] ??
+                  'Failed to load tasks: Invalid response structure.'
+              : 'Failed to load tasks: Unexpected response format.');
         }
       } else {
-        throw Exception('HTTP Error ${response.statusCode}');
+        throw Exception(
+            'Failed to load tasks. Server responded with status ${response.statusCode}');
       }
-    } catch (e) {
-      print('[FetchTasks] Error fetching: $e');
-
+    } catch (e, stacktrace) {
+      print('[FetchTasks] Error fetching or parsing tasks: $e');
+      print('[FetchTasks] Stacktrace: $stacktrace');
       if (mounted) {
         setState(() {
           _allTasks = [];
           _isLoadingTasks = false;
-          _errorTasks = '$e';
+          _errorTasks =
+              'Failed to load tasks. Please check your connection and try again.';
         });
       }
     }
@@ -153,13 +160,12 @@ class TaskPageState extends State<TaskPage>
         return TaskItem.fromJson(taskJson);
       } else {
         print(
-            "[$logPrefix] Error parsing task item: Invalid data type in list - $taskJson");
+            "[$logPrefix] Error parsing task item: Expected a Map but got ${taskJson.runtimeType}");
         return null;
       }
     } catch (e, stacktrace) {
       print(
-          "[$logPrefix] Error parsing task item: $taskJson \nError: $e\nStackTrace: $stacktrace");
-
+          "[$logPrefix] Error parsing task item JSON: $taskJson \nError: $e\nStackTrace: $stacktrace");
       return null;
     }
   }
@@ -175,58 +181,71 @@ class TaskPageState extends State<TaskPage>
 
     final highlightedIndex = _allTasks
         .indexWhere((task) => task.task_id == widget.highlightedTaskId);
+    if (highlightedIndex == -1) {
+      print(
+          "[Scroll] Highlighted task ID ${widget.highlightedTaskId} not found in all tasks.");
+      return;
+    }
 
-    if (highlightedIndex != -1) {
-      final taskToHighlight = _allTasks[highlightedIndex];
+    final taskToHighlight = _allTasks[highlightedIndex];
 
-      final bool isInMyTasks = taskToHighlight.alloted_to_id == _userData!.id;
-      final int targetTabIndex = isInMyTasks ? 0 : 1;
-      final ScrollController targetController =
-          isInMyTasks ? _myTasksScrollController : _createdByMeScrollController;
+    final bool isInMyTasks = taskToHighlight.alloted_to_id == _userData!.id;
+    final int targetTabIndex = isInMyTasks ? 0 : 1;
+    final ScrollController targetController =
+        isInMyTasks ? _myTasksScrollController : _createdByMeScrollController;
 
-      List<TaskItem> filteredList;
-      if (isInMyTasks) {
-        filteredList = _allTasks
+    final List<TaskItem> filteredList = isInMyTasks
+        ? _allTasks
             .where((task) => task.alloted_to_id == _userData!.id)
-            .toList();
-      } else {
-        filteredList = _allTasks
+            .toList()
+        : _allTasks
             .where((task) => task.alloted_to_id != _userData!.id)
             .toList();
-      }
 
-      final int indexInFilteredList = filteredList
-          .indexWhere((task) => task.task_id == widget.highlightedTaskId);
-
-      if (indexInFilteredList != -1) {
-        if (mounted && _tabController!.index != targetTabIndex) {
-          _tabController!.animateTo(targetTabIndex);
-        }
-
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          Future.delayed(const Duration(milliseconds: 50), () {
-            if (mounted && targetController.hasClients) {
-              _scrollToIndex(indexInFilteredList, targetController);
-            }
-          });
-        });
-      }
+    final int indexInFilteredList = filteredList
+        .indexWhere((task) => task.task_id == widget.highlightedTaskId);
+    if (indexInFilteredList == -1) {
+      print(
+          "[Scroll] Highlighted task ID ${widget.highlightedTaskId} not found in filtered list for tab $targetTabIndex.");
+      return;
     }
+
+    if (mounted && _tabController!.index != targetTabIndex) {
+      _tabController!.animateTo(targetTabIndex);
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future.delayed(const Duration(milliseconds: 150), () {
+        if (mounted && targetController.hasClients) {
+          _scrollToIndex(indexInFilteredList, targetController);
+        } else if (mounted) {
+          print(
+              "[Scroll] Target scroll controller doesn't have clients attached. Cannot scroll.");
+        }
+      });
+    });
   }
 
   void _scrollToIndex(int index, ScrollController controller) {
-    if (controller.hasClients) {
-      const double itemEstimatedHeight = 280.0;
-      final scrollOffset = index * itemEstimatedHeight;
-      final maxScroll = controller.position.maxScrollExtent;
-      final targetOffset = scrollOffset.clamp(0.0, maxScroll);
-
-      controller.animateTo(
-        targetOffset,
-        duration: const Duration(milliseconds: 500),
-        curve: Curves.easeInOut,
-      );
+    if (!controller.hasClients) {
+      print("[Scroll] Cannot scroll, controller has no clients.");
+      return;
     }
+
+    const double itemEstimatedHeight = 280.0;
+
+    final double scrollOffset = index * itemEstimatedHeight;
+    final double maxScroll = controller.position.maxScrollExtent;
+    final double targetOffset = scrollOffset.clamp(0.0, maxScroll);
+
+    print(
+        "[Scroll] Scrolling controller to index $index, target offset $targetOffset (max: $maxScroll)");
+
+    controller.animateTo(
+      targetOffset,
+      duration: const Duration(milliseconds: 500),
+      curve: Curves.easeInOut,
+    );
   }
 
   void _navigateToReAssignTask(TaskItem taskItem) async {
@@ -251,7 +270,7 @@ class TaskPageState extends State<TaskPage>
     );
 
     if (result == true && mounted) {
-      print("Reassign returned true, refreshing all tasks...");
+      print("[Reassign] Task reassigned/updated, refreshing task list.");
       await _fetchTasks();
     }
   }
@@ -266,95 +285,162 @@ class TaskPageState extends State<TaskPage>
     bool isAssignedToMe = taskItem.alloted_to_id == _userData!.id;
     bool isNotCompleted = taskItem.status.toLowerCase() != 'completed';
     bool isAllotted = taskItem.status.toLowerCase() == 'allotted';
+
     bool canModifyAssignedTask =
         (isAssignedToMe && isNotCompleted) || isAllotted;
 
     print("\n--- [DEBUG] Task Action Check ---");
-    print("Task ID: ${taskItem.task_id}, Status: ${taskItem.status}");
     print(
-        "Assigned To: ${taskItem.alloted_to_id}, Current User: ${_userData!.id}");
+        "Task ID: ${taskItem.task_id}, Status: ${taskItem.status}, Title: ${taskItem.caseNo ?? 'N/A'}");
+    print(
+        "Assigned To: ${taskItem.alloted_to_id ?? 'None'}, Current User: ${_userData!.id}");
     print("Is Assigned To Me: $isAssignedToMe");
     print("Is Not Completed: $isNotCompleted");
-    print("Can Modify (As Assignee): $canModifyAssignedTask");
+    print("Is Allotted: $isAllotted");
+    print("Can Modify: $canModifyAssignedTask");
     print("--- End Check ---\n");
 
     if (!mounted) return;
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(15.0)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20.0)),
       ),
       builder: (BuildContext bottomSheetContext) {
-        return Wrap(
-          children: <Widget>[
-            AnimatedListTile(
-              leading: Icon(Icons.edit_note_outlined,
-                  color: canModifyAssignedTask
-                      ? Theme.of(context).iconTheme.color
-                      : Colors.grey),
-              title: Text('Add Remark',
-                  style: TextStyle(
-                      color:
-                          canModifyAssignedTask ? Colors.black : Colors.grey)),
-              enabled: canModifyAssignedTask,
-              onTap: !canModifyAssignedTask
-                  ? null
-                  : () async {
-                      Navigator.pop(bottomSheetContext);
-
-                      if (!mounted) return;
-                      final result = await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => AddRemarkPage(
-                            taskItem: taskItem,
-                            task_id: taskItem.task_id,
-                            case_id: taskItem.case_id,
-                            stage_id: taskItem.stage_id,
-                          ),
-                        ),
-                      );
-
-                      if (result == true && mounted) {
-                        await _fetchTasks();
-                      }
-                    },
-            ),
-            AnimatedListTile(
-              leading: const Icon(Icons.chat_bubble_outline),
-              title: const Text('Show Remarks'),
-              enabled: true,
-              onTap: () {
-                Navigator.pop(bottomSheetContext);
-
-                if (!mounted) return;
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ShowRemarkPage(taskItem: taskItem),
+        return Padding(
+          padding: EdgeInsets.only(
+              bottom: MediaQuery.of(bottomSheetContext).viewInsets.bottom + 10,
+              left: 16,
+              right: 16,
+              top: 10),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 5,
+                  margin: const EdgeInsets.only(bottom: 10.0),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                );
-              },
-            ),
-            AnimatedListTile(
-              leading: Icon(Icons.assignment_return_outlined,
+                ),
+              ),
+              // 2. Title Area (Modified)
+              Padding(
+                padding:
+                    const EdgeInsets.only(bottom: 12.0, left: 8.0, right: 8.0),
+                child: Text(
+                  // Construct the string with the desired format
+                  'Case Number : ${taskItem.caseNo ?? 'N/A'}', // Added prefix and null check
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleLarge // Use titleLarge for emphasis
+                      ?.copyWith(
+                          fontWeight: FontWeight.w600), // Keep bold weight
+                  overflow:
+                      TextOverflow.ellipsis, // Keep ellipsis for long numbers
+                ),
+              ),
+              const Divider(height: 1, thickness: 1, indent: 16, endIndent: 16),
+              ListTile(
+                leading: Icon(
+                  Icons.edit_note_outlined,
                   color: canModifyAssignedTask
-                      ? Theme.of(context).iconTheme.color
-                      : Colors.grey),
-              title: Text('Reassign Task',
+                      ? Colors.black
+                      : Theme.of(context).disabledColor,
+                ),
+                title: Text(
+                  'Add Remark',
                   style: TextStyle(
-                      color:
-                          canModifyAssignedTask ? Colors.black : Colors.grey)),
-              enabled: canModifyAssignedTask,
-              onTap: !canModifyAssignedTask
-                  ? null
-                  : () {
-                      Navigator.pop(bottomSheetContext);
-                      _navigateToReAssignTask(taskItem);
-                    },
-            ),
-          ],
+                    color: canModifyAssignedTask
+                        ? Colors.black87
+                        : Theme.of(context).disabledColor,
+                  ),
+                ),
+                enabled: canModifyAssignedTask,
+                onTap: !canModifyAssignedTask
+                    ? null
+                    : () async {
+                        Navigator.pop(bottomSheetContext);
+                        if (!mounted) return;
+
+                        final result = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => AddRemarkPage(
+                              taskItem: taskItem,
+                              task_id: taskItem.task_id,
+                              case_id: taskItem.case_id,
+                              stage_id: taskItem.stage_id,
+                            ),
+                          ),
+                        );
+
+                        if (result == true && mounted) {
+                          await _fetchTasks();
+                        }
+                      },
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+              ),
+              ListTile(
+                leading: Icon(Icons.chat_bubble_outline, color: Colors.black),
+                title: const Text('Show Remarks',
+                    style: TextStyle(color: Colors.black87)),
+                enabled: true,
+                onTap: () {
+                  Navigator.pop(bottomSheetContext);
+                  if (!mounted) return;
+
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ShowRemarkPage(taskItem: taskItem),
+                    ),
+                  );
+                },
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+              ),
+              ListTile(
+                leading: Icon(
+                  Icons.assignment_return_outlined,
+                  color: canModifyAssignedTask
+                      ? Colors.black
+                      : Theme.of(context).disabledColor,
+                ),
+                title: Text(
+                  'Reassign Task',
+                  style: TextStyle(
+                    color: canModifyAssignedTask
+                        ? Colors.black87
+                        : Theme.of(context).disabledColor,
+                  ),
+                ),
+                enabled: canModifyAssignedTask,
+                onTap: !canModifyAssignedTask
+                    ? null
+                    : () {
+                        Navigator.pop(bottomSheetContext);
+                        _navigateToReAssignTask(taskItem);
+                      },
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+              ),
+            ],
+          ),
         );
       },
     );
@@ -399,7 +485,7 @@ class TaskPageState extends State<TaskPage>
     return Scaffold(
       appBar: AppBar(
         surfaceTintColor: Colors.transparent,
-        backgroundColor: const Color.fromRGBO(243, 243, 243, 1),
+        backgroundColor: const Color(0xFFF3F3F3),
         elevation: 0,
         leading: IconButton(
           icon: SvgPicture.asset(
@@ -458,7 +544,7 @@ class TaskPageState extends State<TaskPage>
             errorMessage: _errorTasks.isNotEmpty
                 ? _errorTasks
                 : (tasksCreatedByMe.isEmpty && !_isLoadingTasks
-                    ? 'No tasks found in this category.'
+                    ? 'You have not created tasks assigned to others.'
                     : ''),
             scrollController: _createdByMeScrollController,
             onRefresh: _fetchTasks,
@@ -498,7 +584,9 @@ class TaskPageState extends State<TaskPage>
                 child: Padding(
                   padding: const EdgeInsets.all(24.0),
                   child: Text(
-                    errorMessage.isNotEmpty ? errorMessage : 'No tasks found.',
+                    errorMessage.isNotEmpty
+                        ? errorMessage
+                        : 'No tasks found in this category.',
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                   ),
@@ -511,87 +599,35 @@ class TaskPageState extends State<TaskPage>
     }
 
     return RefreshIndicator(
-        onRefresh: onRefresh,
-        color: refreshIndicatorColor,
-        backgroundColor: refreshIndicatorBgColor,
-        child: ListView.builder(
-          controller: scrollController,
-          itemCount: taskList.length,
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.only(
-              left: 16.0, right: 16.0, top: 12.0, bottom: 12.0),
-          itemBuilder: (context, index) {
-            final taskItem = taskList[index];
+      onRefresh: onRefresh,
+      color: refreshIndicatorColor,
+      backgroundColor: refreshIndicatorBgColor,
+      child: ListView.builder(
+        controller: scrollController,
+        itemCount: taskList.length,
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+        itemBuilder: (context, index) {
+          final taskItem = taskList[index];
 
-            final bool isHighlighted =
-                taskItem.task_id == widget.highlightedTaskId;
-            final bool showNewTaskTag = isHighlighted;
+          final bool isHighlighted =
+              taskItem.task_id == widget.highlightedTaskId;
 
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12.0),
-              child: TaskCard(
-                key: ValueKey(taskItem.task_id),
-                taskItem: taskItem,
-                isHighlighted: isHighlighted,
-                showNewTaskTag: showNewTaskTag,
-                onTap: () => _showDropdownMenu(context, taskItem),
-              ),
-            );
-          },
-        ));
-  }
-}
+          final bool showNewTaskTag = isHighlighted;
 
-class AnimatedListTile extends StatelessWidget {
-  final Widget leading;
-  final Widget title;
-  final bool enabled;
-  final VoidCallback? onTap;
-
-  const AnimatedListTile({
-    Key? key,
-    required this.leading,
-    required this.title,
-    this.enabled = true,
-    this.onTap,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    final Color effectiveColor = enabled
-        ? Theme.of(context).listTileTheme.iconColor ??
-            Theme.of(context).iconTheme.color ??
-            Colors.black
-        : Theme.of(context).disabledColor;
-
-    final TextStyle effectiveTextStyle = enabled
-        ? Theme.of(context).listTileTheme.titleTextStyle ??
-            Theme.of(context).textTheme.titleMedium ??
-            const TextStyle()
-        : Theme.of(context)
-                .listTileTheme
-                .titleTextStyle
-                ?.copyWith(color: Theme.of(context).disabledColor) ??
-            Theme.of(context)
-                .textTheme
-                .titleMedium
-                ?.copyWith(color: Theme.of(context).disabledColor) ??
-            TextStyle(color: Theme.of(context).disabledColor);
-
-    return ListTile(
-      leading: IconTheme.merge(
-        data: IconThemeData(color: effectiveColor),
-        child: leading,
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 12.0),
+            child: TaskCard(
+              key: ValueKey(taskItem.task_id),
+              taskItem: taskItem,
+              isHighlighted: isHighlighted,
+              showNewTaskTag: showNewTaskTag,
+              onTap: () => {},
+              onLongPress: _showDropdownMenu,
+            ),
+          );
+        },
       ),
-      title: DefaultTextStyle.merge(
-        style: effectiveTextStyle,
-        child: title,
-      ),
-      enabled: enabled,
-      onTap: onTap,
-      splashColor: enabled ? Theme.of(context).splashColor : Colors.transparent,
-      hoverColor: enabled ? Theme.of(context).hoverColor : Colors.transparent,
-      focusColor: enabled ? Theme.of(context).focusColor : Colors.transparent,
     );
   }
 }

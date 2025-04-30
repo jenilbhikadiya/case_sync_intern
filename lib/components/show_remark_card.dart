@@ -18,6 +18,7 @@ class _RemarkCardState extends State<RemarkCard>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
+  bool _isExpanded = false;
 
   @override
   void initState() {
@@ -39,6 +40,9 @@ class _RemarkCardState extends State<RemarkCard>
 
   void _animateTap() {
     _animationController.forward().then((_) => _animationController.reverse());
+    setState(() {
+      _isExpanded = !_isExpanded;
+    });
   }
 
   String _formatDate(String? dateString) {
@@ -56,132 +60,191 @@ class _RemarkCardState extends State<RemarkCard>
     }
   }
 
-  TableRow _buildTableRow(IconData icon, String label, Widget valueWidget,
-      {bool isTitle = false}) {
-    return TableRow(
-      decoration: const BoxDecoration(
-        border: Border(
-          bottom:
-              BorderSide(color: Colors.grey, width: 0.2), // Light bottom border
-        ),
-      ),
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 8.0),
-          child: Row(
-            children: [
-              Icon(icon, size: 20, color: Colors.black54),
-              const SizedBox(width: 8),
-              Text(
-                label,
-                style: TextStyle(
-                    fontWeight: isTitle ? FontWeight.bold : FontWeight.w500,
-                    color: Colors.black87,
-                    fontSize: 15),
-              ),
-            ],
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 8.0),
-          child: DefaultTextStyle(
-            style: TextStyle(
-                color: Colors.black87,
-                fontSize: 15,
-                fontWeight: isTitle ? FontWeight.bold : FontWeight.normal),
-            child: valueWidget,
-          ),
-        ),
-      ],
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-        onTap: _animateTap,
-        child: ScaleTransition(
-          scale: _scaleAnimation,
-          child: Container(
-            margin:
-                const EdgeInsets.symmetric(vertical: 5.0), // Matching margin
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12), // Matching borderRadius
-              border: Border.all(
-                color: Colors.black.withOpacity(0.5), // Light border
-                width: 0.5, // Matching border width
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05), // Matching boxShadow
-                  spreadRadius: 1,
-                  blurRadius: 5,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+      onTap: _animateTap,
+      child: ScaleTransition(
+        scale: _scaleAnimation,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          margin: const EdgeInsets.symmetric(vertical: 5.0),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: Colors.black.withOpacity(0.5),
+              width: 0.5,
             ),
-            child: Padding(
-              padding: const EdgeInsets.all(12.0), // Matching padding
-              child: Table(
-                columnWidths: const {
-                  0: IntrinsicColumnWidth(),
-                  1: FlexColumnWidth(),
-                },
-                border: TableBorder.all(
-                  color: Colors.grey.shade200, // Light grey table border
-                  width: 0.3,
-                ),
-                children: [
-                  _buildTableRow(
-                    Icons.format_list_numbered,
-                    'SR. No.',
-                    Text(
-                      ((widget.index + 1).toString()),
-                      style: const TextStyle(fontSize: 16),
-                    ),
-                    isTitle: true,
-                  ),
-                  _buildTableRow(
-                    Icons.text_snippet_outlined,
-                    'Remark',
-                    Text(widget.remark['remarks'] ?? 'N/A'),
-                  ),
-                  _buildTableRow(Icons.image_outlined, 'Stage',
-                      Text(widget.remark['stage'] ?? 'N/A')),
-                  _buildTableRow(Icons.person_outline, 'Added By',
-                      Text(widget.remark['added_by'] ?? 'N/A')),
-                  _buildTableRow(Icons.calendar_today_outlined, 'Remark Date',
-                      Text(_formatDate(widget.remark['dos']))),
-                  _buildTableRow(
-                    Icons.label_outline,
-                    'Status',
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 18, vertical: 5),
-                        decoration: BoxDecoration(
-                          color: getStatusColor(widget.remark['status'])
-                                  .withOpacity(0.8) ??
-                              Colors.grey.withOpacity(0.8),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                spreadRadius: 1,
+                blurRadius: 5,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header with always visible information
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade200,
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      child: Center(
                         child: Text(
-                          widget.remark['status']?.toUpperCase() ?? 'N/A',
+                          (widget.index + 1).toString(),
                           style: const TextStyle(
-                            color: Colors.white,
                             fontWeight: FontWeight.bold,
-                            fontSize: 10,
+                            fontSize: 16,
                           ),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.remark['remarks'] ?? 'N/A',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.calendar_today_outlined,
+                                size: 12,
+                                color: Colors.grey.shade700,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                _formatDate(widget.remark['dos']),
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.grey.shade700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: getStatusColor(widget.remark['status'])
+                                .withOpacity(0.8) ??
+                            Colors.grey.withOpacity(0.8),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        widget.remark['status']?.toUpperCase() ?? 'N/A',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 10,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Icon(
+                      _isExpanded
+                          ? Icons.keyboard_arrow_up
+                          : Icons.keyboard_arrow_down,
+                      color: Colors.grey.shade700,
+                    ),
+                  ],
+                ),
               ),
-            ),
+
+              // Expandable content
+              AnimatedCrossFade(
+                firstChild: const SizedBox(height: 0),
+                secondChild: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Divider(color: Colors.grey.shade300),
+                      _buildDetailRow(
+                        Icons.text_snippet_outlined,
+                        'Full Remark',
+                        widget.remark['remarks'] ?? 'N/A',
+                      ),
+                      const SizedBox(height: 8),
+                      _buildDetailRow(
+                        Icons.category_outlined,
+                        'Stage',
+                        widget.remark['stage'] ?? 'N/A',
+                      ),
+                      const SizedBox(height: 8),
+                      _buildDetailRow(
+                        Icons.person_outline,
+                        'Added By',
+                        widget.remark['added_by'] ?? 'N/A',
+                      ),
+                    ],
+                  ),
+                ),
+                crossFadeState: _isExpanded
+                    ? CrossFadeState.showSecond
+                    : CrossFadeState.showFirst,
+                duration: const Duration(milliseconds: 300),
+              ),
+            ],
           ),
-        ));
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(IconData icon, String label, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 18, color: Colors.grey.shade700),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey.shade700,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 15,
+                  color: Colors.black87,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 }
