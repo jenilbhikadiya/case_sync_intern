@@ -89,7 +89,7 @@ class _ViewProceedCaseHistoryScreenState
   }
 
   Future<void> _fetchStages() async {
-    const String apiUrl = "$baseUrl/stage_list";
+    String apiUrl = "$baseUrl/stage_list";
 
     try {
       var request = http.MultipartRequest('POST', Uri.parse(apiUrl));

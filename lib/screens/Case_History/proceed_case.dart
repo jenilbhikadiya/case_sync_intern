@@ -36,7 +36,7 @@ class _ProceedCaseAddState extends State<ProceedCaseAdd> {
   }
 
   Future<void> _fetchStages() async {
-    const String apiUrl = "$baseUrl/stage_list";
+    String apiUrl = "$baseUrl/stage_list";
 
     try {
       var request = http.MultipartRequest('POST', Uri.parse(apiUrl));
@@ -75,7 +75,7 @@ class _ProceedCaseAddState extends State<ProceedCaseAdd> {
   }
 
   Future<void> _fetchNextDateStage() async {
-    const String apiUrl = "$baseUrl/get_case_info";
+    String apiUrl = "$baseUrl/get_case_info";
 
     try {
       var request = http.MultipartRequest('POST', Uri.parse(apiUrl));
@@ -127,7 +127,7 @@ class _ProceedCaseAddState extends State<ProceedCaseAdd> {
     final String formattedDate =
         "${_selectedDate!.year}/${_selectedDate!.month.toString().padLeft(2, '0')}/${_selectedDate!.day.toString().padLeft(2, '0')}";
 
-    const String apiUrl = "$baseUrl/proceed_case_add";
+    String apiUrl = "$baseUrl/proceed_case_add";
 
     try {
       // Fetch intern ID from shared preferences

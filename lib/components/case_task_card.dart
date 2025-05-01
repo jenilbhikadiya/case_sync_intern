@@ -62,7 +62,7 @@ class _CaseTaskCardState extends State<CaseTaskCard> {
   }
 
   Future<void> fetchTasks() async {
-    const String url = '$baseUrl/intern_task_list';
+    String url = '$baseUrl/intern_task_list';
 
     try {
       var request = http.MultipartRequest('POST', Uri.parse(url));

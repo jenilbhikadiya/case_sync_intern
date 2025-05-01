@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:intern_side/utils/flavor_config.dart';
 
 const List<String> months = [
   'January',
@@ -43,12 +44,18 @@ Color getStatusColor(String status) {
   }
 }
 
-const baseUrl =
-"https://pragmanxt.com/case_sync_pro/services/intern/v1/index.php";
+// Get baseUrl from FlavorConfig
+String get baseUrl => FlavorConfig.instance.baseUrl;
 
+// Previous baseUrl definitions (kept as comments for reference)
+// Production URL
+// const baseUrl = "https://pragmanxt.com/case_sync_pro/services/intern/v1/index.php";
+
+// Legacy URL
 // const baseUrl = "https://pragmanxt.com/case_sync/services/intern/v1/index.php";
 
-// const baseUrl =
-//     "https://pragmanxt.com/case_sync_test/services/intern/v1/index.php";
+// Test URL
+// const baseUrl = "https://pragmanxt.com/case_sync_test/services/intern/v1/index.php";
 
+// Local Development URL
 // const baseUrl = "http://192.168.1.129/case_sync/services/intern/v1/index.php";

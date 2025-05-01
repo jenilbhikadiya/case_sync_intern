@@ -1,0 +1,77 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Production",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "debug",
+            "args": [
+                "--flavor",
+                "production",
+                "-t",
+                "lib/main_production.dart"
+            ]
+        },
+        {
+            "name": "Staging",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "debug",
+            "args": [
+                "--flavor",
+                "staging",
+                "-t",
+                "lib/main_staging.dart"
+            ]
+        },
+        {
+            "name": "Production (profile mode)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile",
+            "args": [
+                "--flavor",
+                "production",
+                "-t",
+                "lib/main_production.dart"
+            ]
+        },
+        {
+            "name": "Staging (profile mode)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile",
+            "args": [
+                "--flavor",
+                "staging",
+                "-t",
+                "lib/main_staging.dart"
+            ]
+        },
+        {
+            "name": "Production (release mode)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release",
+            "args": [
+                "--flavor",
+                "production",
+                "-t",
+                "lib/main_production.dart"
+            ]
+        },
+        {
+            "name": "Staging (release mode)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release",
+            "args": [
+                "--flavor",
+                "staging",
+                "-t",
+                "lib/main_staging.dart"
+            ]
+        }
+    ]
+} 

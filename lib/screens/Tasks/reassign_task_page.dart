@@ -64,7 +64,7 @@ class _ReAssignTaskPageState extends State<ReAssignTaskPage> {
       _isLoadingInterns = true;
       _responseMessage = null; // Clear previous messages
     });
-    const String apiUrl = '$baseUrl/get_interns_list';
+    String apiUrl = '$baseUrl/get_interns_list';
 
     try {
       final response = await http.get(Uri.parse(apiUrl));
@@ -113,7 +113,7 @@ class _ReAssignTaskPageState extends State<ReAssignTaskPage> {
       _isLoadingAdvocates = true;
       _responseMessage = null; // Clear previous messages
     });
-    const String apiUrl = '$baseUrl/get_advocate_list';
+    String apiUrl = '$baseUrl/get_advocate_list';
 
     try {
       final response = await http.get(Uri.parse(apiUrl));
